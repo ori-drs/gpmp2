@@ -192,6 +192,7 @@ else
     plot_values = result;
 end
 
+pause(pause_time)
 % plot final values
 figure(4),
 clf, hold on
@@ -208,8 +209,9 @@ for i=0:total_plot_step
     pause(pause_time)
 end
 hold off
+pause(pause_time)
 
-
+%%
 % plot final values
 figure(5),
 for i=0:total_plot_step
