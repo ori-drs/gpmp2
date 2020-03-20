@@ -26,6 +26,7 @@ TEST(GaussianProcessInterpolatorLinear, equals) {
   Matrix3 Qc = 0.01 * Matrix::Identity(3,3);
   noiseModel::Gaussian::shared_ptr Qc_model = noiseModel::Gaussian::Covariance(Qc);
   double dt = 0.1, tau = 0.03;
+
   GPBase base1(Qc_model, dt, tau), base2(Qc_model, dt, tau);
   EXPECT(assert_equal(base1, base2, 1e-9));
 
