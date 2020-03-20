@@ -6,7 +6,7 @@
  **/
 
 #include <gpmp2/gp/GPutils.h>
-
+#include <iostream>
 using namespace gtsam;
 
 
