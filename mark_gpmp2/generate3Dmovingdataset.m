@@ -26,42 +26,53 @@ if nargin == 1
 end
 
 % small dataset for WAM
-if strcmp(dataset_str, 'WAMDeskDataset')
+if strcmp(dataset_str, 'MovingBlock')
     % params
     dataset.cols = 300;
     dataset.rows = 300;
     dataset.z = 300;
-    dataset.origin_x = -1.5;
-    dataset.origin_y = -1.5;
-    dataset.origin_z = -1.5;
+    dataset.origin_x = 0;
+    dataset.origin_y = 0;
+    dataset.origin_z = 0;
+    dataset.origin = [dataset.origin_x, dataset.origin_y, dataset.origin_z];
+    dataset.origin_point3 = Point3(dataset.origin');
+
     dataset.cell_size = 0.01;
     
-    % map
-    dataset.map = zeros(dataset.rows, dataset.cols, dataset.z);
-    
-    % obstacles
-    dataset.corner_idx = [];
-    
-    % Add table
-%     [dataset.map, dataset.corner_idx] = add_obstacle([170 220 130], [140, 60, 5], dataset.map, dataset.corner_idx);
-%     [dataset.map, dataset.corner_idx] = add_obstacle([105 195 90], [10, 10, 80], dataset.map, dataset.corner_idx);
-%     [dataset.map, dataset.corner_idx] = add_obstacle([235 195 90], [10, 10, 80], dataset.map, dataset.corner_idx);
-%     [dataset.map, dataset.corner_idx] = add_obstacle([105 245 90], [10, 10, 80], dataset.map, dataset.corner_idx);
-%     [dataset.map, dataset.corner_idx] = add_obstacle([235 245 90], [10, 10, 80], dataset.map, dataset.corner_idx);
+    dataset.maps = [];
+    dataset.corner_idxs = [];
 
-%     % Add sides of the cabinet
-%     [dataset.map, dataset.corner_idx] = add_obstacle([250 190 145], [60, 5, 190], dataset.map, dataset.corner_idx);   
-%     [dataset.map, dataset.corner_idx] = add_obstacle([250 90 145], [60, 5, 190], dataset.map, dataset.corner_idx);   
-%    
-%     % Add extra wall partition
-%     [dataset.map, dataset.corner_idx] = add_obstacle([200 190 145], [40, 5, 190], dataset.map, dataset.corner_idx);   
-%  
-    % Add the four shelves
-    [dataset.map, dataset.corner_idx] = add_obstacle([250 140 240], [60, 100, 5], dataset.map, dataset.corner_idx);
-    [dataset.map, dataset.corner_idx] = add_obstacle([250 140 190], [60, 100, 5], dataset.map, dataset.corner_idx);
-    [dataset.map, dataset.corner_idx] = add_obstacle([250 140 140], [60, 100, 5], dataset.map, dataset.corner_idx);
-    [dataset.map, dataset.corner_idx] = add_obstacle([250 140 90], [60, 100, 5], dataset.map, dataset.corner_idx);
+    
+    for i = 0 : num_steps
+        % map
+        map = zeros(dataset.rows, dataset.cols, dataset.z);
 
+        % obstacles
+        corner_idx = [];
+
+    %     % Add fixed block
+        [map, corner_idx] = add_obstacle([80 50 50], [20, 20, 20], map, corner_idx);            
+        
+    %     % Add Moving block
+        [map, corner_idx] = add_obstacle([11 11 11]+i*shift, [20, 20, 20], map, corner_idx);            
+        
+        dataset.maps{i+1} = map;
+        dataset.corner_idxs{i+1} = corner_idx;
+        dataset.fields{i+1} = signedDistanceField3D(map, dataset.cell_size);
+
+        
+        % init sdf
+        sdf = SignedDistanceField(dataset.origin_point3, dataset.cell_size, size(dataset.fields{i+1}, 1), ...
+            size(dataset.fields{i+1}, 2), size(dataset.fields{i+1}, 3));
+        for z = 1:size(dataset.fields{i+1}, 3)
+            sdf.initFieldData(z-1, dataset.fields{i+1}(:,:,z)');
+        end
+        
+        dataset.sdfs{i+1} = sdf;
+        
+    end
+        
+    
 % small dataset for WAM
 elseif strcmp(dataset_str, 'MovingBox')
     % params

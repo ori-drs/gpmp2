@@ -212,7 +212,7 @@ for i=0:total_plot_step
     % plot config
     set3DPlotRange(dataset)
     grid on, view(-80, 12) %view(-5, 12)
-    pause(pause_time*3)
+    pause(pause_time)
 end
 hold off
 pause(pause_time)
@@ -234,7 +234,7 @@ for i=0:total_plot_step
     % plot config
     set3DPlotRange(dataset)
     grid on, view(-80, 12)
-    pause(pause_time*3)
+    pause(pause_time)
 end
 hold off
 
@@ -253,7 +253,7 @@ for i=0:total_plot_step
     % plot config
     set3DPlotRange(dataset)
     grid on, view(0, 90) %view(-5, 12)
-    pause(pause_time*3)
+    pause(pause_time)
 end
 hold off
 pause(pause_time)

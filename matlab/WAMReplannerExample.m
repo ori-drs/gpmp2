@@ -135,10 +135,11 @@ else
     plot_replan_result = replan_result;
 end
 
+pause(pause_time*2)
 % plot final values
 figure(4)
 title('Result Values')
-grid on, view(-83, 86)
+grid on, view(3) %view(-83, 86)
 hold on
 
 % plot world
