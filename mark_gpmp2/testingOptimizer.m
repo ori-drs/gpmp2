@@ -10,7 +10,8 @@ import gpmp2.*
 
 
 %% small dataset
-dataset = generate2Ddataset('OneObstacleDataset');
+% dataset = generate2DdatasetMark('OneObstacleDataset');
+dataset = generateMovingScene('Static');
 rows = dataset.rows;
 cols = dataset.cols;
 cell_size = dataset.cell_size;
@@ -127,20 +128,10 @@ for i = 0 : total_time_step
     end
 end
 
-% %% plot initial values
-% for i=0:total_time_step
-%     figure(3), hold on
-%     title('Initial Values')
-%     % plot world
-%     plotEvidenceMap2D(dataset.map, dataset.origin_x, dataset.origin_y, cell_size);
-%     % plot arm
-%     conf = init_values.atVector(symbol('x', i));
-%     plotPlanarArm(arm, conf, 'b', 2);
-%     pause(pause_time), hold off
-% end
-
-
 %% optimize!
+import gtsam.*
+import gpmp2.*
+
 use_trustregion_opt = false;
 
 if use_trustregion_opt
@@ -152,9 +143,6 @@ else
     parameters.setVerbosity('ERROR');
     optimizer = GaussNewtonOptimizer(graph, init_values, parameters);
 end
-
-optimizer.optimize();
-result = optimizer.values();
 
 fprintf('Initial Error = %d\n', graph.error(init_values))
 fprintf('Initial Collision Cost: %d\n', obs_graph.error(init_values))
@@ -169,15 +157,86 @@ fprintf('Collision Cost End: %d\n', obs_graph.error(result))
 
 
 %% plot final values
-for i=0:total_time_step
-    figure(4), hold on
-    title('Optimized Values')
-    % plot world
-    plotEvidenceMap2D(dataset.map, dataset.origin_x, dataset.origin_y, cell_size);
-    % plot arm
-    conf = result.atVector(symbol('x', i));
-    plotPlanarArm(arm.fk_model(), conf, 'b', 2);
-    pause(pause_time), hold off
+% for i=0:total_time_step
+%     figure(4), hold on
+%     title('Optimized Values')
+%     % plot world
+%     plotEvidenceMap2D(dataset.map, dataset.origin_x, dataset.origin_y, cell_size);
+%     % plot arm
+%     conf = result.atVector(symbol('x', i));
+%     plotPlanarArm(arm.fk_model(), conf, 'b', 2);
+%     pause(pause_time), hold off
+% end
+
+%% optimize!
+import gtsam.*
+import gpmp2.*
+
+parameters = GaussNewtonParams;
+parameters.setVerbosity('ERROR');
+optimizer = GaussNewtonOptimizer(graph, init_values, parameters);
+
+
+%% Iterative approach
+import gtsam.*
+import gpmp2.* 
+
+iters = 10;
+% num_steps = double(size(result)/2-1);
+% num_plot_cols = double(ceil(double(num_steps)/double(num_plot_rows)));
+num_plot_cols = 5;
+num_plot_rows = ceil(double(10)/num_plot_cols);
+
+figure(6);    
+for k=0:iters
+    optimizer.iterate();    
+    result = optimizer.values();
+    error = graph.error(result);
+    obs_error = obs_graph.error(result);
+
+    % Plotting a trajectory  
+    figure(6), hold on
+    subplot(num_plot_rows, num_plot_cols, k+1);
+    ax = gca; % current axes
+
+    title('Iteration:' + string(k+1) + ...
+        " Error:" + string(error))
+
+    for i=0:total_time_step
+        block_pos_x = [dataset.obs_pose(1); dataset.obs_pose(1)+dataset.obs_size(1); ...
+        dataset.obs_pose(1)+dataset.obs_size(1); dataset.obs_pose(1)];
+
+        block_pos_y = [dataset.obs_pose(2); dataset.obs_pose(2); ...
+            dataset.obs_pose(2)+dataset.obs_size(2); dataset.obs_pose(2)+dataset.obs_size(2)];
+
+        % Add Origin
+        block_pos_x = block_pos_x + dataset.origin_x/dataset.cell_size;
+        block_pos_y = block_pos_y + dataset.origin_y/dataset.cell_size;
+
+        c = [1];
+
+    %     clf(4)
+        patch(block_pos_x * dataset.cell_size, ...
+        block_pos_y * dataset.cell_size, ...
+        c,...
+        'FaceAlpha', i*0.9/total_time_step);
+        colormap(gray(100));
+        hold on
+        conf = result.atVector(symbol('x', i));
+        customPlotPlanarArm(arm.fk_model(), wrapToPi(conf), 'b', 2); 
+        xlabel('X/m');
+        ylabel('Y/m');
+        axis equal
+        axis([dataset.origin_x, dataset.cols*dataset.cell_size, ...
+        dataset.origin_y, dataset.rows*dataset.cell_size])
+        pause(0.5);
+    end
+    pause(pause_time)
+    
 end
+
+% For each obstacles
+
+
 
 

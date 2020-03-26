@@ -24,28 +24,34 @@ if strcmp(dataset_str, 'OneObstacleDataset')
     dataset.cell_size = 0.01;
     % map
     dataset.maps = [];
-    x_pos_limits = [160, 50];
+%     x_pos_limits = [50, 160];
+%     y_pos_limits = [190, 150];
+    x_pos_limits = [50, 250];
     y_pos_limits = [190, 150];
-        
+    obs_size = [60, 80];
+    
     for i = 0 : num_steps
         x = x_pos_limits(1) + i * (x_pos_limits(2)-x_pos_limits(1))/num_steps;
         y = y_pos_limits(1) + i * (y_pos_limits(2)-y_pos_limits(1))/num_steps;
         
         maps{i+1} = zeros(dataset.rows, dataset.cols);
         % obstacles
-        maps{i+1} = add_obstacle([y,x], [60, 80], maps{i+1});
+        maps{i+1} = add_obstacle([y,x], flip(obs_size), maps{i+1});
         % signed distance field
         origin_point2 = gtsam.Point2(dataset.origin_x, dataset.origin_y);
 
         field{i+1} = gpmp2.signedDistanceField2D(maps{i+1}, dataset.cell_size);
         sdf{i+1} = gpmp2.PlanarSDF(origin_point2, dataset.cell_size, field{i+1});
-
+        obs_sizes{i+1} = obs_size;
+        obs_poses{i+1} = [x,y];
     end
 
     dataset.maps = maps;
     dataset.fields = field;
     dataset.sdfs = sdf;
-    
+    dataset.obs_sizes = obs_sizes;
+    dataset.obs_poses = obs_poses;
+
 % no such dataset
 else
     error('No such dataset exist');

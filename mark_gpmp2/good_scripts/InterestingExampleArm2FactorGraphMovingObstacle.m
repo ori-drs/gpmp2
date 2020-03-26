@@ -23,7 +23,7 @@ title('Signed Distance Field')
 %% settings
 total_time_sec = 5.0;
 total_time_step = 10;
-total_check_step = 50;
+total_check_step = 100;
 delta_t = total_time_sec / total_time_step;
 check_inter = total_check_step / total_time_step - 1;
 
@@ -150,7 +150,6 @@ optimizer.optimize();
 result = optimizer.values();
 % result.print('Final results')
 
-
 %% plot final values
 for i=0:total_time_step
     figure(4), hold on
@@ -160,7 +159,5 @@ for i=0:total_time_step
     % plot arm
     conf = result.atVector(symbol('x', i));
     plotPlanarArm(arm.fk_model(), conf, 'b', 2);
-    pause(pause_time), hold off
+    pause(pause_time*2), hold off
 end
-
-

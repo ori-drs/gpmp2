@@ -42,8 +42,8 @@ for i = 1:num_steps
 %     tic
     % Propogate the moving object    
     figure(3);
-%     subplot(1,3,1);
-%     h = plotCustomSignedDistanceField3D(dataset.fields{i}, dataset.origin, dataset.cell_size);
+    subplot(1,3,1);
+    h = plotCustomSignedDistanceField3D(dataset.fields{i}, dataset.origin, dataset.cell_size);
     
     % Get SDF of the object 
 
@@ -53,8 +53,8 @@ for i = 1:num_steps
         figure(3);
         subplot(1,3,2);
         inds_ignore = D_change>0.99*min(min(min(D_change)));
-%         h = plotCustomSignedDistanceField3D(D_change, dataset.origin, dataset.cell_size);
-%         title('SDF rate of change');
+        h = plotCustomSignedDistanceField3D(D_change, dataset.origin, dataset.cell_size);
+        title('SDF rate of change');
 
         % Calculate the time for coillision for each voxel     
         time_to_collision = -dataset.fields{i}./D_change;
@@ -72,7 +72,7 @@ for i = 1:num_steps
 %     toc 
     %0.2s per time step with figures on
     % Between 0.202811 and 0.127176 seconds without figures
-    pause(4)
+    pause(2)
 end
 
 % % Extract collision time for each support state
