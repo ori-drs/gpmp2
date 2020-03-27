@@ -59,7 +59,7 @@ end_vel = [0, 0]';
 avg_vel = (end_conf / total_time_step) / delta_t;
 
 %% Plot the start of the problem
-dataset = generateMovingScene(t_start_moving, v_or_t_end, v_or_t_end_value, 0);
+dataset = generateMovingScene('OneObstacleDataset', t_start_moving, v_or_t_end, v_or_t_end_value, 0);
 
 rows = dataset.rows;
 cols = dataset.cols;
@@ -96,7 +96,7 @@ for i = 0 : total_time_step
     key_pos = symbol('x', i);
     key_vel = symbol('v', i);
     
-    datasets{i+1} = generateMovingScene(t_start_moving, v_or_t_end, v_or_t_end_value, query_t);
+    datasets{i+1} = generateMovingScene('OneObstacleDataset', t_start_moving, v_or_t_end, v_or_t_end_value, query_t);
     % initialize as straight line in conf space
     pose = start_conf * (total_time_step-i)/total_time_step + end_conf * i/total_time_step;
     vel = avg_vel;
