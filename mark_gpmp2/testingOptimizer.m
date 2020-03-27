@@ -18,19 +18,20 @@ cell_size = dataset.cell_size;
 origin_point2 = Point2(dataset.origin_x, dataset.origin_y);
 
 % signed distance field
-field = signedDistanceField2D(dataset.map, cell_size);
-sdf = PlanarSDF(origin_point2, cell_size, field);
+% field = signedDistanceField2D(dataset.map, cell_size);
+% sdf = PlanarSDF(origin_point2, cell_size, field);
 
 % plot sdf
-figure(2)
-plotSignedDistanceField2D(field, dataset.origin_x, dataset.origin_y, dataset.cell_size);
-title('Signed Distance Field')
-
+figure(1)
+plotSignedDistanceField2D(flip(dataset.field), dataset.origin_x, dataset.origin_y, dataset.cell_size);
+title('Signed Distance Field');
+hold off;
+pause(0.1);
 
 %% settings
 total_time_sec = 5.0;
-total_time_step = 10;
-total_check_step = 50;
+total_time_step = 25;
+total_check_step = 125;
 delta_t = total_time_sec / total_time_step;
 check_inter = total_check_step / total_time_step - 1;
 
@@ -39,23 +40,30 @@ use_GP_inter = true;
 
 % arm model
 arm = generateArm('SimpleTwoLinksArm');
+arm_model = arm.fk_model();
 
 % GP
 Qc = eye(2);
 Qc_model = noiseModel.Gaussian.Covariance(Qc); 
 
 % Obstacle avoid settings
-cost_sigma = 0.1;
+cost_sigma = 0.01;
 epsilon_dist = 0.1;
 
 % prior to start/goal
 pose_fix = noiseModel.Isotropic.Sigma(2, 0.0001);
 vel_fix = noiseModel.Isotropic.Sigma(2, 0.0001);
 
+% joint velocity limit param
+flag_joint_vel_limit = true;
+joint_vel_limit_vec = [1, 1]';
+joint_vel_limit_thresh = 0.01 * ones(2,1);
+joint_vel_limit_model = noiseModel.Isotropic.Sigma(2, 0.1);
+
 % start and end conf
 start_conf = [0, 0]';
 start_vel = [0, 0]';
-end_conf = [pi/2, 0]';
+end_conf = [-3*pi/2, 0]';
 end_vel = [0, 0]';
 avg_vel = (end_conf / total_time_step) / delta_t;
 
@@ -63,12 +71,13 @@ avg_vel = (end_conf / total_time_step) / delta_t;
 pause_time = total_time_sec / total_time_step;
 
 % plot start / end configuration
-figure(1), hold on
-plotEvidenceMap2D(dataset.map, dataset.origin_x, dataset.origin_y, cell_size);
+figure(2), hold on
+plotEvidenceMap2D(flip(dataset.map), dataset.origin_x, dataset.origin_y, cell_size);
 title('Layout')
 plotPlanarArm(arm.fk_model(), start_conf, 'b', 2);
 plotPlanarArm(arm.fk_model(), end_conf, 'r', 2);
-hold off
+hold off;
+pause(0.1);
 
 
 %% init optimization
@@ -86,6 +95,12 @@ for i = 0 : total_time_step
     vel = avg_vel;
     init_values.insert(key_pos, pose);
     init_values.insert(key_vel, vel);
+    
+    % joint velocity limit factor on every velocity
+    if flag_joint_vel_limit
+        graph.add(VelocityLimitFactorVector(key_vel, joint_vel_limit_model, ...
+            joint_vel_limit_vec, joint_vel_limit_thresh));
+    end    
     
     % start/end priors
     if i==0
@@ -107,9 +122,9 @@ for i = 0 : total_time_step
         
         % cost factor
         graph.add(ObstaclePlanarSDFFactorArm(...
-            key_pos, arm, sdf, cost_sigma, epsilon_dist));
+            key_pos, arm, dataset.sdf, cost_sigma, epsilon_dist));
         obs_graph.add(ObstaclePlanarSDFFactorArm(...
-            key_pos, arm, sdf, cost_sigma, epsilon_dist));
+            key_pos, arm, dataset.sdf, cost_sigma, epsilon_dist));
         
         % GP cost factor
         if use_GP_inter & check_inter > 0
@@ -117,11 +132,11 @@ for i = 0 : total_time_step
                 tau = j * (total_time_sec / total_check_step);
                 graph.add(ObstaclePlanarSDFFactorGPArm( ...
                     key_pos1, key_vel1, key_pos2, key_vel2, ...
-                    arm, sdf, cost_sigma, epsilon_dist, ...
+                    arm, dataset.sdf, cost_sigma, epsilon_dist, ...
                     Qc_model, delta_t, tau));
                 obs_graph.add(ObstaclePlanarSDFFactorGPArm( ...
                     key_pos1, key_vel1, key_pos2, key_vel2, ...
-                    arm, sdf, cost_sigma, epsilon_dist, ...
+                    arm, dataset.sdf, cost_sigma, epsilon_dist, ...
                     Qc_model, delta_t, tau));
             end
         end
@@ -181,59 +196,91 @@ optimizer = GaussNewtonOptimizer(graph, init_values, parameters);
 import gtsam.*
 import gpmp2.* 
 
-iters = 10;
+iters = 50;
 % num_steps = double(size(result)/2-1);
 % num_plot_cols = double(ceil(double(num_steps)/double(num_plot_rows)));
+plot_step_size = 5;
+plots = (iters/plot_step_size);
 num_plot_cols = 5;
-num_plot_rows = ceil(double(10)/num_plot_cols);
+num_plot_rows = ceil(double(plots)/num_plot_cols);
 
-figure(6);    
-for k=0:iters
-    optimizer.iterate();    
+format bank;
+plot_counter = 0;
+for k=0:iters-1
     result = optimizer.values();
     error = graph.error(result);
     obs_error = obs_graph.error(result);
 
-    % Plotting a trajectory  
-    figure(6), hold on
-    subplot(num_plot_rows, num_plot_cols, k+1);
-    ax = gca; % current axes
+    if mod(k, plot_step_size) == 0
+        plot_counter = plot_counter +1;
+        % Plotting a trajectory  
+        figure(3), hold on;
+        cmap = colormap(parula(total_time_step+1));
+        h1 = subplot(num_plot_rows, num_plot_cols, plot_counter);
+%         ax1 = gca; % current axes
 
-    title('Iteration:' + string(k+1) + ...
-        " Error:" + string(error))
+        title('Iteration:' + string(k) + ...
+            " Error:" + num2str(error,'% 10.2f'))
 
-    for i=0:total_time_step
-        block_pos_x = [dataset.obs_pose(1); dataset.obs_pose(1)+dataset.obs_size(1); ...
-        dataset.obs_pose(1)+dataset.obs_size(1); dataset.obs_pose(1)];
+        for i=0:total_time_step
 
-        block_pos_y = [dataset.obs_pose(2); dataset.obs_pose(2); ...
-            dataset.obs_pose(2)+dataset.obs_size(2); dataset.obs_pose(2)+dataset.obs_size(2)];
+            conf = result.atVector(symbol('x', i));
+            position = arm_model.forwardKinematicsPosition(wrapToPi(conf));
 
-        % Add Origin
-        block_pos_x = block_pos_x + dataset.origin_x/dataset.cell_size;
-        block_pos_y = block_pos_y + dataset.origin_y/dataset.cell_size;
+            block_pos_x = [dataset.obs_pose(1)-dataset.obs_size(1)/2; ...
+                            dataset.obs_pose(1)+dataset.obs_size(1)/2; ...
+                            dataset.obs_pose(1)+dataset.obs_size(1)/2; ...
+                            dataset.obs_pose(1)-dataset.obs_size(1)/2];
 
-        c = [1];
+            block_pos_y = [dataset.obs_pose(2)-dataset.obs_size(2)/2; ...
+                            dataset.obs_pose(2)-dataset.obs_size(2)/2; ...
+                            dataset.obs_pose(2)+dataset.obs_size(2)/2; ...
+                            dataset.obs_pose(2)+dataset.obs_size(2)/2];
 
-    %     clf(4)
-        patch(block_pos_x * dataset.cell_size, ...
-        block_pos_y * dataset.cell_size, ...
-        c,...
-        'FaceAlpha', i*0.9/total_time_step);
-        colormap(gray(100));
-        hold on
-        conf = result.atVector(symbol('x', i));
-        customPlotPlanarArm(arm.fk_model(), wrapToPi(conf), 'b', 2); 
-        xlabel('X/m');
-        ylabel('Y/m');
-        axis equal
-        axis([dataset.origin_x, dataset.cols*dataset.cell_size, ...
-        dataset.origin_y, dataset.rows*dataset.cell_size])
+            % Add Origin
+%             block_pos_x = block_pos_x + dataset.origin_x/dataset.cell_size;
+%             block_pos_y = block_pos_y + dataset.origin_y/dataset.cell_size;
+
+%             c = [1];
+            c = [0.25, 0.25, 0.25]; % grey
+
+        %     clf(4)
+            patch(h1, block_pos_x , block_pos_y, ...
+            c,...
+            'FaceAlpha', 1);
+%             colormap(gray(100));
+            hold on;
+            scatterPlotPlanarArm(position, cmap(i+1,:), 0, (i+1)*0.9/total_time_step, h1); 
+    %         customPlotPlanarArm(arm.fk_model(), wrapToPi(conf), 'b', 2); 
+            xlabel('X/m');
+            ylabel('Y/m');
+            axis equal
+            axis([dataset.origin_x, dataset.cols*dataset.cell_size, ...
+            dataset.origin_y, dataset.rows*dataset.cell_size])
+            pause(0.05);
+        end
+        hold off
+
+        pause(0.5)
+       
+        figure(4);
+        hold on;
+        h2 = subplot(num_plot_rows, num_plot_cols, plot_counter);
+%         ax2 = gca; % current axes
+        plotStateEvolution(result, delta_t, total_time_sec, total_time_step, h2)
+        title('Iteration:' + string(k+1))
+        hold off
+
         pause(0.5);
+        
+        
     end
-    pause(pause_time)
-    
+    optimizer.iterate();    
+
 end
+
+
+
 
 % For each obstacles
 
