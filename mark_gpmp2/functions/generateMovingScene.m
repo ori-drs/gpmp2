@@ -56,7 +56,7 @@ function dataset = generateMovingScene(scenario, t_start_moving, v_or_t_end, v_o
         dataset.obs_pose = [x,y];
 
     elseif strcmp(scenario, 'Static')
-        block_starting_pos = [0.60, 0.40];
+        block_starting_pos = [0.60, 0.45];
         block_size = [0.60, 0.80];
         
         x = block_starting_pos(1);
@@ -77,14 +77,14 @@ function dataset = generateMovingScene(scenario, t_start_moving, v_or_t_end, v_o
                                 x - dataset.origin_x]/dataset.cell_size) ...
                             + [dataset.rows,0];    
         dataset.map = add_obstacle(obs_pos_to_add, flip(round(block_size/dataset.cell_size)), dataset.map);
-
+                
         % signed distance field
         dataset.origin_point2 = gtsam.Point2(dataset.origin_x, dataset.origin_y);
 
         dataset.field  = gpmp2.signedDistanceField2D(dataset.map, dataset.cell_size);
         dataset.sdf = gpmp2.PlanarSDF(dataset.origin_point2, dataset.cell_size, dataset.field);
         dataset.obs_size = block_size;
-        dataset.obs_pose = [x,y];
+        dataset.obs_pose = block_starting_pos;
     else
         disp("No such scenarios");
     end
