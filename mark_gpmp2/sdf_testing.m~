@@ -84,9 +84,8 @@ for i = 1:env_size
 %         figure(1);
         D_change = D - last_D;
         inds_ignore = D_change>0.99*min(min(D_change));
-%         % Make prediction for next SDF
-%         D_prediction 
-%         if i>2
+        D_prediction 
+        if i>2
             
         end
         % Plot rate of change

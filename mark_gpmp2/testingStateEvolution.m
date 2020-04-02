@@ -17,10 +17,6 @@ cols = dataset.cols;
 cell_size = dataset.cell_size;
 origin_point2 = Point2(dataset.origin_x, dataset.origin_y);
 
-% signed distance field
-% field = signedDistanceField2D(dataset.map, cell_size);
-% sdf = PlanarSDF(origin_point2, cell_size, field);
-
 % plot sdf
 figure(1)
 plotSignedDistanceField2D(flip(dataset.field), dataset.origin_x, dataset.origin_y, dataset.cell_size);
@@ -151,46 +147,6 @@ end
 import gtsam.*
 import gpmp2.*
 
-use_trustregion_opt = false;
-
-if use_trustregion_opt
-    parameters = DoglegParams;
-    parameters.setVerbosity('ERROR');
-    optimizer = DoglegOptimizer(graph, init_values, parameters);
-else
-    parameters = GaussNewtonParams;
-    parameters.setVerbosity('ERROR');
-    optimizer = GaussNewtonOptimizer(graph, init_values, parameters);
-end
-
-fprintf('Initial Error = %d\n', graph.error(init_values))
-fprintf('Initial Collision Cost: %d\n', obs_graph.error(init_values))
-
-optimizer.optimize();
-
-result = optimizer.values();
-% result.print('Final results')
-
-fprintf('Error = %d\n', graph.error(result))
-fprintf('Collision Cost End: %d\n', obs_graph.error(result))
-
-
-%% plot final values
-% for i=0:total_time_step
-%     figure(4), hold on
-%     title('Optimized Values')
-%     % plot world
-%     plotEvidenceMap2D(dataset.map, dataset.origin_x, dataset.origin_y, cell_size);
-%     % plot arm
-%     conf = result.atVector(symbol('x', i));
-%     plotPlanarArm(arm.fk_model(), conf, 'b', 2);
-%     pause(pause_time), hold off
-% end
-
-%% optimize!
-import gtsam.*
-import gpmp2.*
-
 parameters = GaussNewtonParams;
 parameters.setVerbosity('ERROR');
 optimizer = GaussNewtonOptimizer(graph, init_values, parameters);
@@ -202,7 +158,7 @@ import gpmp2.*
 
 plot_bool = false;
 iters = 50;
-num_steps = double(size(result)/2-1);
+num_steps = total_time_step;
 % num_plot_cols = double(ceil(double(num_steps)/double(num_plot_rows)));
 plot_step_size = 5;
 plots = (iters/plot_step_size);
@@ -212,19 +168,25 @@ num_plot_rows = ceil(double(plots)/num_plot_cols);
 format bank;
 plot_counter = 0;
 results = {};
+errors = [];
+obs_errors = [];
+
+
 for k=0:iters-1
     result = optimizer.values();
     results{k+1} = result;
     error = graph.error(result);
+    errors = errors + [error];
     obs_error = obs_graph.error(result);
+    obs_errors = obs_errors + [obs_error];
 
     if mod(k, plot_step_size) == 0 & plot_bool
         plot_counter = plot_counter +1;
+        
         % Plotting a trajectory  
         figure(3), hold on;
         cmap = colormap(parula(total_time_step+1));
         h1 = subplot(num_plot_rows, num_plot_cols, plot_counter);
-%         ax1 = gca; % current axes
 
         title('Iteration:' + string(k) + ...
             " Error:" + num2str(error,'% 10.2f'))
@@ -244,21 +206,13 @@ for k=0:iters-1
                             dataset.obs_pose(2)+dataset.obs_size(2)/2; ...
                             dataset.obs_pose(2)+dataset.obs_size(2)/2];
 
-            % Add Origin
-%             block_pos_x = block_pos_x + dataset.origin_x/dataset.cell_size;
-%             block_pos_y = block_pos_y + dataset.origin_y/dataset.cell_size;
-
-%             c = [1];
             c = [0.25, 0.25, 0.25]; % grey
 
-        %     clf(4)
             patch(h1, block_pos_x , block_pos_y, ...
             c,...
             'FaceAlpha', 1);
-%             colormap(gray(100));
             hold on;
             scatterPlotPlanarArm(position, cmap(i+1,:), 0, (i+1)*0.9/total_time_step, h1); 
-    %         customPlotPlanarArm(arm.fk_model(), wrapToPi(conf), 'b', 2); 
             xlabel('X/m');
             ylabel('Y/m');
             axis equal
@@ -273,7 +227,6 @@ for k=0:iters-1
         figure(4);
         hold on;
         h2 = subplot(num_plot_rows, num_plot_cols, plot_counter);
-%         ax2 = gca; % current axes
         plotStateEvolution(result, delta_t, total_time_sec, total_time_step, h2)
         title('Iteration:' + string(k+1))
         hold off
@@ -285,3 +238,59 @@ for k=0:iters-1
     optimizer.iterate();    
 
 end
+
+%% Animation
+
+f = figure(1);
+ax = gca;
+time_steps = 0:delta_t:total_time_sec;
+set_up_slider(results, time_steps, total_time_step, iters, ax)
+function set_up_slider(results, time_steps, total_time_step, iters, f)
+
+    % initial plot
+    conf_x_series = [];
+    conf_v_series = [];
+
+    for i=0:total_time_step
+        x_conf = results{1}.atVector(gtsam.symbol('x', i));
+        conf_x_series = horzcat(conf_x_series, x_conf);
+        v_conf = results{1}.atVector(gtsam.symbol('v', i));
+        conf_v_series = horzcat(conf_v_series, v_conf);
+    end
+    
+    x_handles = plot(f, time_steps, conf_x_series);
+    hold on;
+    v_handles = plot(f, time_steps, conf_v_series);
+    legend('x1','x2','v1','v2')
+    xlabel('Time (s)');
+    ylabel('State value');
+    xlim([0,5]);
+    ylim([-8,14]);
+    uicontrol('Style', 'slider', 'Min', 1, 'Max', iters, ...
+           'Value', 1, 'SliderStep',[0.02 , 0.02], 'Position', [400 20 120 20], ...
+           'Callback', @react_to_slider);
+
+  function react_to_slider(source, event)   %nested !!
+      val = round(get(source, 'Value'));
+      disp(val);
+      set(source, 'Value', val);
+      
+      conf_x_series = [];
+      conf_v_series = [];
+
+      for i=0:total_time_step
+          x_conf = results{val}.atVector(gtsam.symbol('x', i));
+          conf_x_series = horzcat(conf_x_series, x_conf);
+          v_conf = results{val}.atVector(gtsam.symbol('v', i));
+          conf_v_series = horzcat(conf_v_series, v_conf);
+      end
+    
+      set(x_handles(1), 'YData', conf_x_series(1,:));
+      set(x_handles(2), 'YData', conf_x_series(2,:));
+      set(v_handles(1), 'YData', conf_v_series(1,:));
+      set(v_handles(2), 'YData', conf_v_series(2,:));
+
+  end
+end
+  
+

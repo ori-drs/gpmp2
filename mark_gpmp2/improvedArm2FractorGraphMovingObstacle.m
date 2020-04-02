@@ -13,6 +13,7 @@ t_start_moving = 0;
 v_or_t_end = true;
 v_or_t_end_value = [0,0];
 % v_or_t_end_value = [1,-1];
+env = movingEnvironment(0,true,[0,0]);
 
 %% settings 
 total_time_sec = 4.0;
