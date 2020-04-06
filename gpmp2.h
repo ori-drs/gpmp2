@@ -440,6 +440,7 @@ class PlanarSDF {
   // access
   double getSignedDistance(const gtsam::Point2& point) const;
   void print(string s) const;
+  void changeData(const Matrix& new_data);
 };
 
 
@@ -472,6 +473,7 @@ virtual class ObstaclePlanarSDFFactorArm : gtsam::NoiseModelFactor {
       size_t posekey, const gpmp2::ArmModel& arm,
       const gpmp2::PlanarSDF& sdf, double cost_sigma, double epsilon);
   Vector evaluateError(Vector pose) const;
+  void changeSDFData(const Matrix& field); 
 };
 
 
@@ -484,6 +486,7 @@ virtual class ObstaclePlanarSDFFactorGPArm : gtsam::NoiseModelFactor {
       const gpmp2::ArmModel& arm, const gpmp2::PlanarSDF& sdf,
       double cost_sigma, double epsilon, const gtsam::noiseModel::Base* Qc_model,
       double delta_t, double tau);
+  void changeSDFData(const Matrix& field); 
 };
 
 

@@ -84,6 +84,12 @@ public:
 
   virtual ~ObstaclePlanarSDFFactorGP() {}
 
+  /// to change the SDF dynamically
+  void changeSDFData(const gtsam::Matrix& new_data) {
+    // PlanarSDF *sdf_ptr = sdf_;
+    // sdf_ptr->changeData(new_data);
+    const_cast<PlanarSDF&>(sdf_).changeData(new_data);
+  }
 
   /// error function
   /// numerical jacobians / analytic jacobians from cost function
