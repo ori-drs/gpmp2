@@ -88,7 +88,7 @@ for i = 1:env_size
 %         D_prediction 
 %         if i>2
             
-        end
+%         end
         % Plot rate of change
         subplot(2,3,4);
         h = imagesc(D_change);

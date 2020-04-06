@@ -23,7 +23,7 @@ origin_point2 = Point2(dataset.origin_x, dataset.origin_y);
 
 % plot sdf
 figure(1)
-plotSignedDistanceField2D(flip(dataset.field), dataset.origin_x, dataset.origin_y, dataset.cell_size);
+plotSignedDistanceField2D(dataset.field, dataset.origin_x, dataset.origin_y, dataset.cell_size);
 title('Signed Distance Field');
 hold off;
 pause(0.1);
@@ -188,27 +188,29 @@ result = optimizer.values();
 error = graph.error(result);
 obs_error = obs_graph.error(result);
 
-linear_err_acc = [];
-for i = 0 : total_time_step-1
-%     conf = result.atVector(gtsam.symbol('x', i));
-    fact = graph.at(2 + 6*i);
-    er = fact.evaluateError(result.atVector(gtsam.symbol('x', i)),...
-                    result.atVector(gtsam.symbol('v', i)), ...
-                    result.atVector(gtsam.symbol('x', i+1)), ...
-                    result.atVector(gtsam.symbol('v', i+1)));
-%     er = fact.error(result);
-    linear_err_acc = [linear_err_acc, er];
-%     err_acc = err_acc + sum(abs(er));
-%     disp(i)
-end
+collision_costs = getCollisionErrorVector(graph, obs_factor_inds, result);
+
+% linear_err_acc = [];
+% for i = 0 : total_time_step-1
+% %     conf = result.atVector(gtsam.symbol('x', i));
+%     fact = graph.at(2 + 6*i);
+%     er = fact.evaluateError(result.atVector(gtsam.symbol('x', i)),...
+%                     result.atVector(gtsam.symbol('v', i)), ...
+%                     result.atVector(gtsam.symbol('x', i+1)), ...
+%                     result.atVector(gtsam.symbol('v', i+1)));
+% %     er = fact.error(result);
+%     linear_err_acc = [linear_err_acc, er];
+% %     err_acc = err_acc + sum(abs(er));
+% %     disp(i)
+% end
 
 
-all_err_acc = [ ];
-for i = 0 : 153 % 179 with vel limit
-    fact = graph.at(i);
-    er = fact.error(result)
-    all_err_acc = [all_err_acc, er];
-end
+% all_err_acc = [ ];
+% for i = 0 : 153 % 179 with vel limit
+%     fact = graph.at(i);
+%     er = fact.error(result)
+%     all_err_acc = [all_err_acc, er];
+% end
 
 
 obs_err_acc = [ ];

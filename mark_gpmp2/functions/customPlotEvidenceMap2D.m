@@ -17,7 +17,7 @@ grid_corner_y = origin_y + (grid_rows-1)*cell_size;
 grid_X = origin_x : cell_size : grid_corner_x;
 grid_Y = origin_y : cell_size : grid_corner_y;
 
-h = image(grid_X, grid_Y, flip((1-prob_grid)*2+1));
+h = image(grid_X, grid_Y, (1-prob_grid)*2+1);
 
 set(gca,'YDir','normal')
 
