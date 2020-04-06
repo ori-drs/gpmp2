@@ -40,8 +40,6 @@ classdef movingEnvironment
             % params
             obj.dataset.cols = 300;
             obj.dataset.rows = 300;
-%             obj.dataset.origin_x = 0;
-%             obj.dataset.origin_y = 0;
             obj.dataset.origin_x = -1;
             obj.dataset.origin_y = -1;
             obj.dataset.cell_size = 0.01;
@@ -75,9 +73,7 @@ classdef movingEnvironment
                                                 + [0, obj.dataset.rows];
 
             obj.dataset.map = add_obstacle(obs_pos_to_add, round(obj.dataset.obs_size/obj.dataset.cell_size), obj.dataset.map);
-        
-            obj.dataset.map = flip(obj.dataset.map);
-            
+
             % signed distance field
             obj.dataset.field  = gpmp2.signedDistanceField2D(obj.dataset.map, obj.dataset.cell_size);
             obj.dataset.sdf = gpmp2.PlanarSDF(obj.dataset.origin_point2, obj.dataset.cell_size, obj.dataset.field);
