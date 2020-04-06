@@ -26,7 +26,7 @@ traj_inds = traj_mat > 0;
 
 
 %% Loop through timesteps
-predict_ahead_steps = 5;
+predict_ahead_steps = 1;
 for i = 1:env_size
 
     % Propogate the moving object    
@@ -73,15 +73,8 @@ for i = 1:env_size
         D_change = D - last_D;
         inds_ignore = D_change>0.99*min(min(D_change));
         
-        % Make prediction for next SDF
-        if i<=predict_ahead_steps+1
-            sdf_prediction{i-1} = D + D_change * predict_ahead_steps;
-        else
-            sdf_prediction = sdf_prediction(1,2:end);
-            sdf_prediction{predict_ahead_steps} = D + D_change * predict_ahead_steps;
-        end
-        
-        if i>predict_ahead_steps
+
+        if i>1+predict_ahead_steps
             subplot(2,3,3);
             h = imagesc(sdf_prediction{1});
             colormap(gca, parula(1000));
@@ -101,6 +94,14 @@ for i = 1:env_size
             set(gca, 'YDir','normal')
         end
    
+        % Make prediction for next SDF
+        if i<=predict_ahead_steps+1
+            sdf_prediction{i-1} = D + D_change * predict_ahead_steps;
+        else
+            sdf_prediction = sdf_prediction(1,2:end);
+            sdf_prediction{predict_ahead_steps} = D + D_change * predict_ahead_steps;
+        end
+        
 
     end
     last_D = D;
