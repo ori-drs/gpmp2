@@ -71,7 +71,7 @@ hold off
 
 
 %% init optimization
-graph = NonlinearFactorevaluateErrorGraph;
+graph = NonlinearFactorGraph;
 obs_graph = NonlinearFactorGraph;
 
 init_values = Values;
