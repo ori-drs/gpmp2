@@ -11,6 +11,7 @@ import gpmp2.*
 
 t_start_moving = 0;
 v_or_t_end = true;
+use_all_straight_initialisations = false;
 
 % v_or_t_end_value = [0.2,-0.2];
 % starting_pos = [-0.50, 1.90];
@@ -35,7 +36,6 @@ start_conf = [0, 0]';
 start_vel = [0, 0]';
 end_conf = [pi/2, 0]';
 end_vel = [0, 0]';
-avg_vel = (end_conf / total_time_step) / delta_t;
 
 % arm model
 arm = generateArm('SimpleTwoLinksArm');
@@ -76,13 +76,19 @@ pose_fix = noiseModel.Isotropic.Sigma(2, 0.0001);
 vel_fix = noiseModel.Isotropic.Sigma(2, 0.0001);
 
 % Set up the factor graph
-[graph, obs_graph, init_values , obs_factor_inds] = createFactorGraph(dataset, start_conf,end_conf,start_vel, end_vel, avg_vel,...
+[graph, obs_graph , obs_factor_inds] = createFactorGraph(dataset, start_conf,end_conf,start_vel, end_vel,...
                                     total_time_sec, total_check_step, total_time_step, delta_t, Qc_model, check_inter, ...
                                     arm, cost_sigma, epsilon_dist, use_GP_inter, ...
                                     joint_vel_limit_model, joint_vel_limit_vec, joint_vel_limit_thresh,flag_joint_vel_limit,...
                                     pose_fix, vel_fix);
+
                                 
-                                                                
+if use_all_straight_initialisations                                
+    init_values = getAllStraightLineInitialisations(start_conf, end_conf, total_time_step, delta_t);
+else
+    init_values = getStraightLineInitialisation(start_conf, end_conf, total_time_step, delta_t);
+end
+
 % Initialise the optimizer
 
 parameters = GaussNewtonParams;
