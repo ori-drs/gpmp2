@@ -90,17 +90,18 @@ hPlot = axes(hViewPanel);
 delta_t = 1;
 for i = 0:delta_t:2 
     dataset = env.queryEnv(i);
-    subplot(1,2,1);
-    ax = gca;
-    imshow(1-dataset.map)
+%     subplot(1,2,1);
+%     ax = gca;
+    imshow(1-dataset.map);
+    hold on;
     centroid = regionprops(dataset.map).Centroid;
-    hold on
     scatter(centroid(1), centroid(2), 'r');
     if i>0
         px_velocity = centroid-last_centroid/delta_t;
-        subplot(1,2,2);
-        imshow(imtranslate(1-dataset.map, delta_t*px_velocity,'FillValues',255))
-    end
+%         subplot(1,2,2);
+        hold on
+        I = imshow(imtranslate(1-dataset.map, delta_t*px_velocity,'FillValues',255));    end
+    hold off
     last_centroid = centroid;
     pause(1)
 end

@@ -125,13 +125,13 @@ end
 % Extract collision time for each support state
 traj_collision_mat = zeros(env_size,env_size);
 traj_collision_mat(traj_inds) = full_time_to_collision(traj_inds);
-
-figure(3);
-set(gcf, 'Position',  [1950, 200, 500, 500])
-h = imagesc(traj_collision_mat);
-colormap(gca, flipud(bone(1000)));
-title('Time to collision');
-xlabel('X/m');
-ylabel('Y/m');
-set(gca, 'YDir','normal')
+% 
+% figure(3);
+% set(gcf, 'Position',  [1950, 200, 500, 500])
+% h = imagesc(traj_collision_mat);
+% colormap(gca, flipud(bone(1000)));
+% title('Time to collision');
+% xlabel('X/m');
+% ylabel('Y/m');
+% set(gca, 'YDir','normal')
 

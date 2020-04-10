@@ -126,7 +126,7 @@ arm_model = arm.fk_model();
 key_pos = gtsam.symbol('x', 0);
 key_vel = gtsam.symbol('v', 0);
 
-test_env = movingEnvironment(0,v_or_t_end,[0, 0],[0, -0.5], obs_size);
+test_env = movingEnvironment(0,v_or_t_end,[0, 0],[-0.5, 0], obs_size);
 test_dataset = test_env.queryEnv(0);
 
 right_conf = [0, 0]';
@@ -172,23 +172,33 @@ end
 
         
 % plot start / end configuration
-figure(10);
+figure(1);
 hold on;
 
 for i = 1:size(arm_positions,2)
 %     for i = 4
     subplot(2,2,i);
     hold on;
-    customPlotEvidenceMap2D(test_dataset.map, test_dataset.origin_x, ...
-        test_dataset.origin_y, test_dataset.cell_size);
+%     customPlotEvidenceMap2D(test_dataset.map, test_dataset.origin_x, ...
+%         test_dataset.origin_y, test_dataset.cell_size);
     
+    [block_pos_x,block_pos_y] = getBlockPos(test_dataset.obs_pose,...
+                                            test_dataset.obs_size);
+    plotBlockAndConf(block_pos_x,block_pos_y, ...
+            1, ...
+            [0.5,  0.5, 0.5], ...
+            arm_positions(:, i), arm , ...
+            [test_dataset.origin_x,test_dataset.origin_y], ...
+            test_dataset.cell_size);
+        
+    hold on;    
     % Calculate the error
     obs_factor = gpmp2.ObstaclePlanarSDFFactorArm(key_pos, arm, ...
                         test_dataset.sdf, cost_sigma, epsilon_dist);
     error = obs_factor.error(arm_values(i));
-    obs_factor.evaluateError([0;0])
+%     obs_factor.evaluateError([0;0])
 
-    plotPlanarArm(arm.fk_model(), arm_positions(:, i), 'b', 2);
+%     plotPlanarArm(arm.fk_model(), arm_positions(:, i), 'b', 2);
     title("Error: " + num2str(error) + "eval Err: " + ...
         num2str(sum(obs_factor.evaluateError(arm_positions(:, i)))));
 end
