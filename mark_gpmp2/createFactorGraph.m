@@ -1,4 +1,4 @@
-function [graph,obs_graph, init_values, obs_factor_inds_and_time] = createFactorGraph(dataset, start_conf,end_conf, start_vel, end_vel, avg_vel,...
+function [graph,obs_graph, obs_factor_inds_and_time] = createFactorGraph(dataset, start_conf,end_conf, start_vel, end_vel,...
                                     total_time_sec, total_check_step,total_time_step, delta_t, Qc_model, check_inter, ...
                                     arm, cost_sigma, epsilon_dist, use_GP_inter, ...
                                     joint_vel_limit_model, joint_vel_limit_vec, joint_vel_limit_thresh,flag_joint_vel_limit,...
@@ -9,18 +9,18 @@ function [graph,obs_graph, init_values, obs_factor_inds_and_time] = createFactor
     graph = gtsam.NonlinearFactorGraph;
     obs_graph = gtsam.NonlinearFactorGraph;
 
-    init_values = gtsam.Values;
+%     init_values = gtsam.Values;
     obs_factor_inds_and_time = [];
     factor_ind = 0;
     for i = 0 : total_time_step
         key_pos = gtsam.symbol('x', i);
         key_vel = gtsam.symbol('v', i);
-
-        % initialize as straight line in conf space
-        pose = start_conf * (total_time_step-i)/total_time_step + end_conf * i/total_time_step;
-        vel = avg_vel;
-        init_values.insert(key_pos, pose);
-        init_values.insert(key_vel, vel);
+% 
+%         % initialize as straight line in conf space
+%         pose = start_conf * (total_time_step-i)/total_time_step + end_conf * i/total_time_step;
+%         vel = avg_vel;
+%         init_values.insert(key_pos, pose);
+%         init_values.insert(key_vel, vel);
 
         % joint velocity limit factor on every velocity
         if flag_joint_vel_limit
