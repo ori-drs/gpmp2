@@ -78,6 +78,12 @@ public:
   gtsam::Vector evaluateError(const Pose& conf,
       boost::optional<gtsam::Matrix&> H1 = boost::none) const ;
 
+  /// to change the SDF dynamically
+  void changeSDFData(const gtsam::Matrix& new_data) {
+    // PlanarSDF *sdf_ptr = sdf_;
+    // sdf_ptr->changeData(new_data);
+    const_cast<PlanarSDF&>(sdf_).changeData(new_data);
+  }
 
   /// @return a deep copy of this factor
   virtual gtsam::NonlinearFactor::shared_ptr clone() const {

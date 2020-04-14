@@ -32,8 +32,9 @@ inline Vector convertSDFtoErr(const Vector& sdf, double eps) {
 
 /* ************************************************************************** */
 // signed distance field data
-Matrix field, map_ground_truth;
+Matrix field, field2, map_ground_truth;
 PlanarSDF sdf;
+PlanarSDF sdf2;
 
 TEST(ObstaclePlanarSDFFactorArm, data) {
 
@@ -54,10 +55,21 @@ TEST(ObstaclePlanarSDFFactorArm, data) {
       2.2361,    1.4142,    1.0000,    1.0000,    1.0000,    1.4142,    2.2361,
       2.8284,    2.2361,    2.0000,    2.0000,    2.0000,    2.2361,    2.8284).finished();
 
+  field2 = (Matrix(7, 7) <<
+      1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+      1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+      1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+      1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+      1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+      1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+      1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000).finished();
+
+
   Point2 origin(0, 0);
   double cell_size = 1.0;
 
   sdf = PlanarSDF(origin, cell_size, field);
+  sdf2 = PlanarSDF(origin, cell_size, field2);
 }
 
 /* ************************************************************************** */
@@ -79,6 +91,7 @@ TEST_UNSAFE(ObstaclePlanarSDFFactorArm, error) {
 
   double obs_eps = 1.0;
   ObstaclePlanarSDFFactorArm factor(0, arm, sdf, 1.0, obs_eps);
+  ObstaclePlanarSDFFactorArm factor2(0, arm, sdf2, 1.0, obs_eps);
 
   // just check cost of two link joint
   Vector2 q;
@@ -105,7 +118,30 @@ TEST_UNSAFE(ObstaclePlanarSDFFactorArm, error) {
       boost::bind(&errorWrapper, factor, _1)), q, 1e-6);
   EXPECT(assert_equal(err_exp, err_act, 1e-6));
   EXPECT(assert_equal(H1_exp, H1_act, 1e-6));
+
+  // changing sdf data origin zero case
+  Matrix H1_1, H1_2;
+  Vector err_1, err_2;
+
+  q = Vector2(0, 0);
+  factor.changeSDFData(field2);
+  err_1 = factor.evaluateError(q, H1_1);
+  err_2 = factor2.evaluateError(q, H1_2);
+
+  EXPECT(assert_equal(H1_1, H1_2, 1e-6));
+  EXPECT(assert_equal(err_1, err_2, 1e-6));
+
+  // changing sdf data 45 deg case
+  q = Vector2(M_PI/4.0, 0);
+  factor.changeSDFData(field2);
+  err_1 = factor.evaluateError(q, H1_1);
+  err_2 = factor2.evaluateError(q, H1_2);
+
+  EXPECT(assert_equal(H1_1, H1_2, 1e-6));
+  EXPECT(assert_equal(err_1, err_2, 1e-6));
 }
+
+
 
 /* ************************************************************************** */
 /* main function */

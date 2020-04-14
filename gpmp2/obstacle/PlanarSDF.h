@@ -48,13 +48,19 @@ public:
 
   ~PlanarSDF() {}
 
-
+  /// to change the SDF dynamically
+  void changeData(const gtsam::Matrix& new_data) {
+    gtsam::Matrix temp = new_data;
+    data_ = temp;
+  }
+  
   /// give a point, search for signed distance field and (optional) gradient
   /// return signed distance
   inline double getSignedDistance(const gtsam::Point2& point) const {
     const float_index pidx = convertPoint2toCell(point);
     return signed_distance(pidx);
   }
+
 
   inline double getSignedDistance(const gtsam::Point2& point, gtsam::Vector2& g) const {
     const float_index pidx = convertPoint2toCell(point);

@@ -13,7 +13,7 @@
 #include <gtsam/geometry/concepts.h>
 #include <gtsam/nonlinear/NonlinearFactor.h>
 #include <gtsam/base/Testable.h>
-
+#include <gpmp2/utils/angles.h>
 
 namespace gpmp2 {
 
@@ -79,7 +79,19 @@ public:
         -1.0 * Matrix::Identity(dof_, dof_)).finished();
 
     // transition matrix & error
+    // Vector err(2*dof_), x1_prop(2*dof_), diffVect(2*dof_);
+    // x1_prop = calcPhi(dof_, delta_t_) * x1;
+    // diffVect = x1_prop - x2;
+    
+    // for (uint i = 0; i < dof_; i++) {
+    //   double ang_dist;
+    //   angles::shortest_angular_distance_with_limits(x2[i], x1_prop[i], -M_PI_2, M_PI_2,  ang_dist);
+    //   diffVect[i] = ang_dist;
+    // }
+    
     return calcPhi(dof_, delta_t_) * x1 - x2;
+    // return diffVect;
+
   }
 
 

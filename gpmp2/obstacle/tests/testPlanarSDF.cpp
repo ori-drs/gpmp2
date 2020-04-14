@@ -25,13 +25,20 @@ double sdf_wrapper(const PlanarSDF& field, const Point2& p) {
 /* ************************************************************************** */
 TEST(PlanarSDFutils, test1) {
   // data
-  Matrix data;
+  Matrix data, data2;
   data = (Matrix(5, 5) <<
       1.7321, 1.4142, 1.4142, 1.4142, 1.7321,
       1.4142, 1, 1, 1, 1.4142,
       1.4142, 1, 1, 1, 1.4142,
       1.4142, 1, 1, 1, 1.4142,
       1.7321, 1.4142, 1.4142, 1.4142, 1.7321).finished();
+
+  data2 = (Matrix(5, 5) <<
+    1, 1, 1, 1, 1,
+    1.4142, 1, 1, 1, 1.4142,
+    1.4142, 1, 1, 1, 1.4142,
+    1.4142, 1, 1, 1, 1.4142,
+    1.7321, 1.4142, 1.4142, 1.4142, 1.7321).finished();
   Point2 origin(-0.2, -0.2);
   double cell_size = 0.1;
 
@@ -71,6 +78,11 @@ TEST(PlanarSDFutils, test1) {
   grad_exp = numericalDerivative11(boost::function<double(const Point2&)>(
       boost::bind(sdf_wrapper, field, _1)), p, 1e-6);
   EXPECT(assert_equal(grad_exp, grad_act, 1e-6));
+
+  // changing data
+  PlanarSDF field2(origin, cell_size, data2);
+  field.changeData(data2);
+  EXPECT_DOUBLES_EQUAL(field.signed_distance(1), field2.signed_distance(1), 1e-9);
 
 }
 

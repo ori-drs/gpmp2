@@ -79,8 +79,8 @@ public:
         epsilon_(epsilon), robot_(robot), sdf_(sdf) {}
 
   virtual ~ObstacleSDFFactorGP() {}
-
-
+  
+  
   /// error function
   /// numerical jacobians / analytic jacobians from cost function
   gtsam::Vector evaluateError(

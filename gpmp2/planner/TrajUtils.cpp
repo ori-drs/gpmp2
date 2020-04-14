@@ -120,21 +120,22 @@ gtsam::Values interpolateArmTraj(const gtsam::Values& opt_values,
       if (pos_idx != 0) {
         // skip first pos to interpolate
 
+        Vector conf1 = opt_values.at<Vector>(Symbol('x', last_pos_idx));
+        Vector vel1  = opt_values.at<Vector>(Symbol('v', last_pos_idx));
+        Vector conf2 = opt_values.at<Vector>(Symbol('x', pos_idx));
+        Vector vel2  = opt_values.at<Vector>(Symbol('v', pos_idx));
+
         for (size_t inter_idx = 1; inter_idx <= inter_step+1; inter_idx++) {
 
           if (inter_idx == inter_step+1) {
             // last pose
-            results.insert(Symbol('x', inter_pos_count), opt_values.at<Vector>(Symbol('x', pos_idx)));
-            results.insert(Symbol('v', inter_pos_count), opt_values.at<Vector>(Symbol('v', pos_idx)));
+            results.insert(Symbol('x', inter_pos_count), conf2);
+            results.insert(Symbol('v', inter_pos_count), vel2);
 
           } else {
             // inter pose
             double tau = static_cast<double>(inter_idx) * inter_dt;
             GaussianProcessInterpolatorLinear gp_inter(Qc_model, delta_t, tau);
-            Vector conf1 = opt_values.at<Vector>(Symbol('x', last_pos_idx));
-            Vector vel1  = opt_values.at<Vector>(Symbol('v', last_pos_idx));
-            Vector conf2 = opt_values.at<Vector>(Symbol('x', pos_idx));
-            Vector vel2  = opt_values.at<Vector>(Symbol('v', pos_idx));
             Vector conf  = gp_inter.interpolatePose(conf1, vel1, conf2, vel2);
             Vector vel  = gp_inter.interpolateVelocity(conf1, vel1, conf2, vel2);
             results.insert(Symbol('x', inter_pos_count), conf);
@@ -169,18 +170,20 @@ gtsam::Values interpolateArmTraj(const gtsam::Values& opt_values,
 
   for (size_t i = start_index; i < end_index; i++) {
 
-    results.insert(Symbol('x', result_index), opt_values.at<Vector>(Symbol('x', i)));
-    results.insert(Symbol('v', result_index), opt_values.at<Vector>(Symbol('v', i)));
+    Vector conf1 = opt_values.at<Vector>(Symbol('x', i));
+    Vector vel1  = opt_values.at<Vector>(Symbol('v', i));
+    Vector conf2 = opt_values.at<Vector>(Symbol('x', i+1));
+    Vector vel2  = opt_values.at<Vector>(Symbol('v', i+1));
+
+    results.insert(Symbol('x', result_index), conf1);
+    results.insert(Symbol('v', result_index), vel1);
 
     for (size_t inter_idx = 1; inter_idx <= inter_step; inter_idx++) {
 
       result_index++;
       double tau = static_cast<double>(inter_idx) * inter_dt;
       GaussianProcessInterpolatorLinear gp_inter(Qc_model, delta_t, tau);
-      Vector conf1 = opt_values.at<Vector>(Symbol('x', i));
-      Vector vel1  = opt_values.at<Vector>(Symbol('v', i));
-      Vector conf2 = opt_values.at<Vector>(Symbol('x', i+1));
-      Vector vel2  = opt_values.at<Vector>(Symbol('v', i+1));
+
       Vector conf  = gp_inter.interpolatePose(conf1, vel1, conf2, vel2);
       Vector vel  = gp_inter.interpolateVelocity(conf1, vel1, conf2, vel2);
       results.insert(Symbol('x', result_index), conf);
@@ -208,18 +211,19 @@ gtsam::Values interpolatePose2MobileArmTraj(const gtsam::Values& opt_values,
 
   for (size_t i = start_index; i < end_index; i++) {
 
-    results.insert(Symbol('x', result_index), opt_values.at<Pose2Vector>(Symbol('x', i)));
-    results.insert(Symbol('v', result_index), opt_values.at<Vector>(Symbol('v', i)));
+    Pose2Vector conf1 = opt_values.at<Pose2Vector>(Symbol('x', i));
+    Vector vel1  = opt_values.at<Vector>(Symbol('v', i));
+    Pose2Vector conf2 = opt_values.at<Pose2Vector>(Symbol('x', i+1));
+    Vector vel2  = opt_values.at<Vector>(Symbol('v', i+1));
+    
+    results.insert(Symbol('x', result_index), conf1);
+    results.insert(Symbol('v', result_index), vel1);
 
     for (size_t inter_idx = 1; inter_idx <= inter_step; inter_idx++) {
 
       result_index++;
       double tau = static_cast<double>(inter_idx) * inter_dt;
       GaussianProcessInterpolatorPose2Vector gp_inter(Qc_model, delta_t, tau);
-      Pose2Vector conf1 = opt_values.at<Pose2Vector>(Symbol('x', i));
-      Vector vel1  = opt_values.at<Vector>(Symbol('v', i));
-      Pose2Vector conf2 = opt_values.at<Pose2Vector>(Symbol('x', i+1));
-      Vector vel2  = opt_values.at<Vector>(Symbol('v', i+1));
       Pose2Vector conf  = gp_inter.interpolatePose(conf1, vel1, conf2, vel2);
       Vector vel  = gp_inter.interpolateVelocity(conf1, vel1, conf2, vel2);
       results.insert(Symbol('x', result_index), conf);
@@ -247,18 +251,19 @@ gtsam::Values interpolatePose2Traj(const gtsam::Values& opt_values,
 
   for (size_t i = start_index; i < end_index; i++) {
 
-    results.insert(Symbol('x', result_index), opt_values.at<Pose2>(Symbol('x', i)));
-    results.insert(Symbol('v', result_index), opt_values.at<Vector>(Symbol('v', i)));
+    Pose2 conf1 = opt_values.at<Pose2>(Symbol('x', i));
+    Vector vel1  = opt_values.at<Vector>(Symbol('v', i));
+    Pose2 conf2 = opt_values.at<Pose2>(Symbol('x', i+1));
+    Vector vel2  = opt_values.at<Vector>(Symbol('v', i+1));
+
+    results.insert(Symbol('x', result_index), conf1);
+    results.insert(Symbol('v', result_index), vel1);
 
     for (size_t inter_idx = 1; inter_idx <= inter_step; inter_idx++) {
 
       result_index++;
       double tau = static_cast<double>(inter_idx) * inter_dt;
       GaussianProcessInterpolatorPose2 gp_inter(Qc_model, delta_t, tau);
-      Pose2 conf1 = opt_values.at<Pose2>(Symbol('x', i));
-      Vector vel1  = opt_values.at<Vector>(Symbol('v', i));
-      Pose2 conf2 = opt_values.at<Pose2>(Symbol('x', i+1));
-      Vector vel2  = opt_values.at<Vector>(Symbol('v', i+1));
       Pose2 conf  = gp_inter.interpolatePose(conf1, vel1, conf2, vel2);
       Vector vel  = gp_inter.interpolateVelocity(conf1, vel1, conf2, vel2);
       results.insert(Symbol('x', result_index), conf);

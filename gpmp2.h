@@ -17,6 +17,7 @@ virtual class gtsam::NoiseModelFactor;
 
 namespace gpmp2 {
 
+   
 ////////////////////////////////////////////////////////////////////////////////
 // geometry
 ////////////////////////////////////////////////////////////////////////////////
@@ -34,7 +35,6 @@ class Pose2Vector {
   void print(string s) const;
 };
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // gp
 ////////////////////////////////////////////////////////////////////////////////
@@ -45,6 +45,9 @@ class Pose2Vector {
 virtual class GaussianProcessPriorLinear : gtsam::NoiseModelFactor {
   GaussianProcessPriorLinear(size_t key1, size_t key2, size_t key3, size_t key4,
       double delta, const gtsam::noiseModel::Base* Qc_model);
+  
+  Vector evaluateError(const Vector& pose1, const Vector& vel1,
+      const Vector& pose2, const Vector& vel2) const;
 };
 
 #include <gpmp2/gp/GaussianProcessPriorPose2.h>
@@ -437,6 +440,7 @@ class PlanarSDF {
   // access
   double getSignedDistance(const gtsam::Point2& point) const;
   void print(string s) const;
+  void changeData(const Matrix& new_data);
 };
 
 
@@ -469,6 +473,7 @@ virtual class ObstaclePlanarSDFFactorArm : gtsam::NoiseModelFactor {
       size_t posekey, const gpmp2::ArmModel& arm,
       const gpmp2::PlanarSDF& sdf, double cost_sigma, double epsilon);
   Vector evaluateError(Vector pose) const;
+  void changeSDFData(const Matrix& field); 
 };
 
 
@@ -481,6 +486,7 @@ virtual class ObstaclePlanarSDFFactorGPArm : gtsam::NoiseModelFactor {
       const gpmp2::ArmModel& arm, const gpmp2::PlanarSDF& sdf,
       double cost_sigma, double epsilon, const gtsam::noiseModel::Base* Qc_model,
       double delta_t, double tau);
+  void changeSDFData(const Matrix& field); 
 };
 
 
