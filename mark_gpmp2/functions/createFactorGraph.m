@@ -15,7 +15,7 @@ function [graph,obs_graph, obs_factor_inds_and_time] = createFactorGraph(dataset
     for i = 0 : total_time_step
         key_pos = gtsam.symbol('x', i);
         key_vel = gtsam.symbol('v', i);
-% 
+ 
 %         % initialize as straight line in conf space
 %         pose = start_conf * (total_time_step-i)/total_time_step + end_conf * i/total_time_step;
 %         vel = avg_vel;
