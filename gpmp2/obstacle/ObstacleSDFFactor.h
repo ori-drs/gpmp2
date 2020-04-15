@@ -75,6 +75,9 @@ public:
   gtsam::Vector evaluateError(const typename Robot::Pose& conf,
       boost::optional<gtsam::Matrix&> H1 = boost::none) const ;
 
+  void changeSDFData(const std::vector<gtsam::Matrix>& new_data) {
+    const_cast<SignedDistanceField&>(sdf_).changeData(new_data);
+  }
 
   /// @return a deep copy of this factor
   virtual gtsam::NonlinearFactor::shared_ptr clone() const {

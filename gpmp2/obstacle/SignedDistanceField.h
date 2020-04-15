@@ -68,6 +68,11 @@ public:
 
   ~SignedDistanceField() {}
 
+  /// to change the SDF dynamically
+  void changeData(const std::vector<gtsam::Matrix>& new_data) {
+    std::vector<gtsam::Matrix> temp = new_data;
+    data_ = temp;
+  }
   /// insert data matrix to each layer of sdf
   /// @param z_idx the z index of 3-D sdf
   /// @param field_layer matrix of each slice of 3-D sdf, Matrix represent the X (col) & Y (row)
