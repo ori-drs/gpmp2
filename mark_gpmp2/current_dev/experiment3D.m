@@ -46,16 +46,6 @@ ylabel('y');
 zlabel('z');
 plot3DEnvironment(dataset, X, Y, Z)
 
-
-% for t = 0:0.5:5
-%     env.updateMap(t);
-%     dataset = env.getDataset();
-%     cla;
-%     plot3DEnvironment(dataset, X, Y, Z)
-%     
-%     pause(0.05);
-% end
-
 %% arm model
 arm = generateArm('WAMArm');
 arm_model = arm.fk_model();
@@ -66,33 +56,5 @@ end_conf = [0.0,0.94,0,1.6,0,-0.919,1.55]';
 start_vel = zeros(7,1);
 end_vel = zeros(7,1);
 hold on;
-plotArm(arm.fk_model(), start_conf, 'r', 2)
-plotArm(arm.fk_model(), end_conf, 'b', 2)
-% %% Planner settings
-% total_time_sec = 5.0;
-% delta_t = 0.1;
-% total_time_step = round(total_time_sec/delta_t);
-% total_check_step = 10*total_time_step;
-% check_inter = total_check_step / total_time_step - 1;
-% pause_time = delta_t;
-% 
-% % use GP interpolation
-% use_GP_inter = true
-
-%% Initial plots
-% % % plot sdf
-% figure(1)
-% plotSignedDistanceField2D(dataset.field, dataset.origin_x, dataset.origin_y, dataset.cell_size);
-% title('Signed Distance Field');
-% hold off;
-% pause(0.1);
-% % 
-% % % plot start / end configuration
-% figure(2), hold on
-% plotEvidenceMap2D(dataset.map, dataset.origin_x, dataset.origin_y, dataset.cell_size);
-% title('Layout')
-% plotPlanarArm(arm.fk_model(), start_conf, 'b', 2);
-% plotPlanarArm(arm.fk_model(), end_conf, 'r', 2);
-% hold off;
-% pause(0.1);
-
+plotArm(arm.fk_model(), start_conf, 'b', 2)
+plotArm(arm.fk_model(), end_conf, 'r', 2)
