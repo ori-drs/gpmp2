@@ -45,6 +45,22 @@ classdef movingEnvironment3D < handle
         
         function add_static_scene(env)
             % map   
+%             stat_obs{1} = {[170 220 130], [140, 60, 5]};
+%             stat_obs{2} = {[105 195 90], [10, 10, 80]};
+%             stat_obs{3} = {[235 195 90], [10, 10, 80]};
+%             stat_obs{4} = {[105 245 90], [10, 10, 80]};
+%             stat_obs{5} = {[235 245 90], [10, 10, 80]};
+%             
+%             stat_obs{6} = {[250 190 145], [60, 5, 190]};
+%             stat_obs{7} = {[250 90 145], [60, 5, 190]};
+%             
+%             stat_obs{8} = {[200 190 145], [40, 5, 190]};
+% 
+%             stat_obs{9} = {[250 140 240], [60, 100, 5]};
+%             stat_obs{10} = {[250 140 190], [60, 100, 5]};
+%             stat_obs{11} = {[250 140 140], [60, 100, 5]};
+%             stat_obs{12} = {[250 140 90], [60, 100, 5]};
+            
             stat_obs{1} = {[170 220 130], [140, 60, 5]};
             stat_obs{2} = {[105 195 90], [10, 10, 80]};
             stat_obs{3} = {[235 195 90], [10, 10, 80]};
@@ -60,12 +76,19 @@ classdef movingEnvironment3D < handle
             stat_obs{10} = {[250 140 190], [60, 100, 5]};
             stat_obs{11} = {[250 140 140], [60, 100, 5]};
             stat_obs{12} = {[250 140 90], [60, 100, 5]};
-            
+                        
+
+            origin = [env.dataset.origin_x, ...
+                      env.dataset.origin_y, ...
+                      env.dataset.origin_z]/env.dataset.cell_size;
+                  
             for i = 1:size(stat_obs, 2)
-%                 env.dataset.static_map = add_obstacle(stat_obs{i}{1}, ...
-%                                                 round(stat_obs{i}{2}/env.dataset.cell_size), ...
-%                                                 env.dataset.static_map);
-                env.dataset.static_map = add_obstacle(stat_obs{i}{1}, ...
+%                 obs_pos_to_add = round([x - env.dataset.origin_x, ...
+%                                     -y + env.dataset.origin_y, ...
+%                                     z - env.dataset.origin_z]/env.dataset.cell_size) ...
+%                                     + [1, env.dataset.rows,1];  
+                               
+                env.dataset.static_map = add_obstacle(stat_obs{i}{1} -[50,50,50], ...
                                 stat_obs{i}{2}, ...
                                 env.dataset.static_map); 
             end
@@ -152,7 +175,7 @@ classdef movingEnvironment3D < handle
             updateMap(obj, query_t);
                    
             % signed distance field
-            obj.dataset.field  = gpmp2.signedDistanceField3D(obj.dataset.map, ...
+            obj.dataset.field  = gpmp2.signedDistanceField3D(permute(obj.dataset.map, [2 1 3]), ...
                                                             obj.dataset.cell_size);            
             
             % init sdf
