@@ -44,23 +44,7 @@ classdef movingEnvironment3D < handle
         end
         
         function add_static_scene(env)
-            % map   
-%             stat_obs{1} = {[170 220 130], [140, 60, 5]};
-%             stat_obs{2} = {[105 195 90], [10, 10, 80]};
-%             stat_obs{3} = {[235 195 90], [10, 10, 80]};
-%             stat_obs{4} = {[105 245 90], [10, 10, 80]};
-%             stat_obs{5} = {[235 245 90], [10, 10, 80]};
-%             
-%             stat_obs{6} = {[250 190 145], [60, 5, 190]};
-%             stat_obs{7} = {[250 90 145], [60, 5, 190]};
-%             
-%             stat_obs{8} = {[200 190 145], [40, 5, 190]};
-% 
-%             stat_obs{9} = {[250 140 240], [60, 100, 5]};
-%             stat_obs{10} = {[250 140 190], [60, 100, 5]};
-%             stat_obs{11} = {[250 140 140], [60, 100, 5]};
-%             stat_obs{12} = {[250 140 90], [60, 100, 5]};
-            
+         
             stat_obs{1} = {[170 220 130], [140, 60, 5]};
             stat_obs{2} = {[105 195 90], [10, 10, 80]};
             stat_obs{3} = {[235 195 90], [10, 10, 80]};
@@ -83,11 +67,6 @@ classdef movingEnvironment3D < handle
                       env.dataset.origin_z]/env.dataset.cell_size;
                   
             for i = 1:size(stat_obs, 2)
-%                 obs_pos_to_add = round([x - env.dataset.origin_x, ...
-%                                     -y + env.dataset.origin_y, ...
-%                                     z - env.dataset.origin_z]/env.dataset.cell_size) ...
-%                                     + [1, env.dataset.rows,1];  
-                               
                 env.dataset.static_map = add_obstacle(stat_obs{i}{1} -[50,50,50], ...
                                 stat_obs{i}{2}, ...
                                 env.dataset.static_map); 
@@ -195,9 +174,6 @@ end
 
 function [map, landmarks] = add_obstacle(position, obj_size, map, landmarks)
 
-% half_width = floor((obj_size(1)-1)/2);
-% half_height = floor((obj_size(2)-1)/2);
-% half_depth = floor((obj_size(3)-1)/2);
 half_width = floor(obj_size(1)/2);
 half_height = floor(obj_size(2)/2);
 half_depth = floor(obj_size(3)/2);
