@@ -3,26 +3,83 @@ classdef movingEnvironment3D < handle
     %   Detailed explanation goes here
     
     properties 
-        t_start_moving
-        v_or_t_end
-        v_or_t_end_value
-        block_starting_pos
+%         t_start_moving
+%         v_or_t_end
+%         v_or_t_end_value
+%         block_starting_pos
         dataset
-        block_velocity
-        t_end_moving
-        block_end_pos
+%         block_velocity
+%         t_end_moving
+%         block_end_pos
+        
+        objects = {};
+        fixed_scene = {}
     end
     
     methods
-        function obj = movingEnvironment3D(t_start_moving, v_or_t_end, v_or_t_end_value, block_starting_pos, obs_size)
+        function env = movingEnvironment3D()
             %MOVINGENVIRONMENT Construct an instance of this class
-            %   Detailed explanation goes here            
+            %   Detailed explanation goes here           
+            
+            % params
+            env.dataset.cols = 300;
+            env.dataset.rows = 300;
+            env.dataset.z = 300;
+            env.dataset.origin_x = -1;
+            env.dataset.origin_y = -1;
+            env.dataset.origin_z = -1;
+            env.dataset.cell_size = 0.01;
+            env.dataset.origin_point3 = gtsam.Point3(env.dataset.origin_x, ...
+                                                    env.dataset.origin_y, ...
+                                                    env.dataset.origin_z);       
+                                                
+            env.dataset.static_map = zeros(env.dataset.rows, ...
+                                    env.dataset.cols, ...
+                                    env.dataset.z);   
+%             env.add_static_scene;          
+%             env.add_static_scene();
+            
+%             add_object(t_start_moving, v_or_t_end, v_or_t_end_value, block_starting_pos, obs_size)                                    
+           
+        end
+        
+        function add_static_scene(env)
+            % map   
+            stat_obs{1} = {[170 220 130], [140, 60, 5]};
+            stat_obs{2} = {[105 195 90], [10, 10, 80]};
+            stat_obs{3} = {[235 195 90], [10, 10, 80]};
+            stat_obs{4} = {[105 245 90], [10, 10, 80]};
+            stat_obs{5} = {[235 245 90], [10, 10, 80]};
+            
+            stat_obs{6} = {[250 190 145], [60, 5, 190]};
+            stat_obs{7} = {[250 90 145], [60, 5, 190]};
+            
+            stat_obs{8} = {[200 190 145], [40, 5, 190]};
+
+            stat_obs{9} = {[250 140 240], [60, 100, 5]};
+            stat_obs{10} = {[250 140 190], [60, 100, 5]};
+            stat_obs{11} = {[250 140 140], [60, 100, 5]};
+            stat_obs{12} = {[250 140 90], [60, 100, 5]};
+            
+            for i = 1:size(stat_obs, 2)
+%                 env.dataset.static_map = add_obstacle(stat_obs{i}{1}, ...
+%                                                 round(stat_obs{i}{2}/env.dataset.cell_size), ...
+%                                                 env.dataset.static_map);
+                env.dataset.static_map = add_obstacle(stat_obs{i}{1}, ...
+                                stat_obs{i}{2}, ...
+                                env.dataset.static_map); 
+            end
+            env.dataset.static_map = flip(env.dataset.static_map);          
+
+        end
+        
+        function add_object(env, t_start_moving, v_or_t_end, v_or_t_end_value, block_starting_pos, obs_size)
             obj.t_start_moving = t_start_moving;
             obj.v_or_t_end = v_or_t_end;
             obj.v_or_t_end_value = v_or_t_end_value;
 
             obj.block_starting_pos = block_starting_pos;
-            obj.dataset.obs_size = obs_size;
+            obj.obs_size = obs_size;
 
             % Parameters for block trajectory
             if v_or_t_end == true % object velocity given
@@ -30,66 +87,58 @@ classdef movingEnvironment3D < handle
             elseif v_or_t_end == false % t_end given
                 obj.t_end_moving = v_or_t_end_value;
                 obj.block_end_pos = [2.50, 1.50, 1.50];
-                obj.block_velocity = (block_end_pos - block_starting_pos)/(t_end_moving-t_start_moving);
+                obj.block_velocity = (obj.block_end_pos - obj.block_starting_pos)/(obj.t_end_moving-obj.t_start_moving);
             end
             
-            % params
-            obj.dataset.cols = 300;
-            obj.dataset.rows = 300;
-            obj.dataset.z = 300;
-            obj.dataset.origin_x = -1;
-            obj.dataset.origin_y = -1;
-            obj.dataset.origin_z = -1;
-            obj.dataset.cell_size = 0.01;
-            obj.dataset.origin_point3 = gtsam.Point3(obj.dataset.origin_x, ...
-                                                    obj.dataset.origin_y, ...
-                                                    obj.dataset.origin_z);       
-            
+            env.objects{end+1} = obj;
+        
         end
-        
-        
-%         function add_block(t_start_moving, v_or_t_end, v_or_t_end_value, block_starting_pos, obs_size)
-%         
-%         
-%         end
-%         
-        function updateMap(obj, query_t)
-            obj.dataset.map = zeros(obj.dataset.rows, ...
-                                    obj.dataset.cols, ...
-                                    obj.dataset.z);
-            
-            if query_t<= obj.t_start_moving
-               t_moved = 0;
-            else
-               t_moved = query_t - obj.t_start_moving;
+%       
+        function [obs_pos_to_add, obs_pos] = calculateObjPosition(env, t, object) 
+            if t<= object.t_start_moving
+                   t_moved = 0;
+                else
+                   t_moved = t - object.t_start_moving;
             end
-            
-            % Calculate object positions - position is start plus v * t
-            x = obj.block_starting_pos(1) + t_moved * obj.block_velocity(1);
-            y = obj.block_starting_pos(2) + t_moved * obj.block_velocity(2);
-            z = obj.block_starting_pos(3) + t_moved * obj.block_velocity(3);
 
-            if obj.v_or_t_end == false && query_t<= obj.v_or_t_end_value
-                x = obj.block_end_pos(1);
-                y = obj.block_end_pos(2);
-                z = obj.block_end_pos(3);
+            % Calculate object positions - position is start plus v * t
+            x = object.block_starting_pos(1) + t_moved * object.block_velocity(1);
+            y = object.block_starting_pos(2) + t_moved * object.block_velocity(2);
+            z = object.block_starting_pos(3) + t_moved * object.block_velocity(3);
+
+            if object.v_or_t_end == false && t<= object.v_or_t_end_value
+                x = object.block_end_pos(1);
+                y = object.block_end_pos(2);
+                z = object.block_end_pos(3);
             end
 
             %  Add each obstacle
-            obs_pos_to_add = round([x - obj.dataset.origin_x, ...
-                                    -y + obj.dataset.origin_y, ...
-                                    z - obj.dataset.origin_z]/obj.dataset.cell_size) ...
-                                    + [0, obj.dataset.rows, 0];
-
-            obj.dataset.map = add_obstacle(obs_pos_to_add, ...
-                                            round(obj.dataset.obs_size/obj.dataset.cell_size), ...
-                                            obj.dataset.map);
-                                
+            obs_pos_to_add = round([x - env.dataset.origin_x, ...
+                                    -y + env.dataset.origin_y, ...
+                                    z - env.dataset.origin_z]/env.dataset.cell_size) ...
+                                    + [1, env.dataset.rows,1];
+            obs_pos = [x, y, z];        
+        end
+        
+        function updateMap(env, query_t)
+                    
+            env.dataset.map = env.dataset.static_map;
+            
+            % Add all the obstacles
+            for i = 1:size(env.objects, 2)
+                
+                [obs_pos_to_add, obs_pos] = env.calculateObjPosition(query_t, env.objects{i});
+             
+                env.dataset.map = add_obstacle(obs_pos_to_add, ...
+                                                round(env.objects{i}.obs_size/env.dataset.cell_size), ...
+                                                env.dataset.map);
+                                            
+                env.dataset.obs_poses{i} = obs_pos;  
+            end
+            
             % Flip the map before calculating SDFs                                    
-            obj.dataset.map = flip(obj.dataset.map);   
-            
-            obj.dataset.obs_pose = [x,y,z];
-            
+            env.dataset.map = flip(env.dataset.map);          
+ 
         end
         
         function val = getDataset(obj)
@@ -101,43 +150,7 @@ classdef movingEnvironment3D < handle
             %   Detailed explanation goes here
             % map
             updateMap(obj, query_t);
-            
-%             obj.dataset.map = zeros(obj.dataset.rows, ...
-%                                     obj.dataset.cols, ...
-%                                     obj.dataset.z);
-%             
-%             if query_t<= obj.t_start_moving
-%                t_moved = 0;
-%             else
-%                t_moved = query_t - obj.t_start_moving;
-%             end
-%             
-%             % Calculate object positions - position is start plus v * t
-%             x = obj.block_starting_pos(1) + t_moved * obj.block_velocity(1);
-%             y = obj.block_starting_pos(2) + t_moved * obj.block_velocity(2);
-%             z = obj.block_starting_pos(3) + t_moved * obj.block_velocity(3);
-% 
-%             if obj.v_or_t_end == false && query_t<= obj.v_or_t_end_value
-%                 x = obj.block_end_pos(1);
-%                 y = obj.block_end_pos(2);
-%                 z = obj.block_end_pos(3);
-%             end
-% 
-%             %  Add each obstacle
-%             obs_pos_to_add = round([x - obj.dataset.origin_x, ...
-%                                     -y + obj.dataset.origin_y, ...
-%                                     z - obj.dataset.origin_z]/obj.dataset.cell_size) ...
-%                                     + [0, obj.dataset.rows, 0];
-% 
-%             obj.dataset.map = add_obstacle(obs_pos_to_add, ...
-%                                             round(obj.dataset.obs_size/obj.dataset.cell_size), ...
-%                                             obj.dataset.map);
-%         
-%                                         
-%                                         
-%             % Flip the map before calculating SDFs                                    
-%             obj.dataset.map = flip(obj.dataset.map);
-            
+                   
             % signed distance field
             obj.dataset.field  = gpmp2.signedDistanceField3D(obj.dataset.map, ...
                                                             obj.dataset.cell_size);            
@@ -152,9 +165,6 @@ classdef movingEnvironment3D < handle
                 obj.dataset.sdf.initFieldData(z-1, obj.dataset.field(:,:,z)');
             end
 
-            
-%             obj.dataset.obs_pose = [x,y,z];
-            
             val = obj.dataset;
         end
     end
@@ -162,9 +172,12 @@ end
 
 function [map, landmarks] = add_obstacle(position, obj_size, map, landmarks)
 
-half_width = floor((obj_size(1)-1)/2);
-half_height = floor((obj_size(2)-1)/2);
-half_depth = floor((obj_size(3)-1)/2);
+% half_width = floor((obj_size(1)-1)/2);
+% half_height = floor((obj_size(2)-1)/2);
+% half_depth = floor((obj_size(3)-1)/2);
+half_width = floor(obj_size(1)/2);
+half_height = floor(obj_size(2)/2);
+half_depth = floor(obj_size(3)/2);
 
 % occupency grid
 X = position(1)-half_width : position(1)+half_width;
