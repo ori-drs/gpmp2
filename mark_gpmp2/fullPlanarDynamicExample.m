@@ -14,7 +14,10 @@ t_start_moving = 0;
 v_or_t_end = true;
 v_or_t_end_value = [0,0];
 
-env = movingEnvironment(0,true,[0,0]);
+starting_pos = [0.40, 0.6];
+obs_size = [0.60, 0.80];
+
+env = movingEnvironment(0,true,[0,0], starting_pos, obs_size );
 dataset = env.queryEnv(0);
 
 %% settings 
