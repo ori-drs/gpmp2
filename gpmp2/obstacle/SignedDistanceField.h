@@ -68,11 +68,21 @@ public:
 
   ~SignedDistanceField() {}
 
-  /// to change the SDF dynamically
+  std::vector<gtsam::Matrix> getData() const {
+    return data_;
+  }
+
+  // to change the SDF dynamically
+  void replaceSDFData(SignedDistanceField& sdf) {
+    std::vector<gtsam::Matrix> temp = sdf.getData();
+    changeData(temp);
+  }
+
   void changeData(const std::vector<gtsam::Matrix>& new_data) {
     std::vector<gtsam::Matrix> temp = new_data;
     data_ = temp;
   }
+
   /// insert data matrix to each layer of sdf
   /// @param z_idx the z index of 3-D sdf
   /// @param field_layer matrix of each slice of 3-D sdf, Matrix represent the X (col) & Y (row)
@@ -81,6 +91,12 @@ public:
       throw std::runtime_error("[SignedDistanceField] matrix layer out of index");
     data_[z_idx] = field_layer;
   }
+
+  // /// clear data matrix of sdf
+  // void clearFieldData() {
+  //   // data_ = std::vector<gtsam::Matrix>(field_z_);
+  //   data_.resize(field_z_);
+  // }
 
   /// give a point, search for signed distance field and (optional) gradient
   /// @param point query position
@@ -190,7 +206,7 @@ public:
     std::cout << "field size:       " << field_cols_ << " x "
         << field_rows_ << " x " << field_z_ << std::endl;
   }
-
+  
   /// save to file
   void saveSDF(const std::string filename);
 
