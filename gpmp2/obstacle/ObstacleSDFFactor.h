@@ -67,6 +67,11 @@ public:
         Base(gtsam::noiseModel::Isotropic::Sigma(robot.nr_body_spheres(), cost_sigma), poseKey),
         epsilon_(epsilon), robot_(robot), sdf_(sdf) {}
 
+  ObstacleSDFFactor(const gtsam::SharedNoiseModel& noiseModel, gtsam::Key poseKey, const Robot& robot,
+      const SignedDistanceField& sdf, double epsilon) :
+        Base(noiseModel, poseKey),
+        epsilon_(epsilon), robot_(robot), sdf_(sdf) {}
+
   virtual ~ObstacleSDFFactor() {}
 
 
@@ -79,9 +84,9 @@ public:
     const_cast<SignedDistanceField&>(sdf_).changeData(new_data);
   }  
   
-  void replaceSDFData(const SignedDistanceField& sdf) {
-    const_cast<SignedDistanceField&>(sdf_).replaceSDFData(sdf);
-  }
+  ObstacleSDFFactor getSDFModFactor(const SignedDistanceField& sdf){
+    return ObstacleSDFFactor(this->noiseModel(), this->key(), robot_ , sdf, epsilon_);
+  }  
 
   /// @return a deep copy of this factor
   virtual gtsam::NonlinearFactor::shared_ptr clone() const {

@@ -27,11 +27,11 @@ env.add_object(0,...
                 starting_pos, ...
                 obs_size);
    
-dataset = env.queryEnv(0);
+dataset1 = env.queryEnv(0);
 dataset2 = env.queryEnv(1);
 dataset3 = env.queryEnv(2);
 
-[X, Y, Z] = getEnvironmentMesh(dataset);
+[X, Y, Z] = getEnvironmentMesh(dataset1);
 
 arm = generateArm('WAMArm');
 arm_model = arm.fk_model();
@@ -48,28 +48,23 @@ for i = 0:500
 
     fact = gpmp2.ObstacleSDFFactorArm(key_pos1, ...
                                             arm, ...
-                                            dataset.sdf, ...
+                                            dataset1.sdf, ...
                                             cost_sigma, ...
                                             epsilon_dist); 
     graph.add(fact);                                  
 end
 
-tic;
-fact.replaceSDFData(dataset3.sdf);
-toc;
-
-tic;      
-graph.at(250).replaceSDFData(dataset2.sdf);
-toc
-
-
+% 
+% fact.replaceSDFData(dataset1.sdf);
+% 
+% tic;      
+% graph.at(250).replaceSDFData(dataset2.sdf);
+% toc
+% 
+% fact.replaceSDFData(dataset1.sdf);
+% 
 tic;  
-fact = gpmp2.ObstacleSDFFactorArm(key_pos1, ...
-                                        arm, ...
-                                        dataset3.sdf, ...
-                                        cost_sigma, ...
-                                        epsilon_dist); 
-                                        
-graph.replace(250, fact);
+new_fact = graph.at(250).getSDFModFactor(dataset2.sdf);                                  
+graph.replace(250, new_fact);
 toc
 disp("it worked");

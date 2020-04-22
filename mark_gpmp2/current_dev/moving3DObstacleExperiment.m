@@ -381,8 +381,11 @@ for i = 0:total_time_step
         tic;
         for j = i:total_time_step
             for k = 1:numel(all_obs_fact_indices{j+1})
+%                 ind = all_obs_fact_indices{j+1}(k);
+%                 execute_update_graph.at(ind).replaceSDFData(datasets(i+1).sdf);                
                 ind = all_obs_fact_indices{j+1}(k);
-                execute_update_graph.at(ind).replaceSDFData(datasets(i+1).sdf);
+                new_fact = execute_update_graph.at(ind).getSDFModFactor(datasets(i+1).sdf);            
+                execute_update_graph.replace(ind, new_fact);
             end
             num_factors_updated = num_factors_updated + numel(all_obs_fact_indices{j+1});
         end 
