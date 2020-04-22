@@ -444,29 +444,6 @@ class PlanarSDF {
   void changeData(const Matrix& new_data);
 };
 
-// dynamic obstacle avoid factor
-#include <gpmp2/obstacle/DynamicObstacleSDFFactorArm.h>
-virtual class DynamicObstacleSDFFactorArm : gtsam::NoiseModelFactor {
-  DynamicObstacleSDFFactorArm(
-      size_t poseKey, const gpmp2::ArmModel& arm,
-      gpmp2::SignedDistanceField& sdf, double cost_sigma, double epsilon);
-  Vector evaluateError(Vector pose) const;
-  void changeSDFData(gpmp2::SignedDistanceField& new_sdf); 
-};
-
-
-// dynamic obstacle avoid factor with GP interpolation
-#include <gpmp2/obstacle/DynamicObstacleSDFFactorGPArm.h>
-virtual class DynamicObstacleSDFFactorGPArm : gtsam::NoiseModelFactor {
-  ObstacleSDFFactorGPArm(
-      size_t pose1Key, size_t vel1Key, size_t pose2Key, size_t vel2Key,
-      const gpmp2::ArmModel& arm, gpmp2::SignedDistanceField& sdf,
-      double cost_sigma, double epsilon, const gtsam::noiseModel::Base* Qc_model,
-      double delta_t, double tau);
-  void changeSDFData(gpmp2::SignedDistanceField& new_sdf); 
-
-};
-
 // obstacle avoid factor
 #include <gpmp2/obstacle/ObstacleSDFFactorArm.h>
 virtual class ObstacleSDFFactorArm : gtsam::NoiseModelFactor {
@@ -474,6 +451,8 @@ virtual class ObstacleSDFFactorArm : gtsam::NoiseModelFactor {
       size_t poseKey, const gpmp2::ArmModel& arm,
       const gpmp2::SignedDistanceField& sdf, double cost_sigma, double epsilon);
   Vector evaluateError(Vector pose) const;
+  void replaceSDFData(const gpmp2::SignedDistanceField& sdf); 
+
 };
 
 
@@ -485,6 +464,7 @@ virtual class ObstacleSDFFactorGPArm : gtsam::NoiseModelFactor {
       const gpmp2::ArmModel& arm, const gpmp2::SignedDistanceField& sdf,
       double cost_sigma, double epsilon, const gtsam::noiseModel::Base* Qc_model,
       double delta_t, double tau);
+  void replaceSDFData(const gpmp2::SignedDistanceField& sdf); 
 };
 
 
