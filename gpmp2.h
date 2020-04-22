@@ -14,6 +14,7 @@ virtual class gtsam::noiseModel::Base;
 virtual class gtsam::NonlinearFactor;
 virtual class gtsam::NonlinearFactorGraph;
 virtual class gtsam::NoiseModelFactor;
+class gtsam::VariableIndex;
 
 namespace gpmp2 {
 
@@ -443,6 +444,28 @@ class PlanarSDF {
   void changeData(const Matrix& new_data);
 };
 
+// dynamic obstacle avoid factor
+#include <gpmp2/obstacle/DynamicObstacleSDFFactorArm.h>
+virtual class DynamicObstacleSDFFactorArm : gtsam::NoiseModelFactor {
+  DynamicObstacleSDFFactorArm(
+      size_t poseKey, const gpmp2::ArmModel& arm,
+      gpmp2::SignedDistanceField& sdf, double cost_sigma, double epsilon);
+  Vector evaluateError(Vector pose) const;
+  void changeSDFData(gpmp2::SignedDistanceField& new_sdf); 
+};
+
+
+// dynamic obstacle avoid factor with GP interpolation
+#include <gpmp2/obstacle/DynamicObstacleSDFFactorGPArm.h>
+virtual class DynamicObstacleSDFFactorGPArm : gtsam::NoiseModelFactor {
+  ObstacleSDFFactorGPArm(
+      size_t pose1Key, size_t vel1Key, size_t pose2Key, size_t vel2Key,
+      const gpmp2::ArmModel& arm, gpmp2::SignedDistanceField& sdf,
+      double cost_sigma, double epsilon, const gtsam::noiseModel::Base* Qc_model,
+      double delta_t, double tau);
+  void changeSDFData(gpmp2::SignedDistanceField& new_sdf); 
+
+};
 
 // obstacle avoid factor
 #include <gpmp2/obstacle/ObstacleSDFFactorArm.h>
@@ -800,6 +823,36 @@ double CollisionCostPose2MobileVetLin2Arms(
 gtsam::Values optimize(const gtsam::NonlinearFactorGraph& graph, const gtsam::Values& init_values,
     const gpmp2::TrajOptimizerSetting& setting, bool iter_no_increase);
 
+/// iSAM2 incremental trajectory optimizers for dynamic environments
+#include <gpmp2/planner/ISAM2DynamicTrajOptimizer.h>
+
+/// 3D replanner
+class ISAM2DynamicTrajOptimizer3DArm {
+  ISAM2DynamicTrajOptimizer3DArm(const gpmp2::ArmModel& arm, const gpmp2::SignedDistanceField& sdf,
+      const gpmp2::TrajOptimizerSetting& setting);
+
+  void initFactorGraph(Vector start_conf, Vector start_vel,
+      Vector goal_conf, Vector goal_vel);
+  void initValues(const gtsam::Values& init_values);
+  void update();
+
+  /// Replanning interfaces
+  void changeGoalConfigAndVel(Vector goal_conf, Vector goal_vel);
+  void removeGoalConfigAndVel();
+  void fixConfigAndVel(size_t state_idx, Vector conf_fix, Vector vel_fix);
+  void addPoseEstimate(size_t state_idx, Vector pose, Matrix pose_cov);
+  void addStateEstimate(size_t state_idx, Vector pose, Matrix pose_cov, Vector vel, Matrix vel_cov);
+
+  /// accesses
+  gtsam::Values values() const;
+  gtsam::VariableIndex getVariableIndex() const;
+
+  void printStats() const;
+  void printVariableIndex() const;
+
+};
+
+
 /// iSAM2 incremental trajectory optimizers
 #include <gpmp2/planner/ISAM2TrajOptimizer.h>
 
@@ -822,6 +875,7 @@ class ISAM2TrajOptimizer2DArm {
 
   /// accesses
   gtsam::Values values() const;
+
 };
 
 /// 3D replanner
@@ -843,6 +897,7 @@ class ISAM2TrajOptimizer3DArm {
 
   /// accesses
   gtsam::Values values() const;
+
 };
 
 /// 2D mobile arm replanner
@@ -864,6 +919,7 @@ class ISAM2TrajOptimizerPose2MobileArm2D {
 
   /// accesses
   gtsam::Values values() const;
+
 };
 
 /// 3D mobile arm replanner
@@ -885,6 +941,7 @@ class ISAM2TrajOptimizerPose2MobileArm {
 
   /// accesses
   gtsam::Values values() const;
+
 };
 
 
@@ -906,6 +963,7 @@ class ISAM2TrajOptimizerPose2MobileVetLin2Arms {
 
   /// accesses
   gtsam::Values values() const;
+
 };
 
 
