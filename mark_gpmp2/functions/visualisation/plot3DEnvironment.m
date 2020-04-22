@@ -1,4 +1,4 @@
-function plot3DEnvironment(dataset, X, Y, Z)
+function p1 = plot3DEnvironment(dataset, X, Y, Z)
 %PLOT3DENVIRONMENT Summary of this function goes here
 %   Detailed explanation goes here
 
