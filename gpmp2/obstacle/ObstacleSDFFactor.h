@@ -80,7 +80,7 @@ public:
   }  
   
   void replaceSDFData(const SignedDistanceField& sdf) {
-    const_cast<SignedDistanceField&>(sdf_).changeData(sdf.getData());
+    const_cast<SignedDistanceField&>(sdf_).replaceSDFData(sdf);
   }
 
   /// @return a deep copy of this factor

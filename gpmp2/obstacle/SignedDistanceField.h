@@ -83,6 +83,10 @@ public:
     data_ = temp;
   }
 
+  void replaceSDFData(const SignedDistanceField& sdf) {
+    data_ = sdf.getData();
+  }
+
   /// insert data matrix to each layer of sdf
   /// @param z_idx the z index of 3-D sdf
   /// @param field_layer matrix of each slice of 3-D sdf, Matrix represent the X (col) & Y (row)
