@@ -92,6 +92,11 @@ public:
   void changeSDFData(const std::vector<gtsam::Matrix>& new_data) {
     const_cast<SignedDistanceField&>(sdf_).changeData(new_data);
   }
+
+  void replaceSDFData(const SignedDistanceField& sdf) {
+    const_cast<SignedDistanceField&>(sdf_).changeData(sdf.getData());
+  }
+
   /// @return a deep copy of this factor
   virtual gtsam::NonlinearFactor::shared_ptr clone() const {
     return boost::static_pointer_cast<gtsam::NonlinearFactor>(

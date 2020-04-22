@@ -146,8 +146,8 @@ TEST(ObstacleSDFFactorArm, error) {
   EXPECT(assert_equal(H1_exp, H1_act, 1e-6));
 
   // changing sdf data origin zero case
-  Matrix H1_1, H1_2;
-  Vector err_1, err_2;
+  Matrix H1_1, H1_2, H1_3;
+  Vector err_1, err_2, err_3;
 
   q = Vector2(0, 0);
   factor.changeSDFData(field2);
@@ -158,14 +158,21 @@ TEST(ObstacleSDFFactorArm, error) {
   EXPECT(assert_equal(err_1, err_2, 1e-6));
 
   // changing sdf data 45 deg case
+  ObstacleSDFFactorArm factor1(0, arm, sdf, 1.0, obs_eps);
+  ObstacleSDFFactorArm initial_factor(0, arm, sdf, 1.0, obs_eps);
+
   q = Vector2(M_PI/4.0, 0);
-  factor.changeSDFData(field2);
-  err_1 = factor.evaluateError(q, H1_1);
+  factor1.changeSDFData(field2);
+  initial_factor.replaceSDFData(sdf2);
+  err_1 = factor1.evaluateError(q, H1_1);
   err_2 = factor2.evaluateError(q, H1_2);
+  err_3 = initial_factor.evaluateError(q, H1_3);
 
   EXPECT(assert_equal(H1_1, H1_2, 1e-6));
   EXPECT(assert_equal(err_1, err_2, 1e-6));
 
+  EXPECT(assert_equal(H1_1, H1_3, 1e-6));
+  EXPECT(assert_equal(err_1, err_3, 1e-6));
 }
 
 

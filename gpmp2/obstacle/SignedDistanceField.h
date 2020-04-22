@@ -72,14 +72,14 @@ public:
     return data_;
   }
 
-  // to change the SDF dynamically
-  void replaceSDFData(SignedDistanceField& sdf) {
-    std::vector<gtsam::Matrix> temp = sdf.getData();
-    changeData(temp);
-  }
+  // // to change the SDF dynamically
+  // void replaceSDFData(SignedDistanceField& sdf) {
+  //   std::vector<gtsam::Matrix> temp = sdf.getData();
+  //   changeData(temp);
+  // }
 
   void changeData(const std::vector<gtsam::Matrix>& new_data) {
-    std::vector<gtsam::Matrix> temp = new_data;
+    std::vector<gtsam::Matrix> temp = new_data; // This copies
     data_ = temp;
   }
 
@@ -91,12 +91,6 @@ public:
       throw std::runtime_error("[SignedDistanceField] matrix layer out of index");
     data_[z_idx] = field_layer;
   }
-
-  // /// clear data matrix of sdf
-  // void clearFieldData() {
-  //   // data_ = std::vector<gtsam::Matrix>(field_z_);
-  //   data_.resize(field_z_);
-  // }
 
   /// give a point, search for signed distance field and (optional) gradient
   /// @param point query position
