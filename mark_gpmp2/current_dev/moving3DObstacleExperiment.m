@@ -26,7 +26,6 @@ obs_size = [0.2, 0.2, 0.2];
 
 use_trustregion_opt = false;
 
-
 %% Problem setup
 up_conf = [0,0,0,0,0,0,0]';
 forward_conf = [0,1.57,0,0,0,0,0]';
@@ -105,27 +104,33 @@ vel_fix_sigma = 0.0001;
 pose_fix_model = noiseModel.Isotropic.Sigma(7, pose_fix_sigma);
 vel_fix_model = noiseModel.Isotropic.Sigma(7, vel_fix_sigma);
 
-%% isam
-
-% settings
-opt_setting = TrajOptimizerSetting(7);
-opt_setting.set_total_step(total_time_step);
-opt_setting.set_total_time(total_time_sec);
-opt_setting.set_epsilon(epsilon_dist);
-opt_setting.set_cost_sigma(cost_sigma);
-opt_setting.set_obs_check_inter(check_inter);
-opt_setting.set_conf_prior_model(pose_fix_sigma);
-opt_setting.set_vel_prior_model(vel_fix_sigma);
-opt_setting.set_Qc_model(Qc);
+problem_setup.start_conf = start_conf;
+problem_setup.end_conf = end_conf;
+problem_setup.start_vel = start_vel;
+problem_setup.end_vel = end_vel;
+problem_setup.total_time_step = total_time_step;
+problem_setup.total_time_sec = total_time_sec;
+problem_setup.total_check_step = total_check_step;
+problem_setup.delta_t = delta_t;
+problem_setup.check_inter = check_inter;
+problem_setup.pose_fix_sigma = pose_fix_sigma;
+problem_setup.pose_fix_model = pose_fix_model;
+problem_setup.vel_fix_sigma = vel_fix_sigma;
+problem_setup.vel_fix_model = vel_fix_model;
+problem_setup.cost_sigma = cost_sigma;
+problem_setup.epsilon_dist = epsilon_dist;
+problem_setup.arm = arm;
+problem_setup.Qc_model = Qc_model;
+problem_setup.use_trustregion_opt = use_trustregion_opt;
 
 % initial values by batch
 init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
-ori_traj_values = BatchTrajOptimize3DArm(arm, dataset.sdf, start_conf, start_vel, end_conf, ...
-    end_vel, init_values, opt_setting);
 
 start_sdf = env.queryEnv(0).sdf;
 
-%% build graphs
+%% get datasets
+
+disp('Getting all the datasets');
 
 datasets = [];
 
@@ -135,270 +140,20 @@ for i = 0:total_time_step
     datasets = [datasets, dataset];
 end   
 
+%% build graphs
 
 disp('Case1: Static sdf');
 
-static_graph = NonlinearFactorGraph;
+static_case = case1(start_sdf, init_values, problem_setup);
 
-for i = 0:total_time_step
-    pose_key = gtsam.symbol('x', i);
-    vel_key = gtsam.symbol('v', i);
-
-    % start and end
-    if i == 0
-      static_graph.add(PriorFactorVector(pose_key, start_conf, pose_fix_model));
-      static_graph.add(PriorFactorVector(vel_key, start_vel, vel_fix_model));
-
-    elseif i == total_time_step
-      static_graph.add(PriorFactorVector(pose_key, end_conf, pose_fix_model));
-      static_graph.add(PriorFactorVector(vel_key, end_vel, vel_fix_model));
-    end
-
-    % non-interpolated cost factor
-    static_graph.add(ObstacleSDFFactorArm(pose_key, ...
-                                        arm, ...
-                                        start_sdf, ...
-                                        cost_sigma, ...
-                                        epsilon_dist));
-
-    if i > 0
-        last_pose_key = gtsam.symbol('x', i-1);
-        last_vel_key = gtsam.symbol('v', i-1);
-
-      % interpolated cost factor
-        % GP cost factor
-        if check_inter > 0
-            for j = 1:check_inter 
-                tau = j * (total_time_sec / total_check_step);
-                static_graph.add(ObstacleSDFFactorGPArm( ...
-                    last_pose_key, last_vel_key, pose_key, vel_key, ...
-                    arm, start_sdf, ...
-                    cost_sigma, epsilon_dist, ...
-                    Qc_model, delta_t, tau));
-            end
-        end
-
-      % GP factor
-        static_graph.add(GaussianProcessPriorLinear(last_pose_key, ...
-                                                last_vel_key, ...
-                                                pose_key, ...
-                                                vel_key, ...
-                                                delta_t, ...
-                                                Qc_model));
-        
-    end
-end
-
-if use_trustregion_opt
-    parameters = DoglegParams;
-    parameters.setVerbosity('ERROR');
-    static_optimizer = DoglegOptimizer(static_graph, init_values, parameters);
-else
-    parameters = GaussNewtonParams;
-    parameters.setVerbosity('ERROR');
-    static_optimizer = GaussNewtonOptimizer(static_graph, init_values, parameters);
-end
-
-
-static_optimizer.optimize();
-static_result = static_optimizer.values();
-
-%%
 disp('Case2: Full knowledge sdf');
 
-full_knowledge_graph = NonlinearFactorGraph;
+full_knowledge_case = case2(datasets, init_values, problem_setup);
 
-obs_fact_indices = zeros(1, total_time_step+1);
-all_obs_fact_indices = cell(1, total_time_step+1);
-obs_fact_indices_in_timestep = [];
-
-factor_ind_counter = 0;
-for i = 0:total_time_step
-    pose_key = gtsam.symbol('x', i);
-    vel_key = gtsam.symbol('v', i);
-
-    obs_fact_indices_in_timestep = [];
-
-    % start and end
-    if i == 0
-      full_knowledge_graph.add(PriorFactorVector(pose_key, start_conf, pose_fix_model));
-      full_knowledge_graph.add(PriorFactorVector(vel_key, start_vel, vel_fix_model));
-      factor_ind_counter = factor_ind_counter + 2;
-    elseif i == total_time_step
-      full_knowledge_graph.add(PriorFactorVector(pose_key, end_conf, pose_fix_model));
-      full_knowledge_graph.add(PriorFactorVector(vel_key, end_vel, vel_fix_model));
-      factor_ind_counter = factor_ind_counter + 2;
-
-    end
-
-    % non-interpolated cost factor
-    obs_fact_indices(i+1) = factor_ind_counter;
-    obs_fact_indices_in_timestep = [obs_fact_indices_in_timestep; factor_ind_counter];
-    
-    full_knowledge_graph.add(ObstacleSDFFactorArm(pose_key, ...
-                                        arm, ...
-                                        datasets(i+1).sdf, ...
-                                        cost_sigma, ...
-                                        epsilon_dist));
-    factor_ind_counter = factor_ind_counter + 1;
-
-    if i > 0
-        last_pose_key = gtsam.symbol('x', i-1);
-        last_vel_key = gtsam.symbol('v', i-1);
-
-      % interpolated cost factor
-        % GP cost factor
-        if check_inter > 0
-            for j = 1:check_inter 
-                tau = j * (total_time_sec / total_check_step);
-                
-                obs_fact_indices_in_timestep = [obs_fact_indices_in_timestep; factor_ind_counter];
-                full_knowledge_graph.add(ObstacleSDFFactorGPArm( ...
-                    last_pose_key, last_vel_key, pose_key, vel_key, ...
-                    arm, datasets(i+1).sdf, ...
-                    cost_sigma, epsilon_dist, ...
-                    Qc_model, delta_t, tau));
-                factor_ind_counter = factor_ind_counter + 1;
-
-            end
-        end
-
-      % GP factor
-        full_knowledge_graph.add(GaussianProcessPriorLinear(last_pose_key, ...
-                                                last_vel_key, ...
-                                                pose_key, ...
-                                                vel_key, ...
-                                                delta_t, ...
-                                                Qc_model));
-        factor_ind_counter = factor_ind_counter + 1;
-
-    end
-    
-    all_obs_fact_indices{i+1} = obs_fact_indices_in_timestep;
-
-end
-
-
-if use_trustregion_opt
-    parameters = DoglegParams;
-    parameters.setVerbosity('ERROR');
-    full_optimizer = DoglegOptimizer(full_knowledge_graph, init_values, parameters);
-else
-    parameters = GaussNewtonParams;
-    parameters.setVerbosity('ERROR');
-    full_optimizer = GaussNewtonOptimizer(full_knowledge_graph, init_values, parameters);
-end
-
-
-full_optimizer.optimize();
-full_result = full_optimizer.values();
-
-
-%% Case 3 - Execution and update all future the same
-
-%%
 disp('Case3: Execute and update sdf');
 
-execute_update_graph = NonlinearFactorGraph;
+execute_update_case = case3(datasets, init_values, problem_setup);
 
-factor_ind_counter = 0;
-for i = 0:total_time_step
-    
-    disp("Case3: Execute and update sdf... step: " + num2str(i));
-    pose_key = gtsam.symbol('x', i);
-    vel_key = gtsam.symbol('v', i);
-
-    % start and end
-    if i == 0
-      execute_update_graph.add(PriorFactorVector(pose_key, start_conf, pose_fix_model));
-      execute_update_graph.add(PriorFactorVector(vel_key, start_vel, vel_fix_model));
-    elseif i == total_time_step
-      execute_update_graph.add(PriorFactorVector(pose_key, end_conf, pose_fix_model));
-      execute_update_graph.add(PriorFactorVector(vel_key, end_vel, vel_fix_model));
-    end
-
-    % non-interpolated cost factor
-    execute_update_graph.add(ObstacleSDFFactorArm(pose_key, ...
-                                        arm, ...
-                                        start_sdf, ...
-                                        cost_sigma, ...
-                                        epsilon_dist));
-    if i > 0
-        last_pose_key = gtsam.symbol('x', i-1);
-        last_vel_key = gtsam.symbol('v', i-1);
-
-      % interpolated cost factor
-        % GP cost factor
-        if check_inter > 0
-            for j = 1:check_inter 
-                tau = j * (total_time_sec / total_check_step);
-                execute_update_graph.add(ObstacleSDFFactorGPArm( ...
-                    last_pose_key, last_vel_key, pose_key, vel_key, ...
-                    arm, start_sdf, ...
-                    cost_sigma, epsilon_dist, ...
-                    Qc_model, delta_t, tau));
-            end
-        end
-
-      % GP factor
-        execute_update_graph.add(GaussianProcessPriorLinear(last_pose_key, ...
-                                                last_vel_key, ...
-                                                pose_key, ...
-                                                vel_key, ...
-                                                delta_t, ...
-                                                Qc_model));
-    end
-end
-
-% At this point the graph is exactly the same of the static graph
-
-
-execute_update_results = [];
-execute_update_result = init_values;
-
-update_timings.factors_t = zeros(1, total_time_step+1);
-update_timings.num_factors = zeros(1, total_time_step+1);
-update_timings.optimize_t = zeros(1, total_time_step+1);
-
-for i = 0:total_time_step
-    disp("Case3: Execute and update sdf... step: " + num2str(i));
-    
-%     execute_update_results = [execute_update_results, execute_update_result];
-    
-    if i > 0
-        % Execute (get next position and add prior to graph)
-        pose_key = gtsam.symbol('x', i);    
-        vel_key = gtsam.symbol('v', i);    
-        curr_conf = execute_update_result.atVector(pose_key);
-        curr_vel = execute_update_result.atVector(vel_key);
-
-        % fix conf and vel current position
-        execute_update_graph.add(PriorFactorVector(pose_key, curr_conf, pose_fix_model));
-        execute_update_graph.add(PriorFactorVector(vel_key, curr_vel, vel_fix_model));
-
-        % Update current and all future factors to what you see now
-        num_factors_updated = 0;
-        tic;
-        for j = i:total_time_step
-            for k = 1:numel(all_obs_fact_indices{j+1})
-%                 ind = all_obs_fact_indices{j+1}(k);
-%                 execute_update_graph.at(ind).replaceSDFData(datasets(i+1).sdf);                
-                ind = all_obs_fact_indices{j+1}(k);
-                new_fact = execute_update_graph.at(ind).getSDFModFactor(datasets(i+1).sdf);            
-                execute_update_graph.replace(ind, new_fact);
-            end
-            num_factors_updated = num_factors_updated + numel(all_obs_fact_indices{j+1});
-        end 
-        update_timings.factors_t(i+1) = toc;
-        update_timings.num_factors(i+1) = num_factors_updated;
-    end
-    
-    % Optimize and store result
-    tic;
-    execute_update_result = gpmp2.optimize(execute_update_graph, execute_update_result, opt_setting, true);
-    update_timings.optimize_t(i+1) = toc;
-
-end
 %% Plot case 1
 import gpmp2.*
 import gtsam.*
@@ -406,13 +161,13 @@ import gtsam.*
 figure(3);
 hold on;
 % gpmp2.set3DPlotRange(dataset);
-axis([-0.5 1 -0.5 0.5 0 1]);
+axis([-0.5 1 -0.5 0.5 -0.2 1]);
 grid on; view(45,45);
 % view(3)
 for i = 0:total_time_step
-    static_conf = static_result.atVector(symbol('x', i));
-    full_conf = full_result.atVector(symbol('x', i));
-    execute_update_conf = execute_update_result.atVector(symbol('x', i));
+    static_conf = static_case.result.atVector(symbol('x', i));
+    full_conf = full_knowledge_case.result.atVector(symbol('x', i));
+    execute_update_conf = execute_update_case.final_result.atVector(symbol('x', i));
     cla;
 %     if i > 0
 %         delete(h1);
