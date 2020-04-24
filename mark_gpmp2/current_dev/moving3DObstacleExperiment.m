@@ -18,8 +18,8 @@ v_or_t_end = true;
 use_all_straight_initialisations = false;
 
 % v_or_t_end_value = [0,0, 0];
-v_or_t_end_value = [0,-0.08, 0];
-starting_pos = [0.40, 0.2, 0.4];
+v_or_t_end_value = [0,-0.16, 0];
+starting_pos = [0.40, 0.4, 0.4];
 % v_or_t_end_value = [0,0, 0];
 % starting_pos = [0.40, 0.0, 0.0];
 obs_size = [0.2, 0.2, 0.2];
@@ -49,6 +49,7 @@ env.add_object(0,...
                 starting_pos, ...
                 obs_size);
    
+%% 
 dataset = env.queryEnv(0);
 [X, Y, Z] = getEnvironmentMesh(dataset);
 
@@ -154,16 +155,12 @@ disp('Case3: Execute and update sdf');
 
 execute_update_case = case3(datasets, init_values, problem_setup);
 
-%% Plot case 1
-import gpmp2.*
-import gtsam.*
-
+%% Plot the comparison animation
 figure(3);
 hold on;
 % gpmp2.set3DPlotRange(dataset);
 axis([-0.5 1 -0.5 0.5 -0.2 1]);
 grid on; view(45,45);
-% view(3)
 for i = 0:total_time_step
     static_conf = static_case.result.atVector(symbol('x', i));
     full_conf = full_knowledge_case.result.atVector(symbol('x', i));
@@ -186,6 +183,29 @@ for i = 0:total_time_step
 end
 
 
+%% Plot the execute update evolution
+import gtsam.*
+import gpmp2.*
+
+figure(4);
+hold on;
+axis([-0.5 1 -0.5 0.5 -0.2 1]);
+grid on; view(45,45);
+for j = 0:total_time_step
+    cla;
+    h1 = plot3DEnvironment(datasets(j+1), X, Y, Z);
+    
+    for i = 0:total_time_step
+        execute_update_conf = execute_update_case.results(j+1).atVector(symbol('x', i));
+        if i<=j % executed
+            execute_update_handle = plotArm(arm.fk_model(), execute_update_conf, 'r', 2);
+        else % plan
+            execute_update_handle = plotArm(arm.fk_model(), execute_update_conf, 'b', 2);
+        end
+    end
+    pause(0.05);
+end
+
 
 % 
 % figure(4);
@@ -194,7 +214,7 @@ end
 % grid on, view(3)
 % conf = result.atVector(gtsam.symbol('x', 10));
 % plot3DEnvironment(datasets(11), X, Y, Z)
-% gpmp2.plotArm(arm.fk_model(), conf, 'b', 2)
+% gpmp2.plotArm(arm.fk_modelstarting_pos(), conf, 'b', 2)
 % 
 % mid_factor = full_knowledge_graph.at(102);
 % 
