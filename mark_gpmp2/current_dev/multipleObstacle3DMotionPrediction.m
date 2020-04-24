@@ -91,11 +91,10 @@ for t = 0:delta_t:1
     obs_centroids_points = zeros(num_obs, 3);
     obj_coords = cell(num_obs);
     
-    predicted_env = zeros(300,300,300);
+    predicted_env = zeros(dataset_size);
     % For each object get centroids
     for j = 1:num_obs
         % Get centroid
-        tic;
         centroid = regions(j).Centroid;
         obs_centroids(j, :) = centroid;
         
@@ -124,10 +123,7 @@ for t = 0:delta_t:1
                                                             
             predicted_env(predicted_occupancy_inds) = 1;
 
-%         hold on
-%         predicted = imtranslate(dataset.map, delta_t*px_velocity,'FillValues',255);
         end
-        toc
     end
     last_centroids = obs_centroids;
     last_centroid_points = obs_centroids_points;
@@ -135,6 +131,20 @@ for t = 0:delta_t:1
         
     pause(1)
 end
+
+%% class testing
+
+object_predictor = objectTrackerPredictor(dataset_size);
+for t = 0:delta_t:1 
+    dataset = env.queryEnv(t);
+    tic;
+    object_predictor.update(t, dataset.map);
+    toc;
+end
+
+tic;
+predicted_env = object_predictor.predict(t_predict);
+toc;
 
 %% Plot prediction and actual
 % if plot_figs
