@@ -4,6 +4,17 @@ function prediction_case = case4(datasets, init_values, problem_setup)
     import gtsam.*
     import gpmp2.*
     
+    arm_model = arm.fk_model();
+    origin = [datasets{1}.origin_x, ...
+            datasets{1}.origin_y, ...
+            datasets{1}.origin_z];
+    cell_size = datasets{1}.cell_size;
+    origin_point3 = datasets{1}.origin_point3;
+    workspace_size = size(datasets{1}.map);
+    rows = datasets{1}.rows;
+    object_predictor = objectTrackerPredictor(workspace_size);
+        
+    
     tic;
     graph = NonlinearFactorGraph;
 
@@ -32,7 +43,7 @@ function prediction_case = case4(datasets, init_values, problem_setup)
         % non-interpolated cost factor
         obs_fact_indices(i+1) = factor_ind_counter;
         obs_fact_indices_in_timestep = [obs_fact_indices_in_timestep; factor_ind_counter];
-tic
+
         graph.add(ObstacleSDFFactorArm(pose_key, ...
                                             problem_setup.arm, ...
                                             datasets(1).sdf, ...
@@ -100,7 +111,8 @@ tic
         disp("Case4: Execute and predict sdf... step: " + num2str(i));
 
         results = [results, result];
-
+        object_predictor.update(i*problem_setup.delta_t, datasets{i+1}.map);
+        
         if i > 0
             % Execute (get next position and add prior to graph)
             pose_key = gtsam.symbol('x', i);    
@@ -114,25 +126,43 @@ tic
             
             % Update current and all future factors based on prediction
             num_factors_updated = 0;
-            tic;
             
-%             % Time to collision matrix
-%             D_change = datasets(i+1).field - datasets(i).field;
-%             inds_ignore = D_change>0.99*min(min(min(D_change))); 
-%             time_to_collision = -datasets(i+1).field./D_change;
-%             time_to_collision(time_to_collision<0)=1000;
+            % Time to collision matrix
+            D_change = datasets(i+1).field - datasets(i).field;
+            inds_ignore = D_change>0.99*min(min(min(D_change))); 
+            time_to_collision = -datasets(i+1).field./D_change;
+            time_to_collision(time_to_collision<0)=1000;
            
-            
+            % For each variable/factor set
             for j = i:problem_setup.total_time_step
-                % Predict the sdf at this point
-
-                % Update factors
-                for k = 1:numel(all_obs_fact_indices{j+1})              
-                    ind = all_obs_fact_indices{j+1}(k);
-                    new_fact = graph.at(ind).getSDFModFactor(datasets(i+1).sdf);            
-                    graph.replace(ind, new_fact);
+                
+                % Query if it could be in collision
+                query_conf = result.atVector(gtsam.symbol('x', j));
+                joint_positions = arm_model.forwardKinematicsPosition(query_conf);
+                joint_coords = positionToCoord(joint_positions, origin, rows, cell_size);
+                
+                % Swap x and y as needed to query the field correctly
+                joint_coords(:, [1 2]) = joint_coords(:, [2 1]);
+                
+                query_inds = sub2ind(workspace_size,...
+                                    joint_coords(:,1)', ...
+                                    joint_coords(:,2)', ...
+                                    joint_coords(:,3)');
+                
+                % If the collision time occurs within 2s of the joint being there, update                
+                if abs((j-i) - min(time_to_collision(query_inds))) < 2
+                    % Predict the sdf at this point
+                    predicted_map = object_predictor.predict(j*problem_setup.delta_t);
+                    predicted_sdf = mapToSdf(predicted_map, origin_point3, cell_size);
+                    
+                    % Update factors
+                    for k = 1:numel(all_obs_fact_indices{j+1})              
+                        ind = all_obs_fact_indices{j+1}(k);
+                        new_fact = graph.at(ind).getSDFModFactor(predicted_sdf);            
+                        graph.replace(ind, new_fact);
+                    end
+                    num_factors_updated = num_factors_updated + numel(all_obs_fact_indices{j+1});
                 end
-                num_factors_updated = num_factors_updated + numel(all_obs_fact_indices{j+1});
             end 
             update_timings.factors_t(i+1) = toc;
             update_timings.num_factors(i+1) = num_factors_updated;
@@ -156,3 +186,31 @@ tic
     
 end
 
+
+function swapped_coord = positionToCoord(positions, origin, rows, cell_size)
+    positions(:,2) = -positions(:,2);
+    origin(:,2) = - origin(:,2);
+
+    coord = round((positions - origin)/cell_size) + [1, rows ,1];
+    swapped_coord = zeros(size(coord));
+    swapped_coord(:,1) = coord(:,2);
+    swapped_coord(:,2) = coord(:,1);
+    swapped_coord(:,3) = coord(:,3);
+end
+
+function sdf = mapToSdf(map, origin_point3, cell_size)
+    % signed distance field
+    field  = gpmp2.signedDistanceField3D(permute(map, [2 1 3]), ...
+                                                    cell_size);            
+
+    % init sdf
+    sdf = gpmp2.SignedDistanceField(origin_point3, ...
+                                        cell_size, ...
+                                        size(field, 1), ...
+                                        size(field, 2), ...
+                                        size(field, 3));
+    for z = 1:size(field, 3)
+        sdf.initFieldData(z-1, field(:,:,z)');
+    end
+
+end     
