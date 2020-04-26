@@ -1,4 +1,4 @@
-function full_knowledge_case = case3(datasets, init_values, problem_setup)
+function execute_update_case = case3(datasets, init_values, problem_setup)
 %CASE3 Summary of this function goes here
 %   Detailed explanation goes here
     import gtsam.*
@@ -83,10 +83,10 @@ function full_knowledge_case = case3(datasets, init_values, problem_setup)
     
     if problem_setup.use_trustregion_opt
         parameters = DoglegParams;
-        parameters.setVerbosity('ERROR');
+        parameters.setVerbosity('NONE');
     else
         parameters = GaussNewtonParams;
-        parameters.setVerbosity('ERROR');
+        parameters.setVerbosity('NONE');
     end
     
     results = [];
@@ -95,6 +95,8 @@ function full_knowledge_case = case3(datasets, init_values, problem_setup)
     update_timings.factors_t = zeros(1, problem_setup.total_time_step+1);
     update_timings.num_factors = zeros(1, problem_setup.total_time_step+1);
     update_timings.optimize_t = zeros(1, problem_setup.total_time_step+1);
+%     update_timings.factors_updated = cell(1, problem_setup.total_time_step+1);
+    update_timings.factors_steps_updated = cell(1, problem_setup.total_time_step+1);
 
     for i = 0:problem_setup.total_time_step
         disp("Case3: Execute and update sdf... step: " + num2str(i));
@@ -122,6 +124,9 @@ function full_knowledge_case = case3(datasets, init_values, problem_setup)
                     graph.replace(ind, new_fact);
                 end
                 num_factors_updated = num_factors_updated + numel(all_obs_fact_indices{j+1});
+%                 update_timings.factors_updated{i+1} = vertcat(update_timings.factors_updated{i+1},all_obs_fact_indices{j+1});
+                update_timings.factors_steps_updated{i+1} = vertcat(update_timings.factors_steps_updated{i+1},j);
+
             end 
             update_timings.factors_t(i+1) = toc;
             update_timings.num_factors(i+1) = num_factors_updated;
@@ -136,12 +141,12 @@ function full_knowledge_case = case3(datasets, init_values, problem_setup)
 
     end
     
-    full_knowledge_case.final_result = result;
-    full_knowledge_case.results = results;
-    full_knowledge_case.graph_build_t = graph_build_t;
-    full_knowledge_case.update_timings = update_timings;
-    full_knowledge_case.all_obs_fact_indices = all_obs_fact_indices;
-    full_knowledge_case.obs_fact_indices = obs_fact_indices;
+    execute_update_case.final_result = result;
+    execute_update_case.results = results;
+    execute_update_case.graph_build_t = graph_build_t;
+    execute_update_case.update_timings = update_timings;
+    execute_update_case.all_obs_fact_indices = all_obs_fact_indices;
+    execute_update_case.obs_fact_indices = obs_fact_indices;
     
 end
 
