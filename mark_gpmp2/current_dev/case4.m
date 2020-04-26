@@ -1,19 +1,22 @@
-function prediction_case = case4(datasets, init_values, problem_setup)
+function selective_prediction_case = case4(datasets, init_values, problem_setup, useStaticMap)
 %CASE3 Summary of this function goes here
 %   Detailed explanation goes here
     import gtsam.*
     import gpmp2.*
     
-    arm_model = arm.fk_model();
-    origin = [datasets{1}.origin_x, ...
-            datasets{1}.origin_y, ...
-            datasets{1}.origin_z];
-    cell_size = datasets{1}.cell_size;
-    origin_point3 = datasets{1}.origin_point3;
-    workspace_size = size(datasets{1}.map);
-    rows = datasets{1}.rows;
-    object_predictor = objectTrackerPredictor(workspace_size);
-        
+    arm_model = problem_setup.arm.fk_model();
+    origin = [datasets(1).origin_x, ...
+            datasets(1).origin_y, ...
+            datasets(1).origin_z];
+    cell_size = datasets(1).cell_size;
+    origin_point3 = datasets(1).origin_point3;
+    workspace_size = size(datasets(1).map);
+    rows = datasets(1).rows;
+    if useStaticMap
+        object_predictor = objectTrackerPredictor(workspace_size, datasets(1).static_map);
+    else
+        object_predictor = objectTrackerPredictor(workspace_size);
+    end
     
     tic;
     graph = NonlinearFactorGraph;
@@ -94,10 +97,10 @@ function prediction_case = case4(datasets, init_values, problem_setup)
     
     if problem_setup.use_trustregion_opt
         parameters = DoglegParams;
-        parameters.setVerbosity('ERROR');
+        parameters.setVerbosity('NONE');
     else
         parameters = GaussNewtonParams;
-        parameters.setVerbosity('ERROR');
+        parameters.setVerbosity('NONE');
     end
     
     results = [];
@@ -106,12 +109,14 @@ function prediction_case = case4(datasets, init_values, problem_setup)
     update_timings.factors_t = zeros(1, problem_setup.total_time_step+1);
     update_timings.num_factors = zeros(1, problem_setup.total_time_step+1);
     update_timings.optimize_t = zeros(1, problem_setup.total_time_step+1);
+%     update_timings.factors_updated = cell(1, problem_setup.total_time_step+1);
+    update_timings.factors_steps_updated = cell(1, problem_setup.total_time_step+1);
 
+    predicted_sdfs = cell(problem_setup.total_time_step);
     for i = 0:problem_setup.total_time_step
-        disp("Case4: Execute and predict sdf... step: " + num2str(i));
+        disp("Case4: Execute and selectively predict sdf... step: " + num2str(i));
 
-        results = [results, result];
-        object_predictor.update(i*problem_setup.delta_t, datasets{i+1}.map);
+        object_predictor.update(i*problem_setup.delta_t, datasets(i+1).map);
         
         if i > 0
             % Execute (get next position and add prior to graph)
@@ -124,11 +129,12 @@ function prediction_case = case4(datasets, init_values, problem_setup)
             graph.add(PriorFactorVector(pose_key, curr_conf, problem_setup.pose_fix_model));
             graph.add(PriorFactorVector(vel_key, curr_vel, problem_setup.vel_fix_model));
             
+            tic;
             % Update current and all future factors based on prediction
             num_factors_updated = 0;
             
             % Time to collision matrix
-            D_change = datasets(i+1).field - datasets(i).field;
+            D_change = (datasets(i+1).field - datasets(i).field)/problem_setup.delta_t;
             inds_ignore = D_change>0.99*min(min(min(D_change))); 
             time_to_collision = -datasets(i+1).field./D_change;
             time_to_collision(time_to_collision<0)=1000;
@@ -138,51 +144,63 @@ function prediction_case = case4(datasets, init_values, problem_setup)
                 
                 % Query if it could be in collision
                 query_conf = result.atVector(gtsam.symbol('x', j));
-                joint_positions = arm_model.forwardKinematicsPosition(query_conf);
+                joint_positions = arm_model.forwardKinematicsPosition(query_conf)'; % [y,x,z]
+                joint_positions(:, [1 2]) = joint_positions(:, [2 1]);
                 joint_coords = positionToCoord(joint_positions, origin, rows, cell_size);
                 
                 % Swap x and y as needed to query the field correctly
-                joint_coords(:, [1 2]) = joint_coords(:, [2 1]);
+%                 joint_coords(:, [1 2]) = joint_coords(:, [2 1]);
                 
                 query_inds = sub2ind(workspace_size,...
                                     joint_coords(:,1)', ...
                                     joint_coords(:,2)', ...
                                     joint_coords(:,3)');
+                                
+%                 time_to_collision(query_inds)
                 
                 % If the collision time occurs within 2s of the joint being there, update                
                 if abs((j-i) - min(time_to_collision(query_inds))) < 2
                     % Predict the sdf at this point
                     predicted_map = object_predictor.predict(j*problem_setup.delta_t);
-                    predicted_sdf = mapToSdf(predicted_map, origin_point3, cell_size);
+                    predicted_sdfs{j} = mapToSdf(predicted_map, origin_point3, cell_size);
+%                     tic;
+%                     predicted_sdfs{j} = object_predictor.predict_sdf(j*problem_setup.delta_t, cell_size, origin_point3);           
+%                     toc;
                     
                     % Update factors
                     for k = 1:numel(all_obs_fact_indices{j+1})              
                         ind = all_obs_fact_indices{j+1}(k);
-                        new_fact = graph.at(ind).getSDFModFactor(predicted_sdf);            
+                        new_fact = graph.at(ind).getSDFModFactor(predicted_sdfs{j});            
                         graph.replace(ind, new_fact);
                     end
                     num_factors_updated = num_factors_updated + numel(all_obs_fact_indices{j+1});
+%                     update_timings.factors_updated{i+1} = vertcat(update_timings.factors_updated{i+1},all_obs_fact_indices{j+1});
+                    update_timings.factors_steps_updated{i+1} = vertcat(update_timings.factors_steps_updated{i+1},j);
+
                 end
-            end 
+                
+            end
             update_timings.factors_t(i+1) = toc;
             update_timings.num_factors(i+1) = num_factors_updated;
         end
     
         % Optimize and store result
-        optimizer = GaussNewtonOptimizer(graph, init_values, parameters);
+        optimizer = GaussNewtonOptimizer(graph, result, parameters);
         
         tic;
         result = optimizer.optimize();
         update_timings.optimize_t(i+1) = toc;
 
+        results = [results, result];
+
     end
     
-    prediction_case.final_result = result;
-    prediction_case.results = results;
-    prediction_case.graph_build_t = graph_build_t;
-    prediction_case.update_timings = update_timings;
-    prediction_case.all_obs_fact_indices = all_obs_fact_indices;
-    prediction_case.obs_fact_indices = obs_fact_indices;
+    selective_prediction_case.final_result = result;
+    selective_prediction_case.results = results;
+    selective_prediction_case.graph_build_t = graph_build_t;
+    selective_prediction_case.update_timings = update_timings;
+    selective_prediction_case.all_obs_fact_indices = all_obs_fact_indices;
+    selective_prediction_case.obs_fact_indices = obs_fact_indices;
     
 end
 
