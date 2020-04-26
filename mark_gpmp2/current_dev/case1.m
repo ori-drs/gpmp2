@@ -63,11 +63,11 @@ function static_case = case1(sdf, init_values, problem_setup)
 
     if problem_setup.use_trustregion_opt
         parameters = DoglegParams;
-        parameters.setVerbosity('ERROR');
+        parameters.setVerbosity('NONE');
         optimizer = DoglegOptimizer(graph, init_values, parameters);
     else
         parameters = GaussNewtonParams;
-        parameters.setVerbosity('ERROR');
+        parameters.setVerbosity('NONE');
         optimizer = GaussNewtonOptimizer(graph, init_values, parameters);
     end
     
