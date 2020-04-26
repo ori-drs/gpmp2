@@ -6,7 +6,9 @@ classdef objectTrackerPredictor < handle
         current_t
         map_size
         static_map
+        use_static_map
         delta_t
+%         cell_size
         
         obs_px_velocity
         px_ind_list
@@ -15,12 +17,21 @@ classdef objectTrackerPredictor < handle
     end
     
     methods
-        function obj = objectTrackerPredictor(map_size)
+        function obj = objectTrackerPredictor(map_size, static_map)
             %OBJECTTRACKERPREDICTOR Construct an instance of this class
             %   Detailed explanation goes here
             obj.map_size = map_size;
-            obj.static_map = zeros(map_size);
             obj.num_obs = 0;
+            if nargin == 2
+%                 obj.static_map = permute(static_map, [2 1 3]);
+                obj.static_map = flip(static_map);
+                obj.use_static_map = true;
+            else
+                obj.static_map = zeros(map_size);
+                obj.use_static_map = false;
+            end
+
+%             obj.cell_size = cell_size;
         end
         
         function obj = update(obj, current_t, new_map)
@@ -30,6 +41,9 @@ classdef objectTrackerPredictor < handle
             % Save new values
             obj.delta_t = current_t - obj.current_t;
             obj.current_t = current_t;
+            
+            % Subtract the static map
+            new_map = new_map - obj.static_map;
             
             % Calculate the centroids
             conn_comps = bwconncomp(new_map);
@@ -42,7 +56,7 @@ classdef objectTrackerPredictor < handle
             % For each object
             for j = 1:num_obs
                 % Get centroid
-                centroid = regions(j).Centroid;
+                centroid = round(regions(j).Centroid);
                 obs_centroids(j, :) = centroid;
 
                 if obj.num_obs>0
@@ -70,10 +84,41 @@ classdef objectTrackerPredictor < handle
                                                                     obj.map_size,...
                                                                     obj.px_ind_list{j});
                 predicted_map(predicted_occupancy_inds) = 1;                                   
-            end
-
-            
+            end  
         end
+        
+        
+        
+        function predicted_sdf = predict_sdf(obj, t, cell_size, origin_point3)
+            %METHOD2 Summary of this method goes here
+            %   Detailed explanation goes here
+            predicted_map = obj.static_map;
+
+            for j = 1:obj.num_obs
+                predicted_occupancy_inds = getPredictedOccupancyInds(t - obj.current_t,...
+                                                                    obj.obs_px_velocity(j,:),...
+                                                                    obj.map_size,...
+                                                                    obj.px_ind_list{j});
+                predicted_map(predicted_occupancy_inds) = 1;                                   
+            end  
+            
+            % Convert map to sdf
+            field  = gpmp2.signedDistanceField3D(permute(predicted_map, [2 1 3]), cell_size);            
+
+            % init sdf
+            predicted_sdf = gpmp2.SignedDistanceField(origin_point3, ...
+                                                cell_size, ...
+                                                size(field, 1), ...
+                                                size(field, 2), ...
+                                                size(field, 3));
+
+            predicted_sdf.initFieldData(0, field(:,:,1)');
+            predicted_sdf.initFieldData(1, field(:,:,2)');
+            predicted_sdf.initFieldData(2, field(:,:,3)');
+
+    
+        end
+        
     end
 end
 
@@ -84,11 +129,12 @@ function px_inds = getPredictedOccupancyInds(time, px_velocity, dataset_size, px
     
     [row,col,z] = ind2sub(dataset_size,px_list);
     obj_coords = horzcat(row,col,z);
-    predicted_coords = obj_coords + (px_velocity_mod*time);
+    predicted_coords = uint8(obj_coords + (px_velocity_mod*time));
     
     % Remove the coords out of the workspace
     keep_mask = all(predicted_coords >= [1,1,1]  & predicted_coords <= dataset_size, 2); % any row that is out of bounds
     predicted_coords = predicted_coords(keep_mask, :);
     
     px_inds = sub2ind(dataset_size,predicted_coords(:,1)', predicted_coords(:,2)', predicted_coords(:,3)');
+%     px_inds = sub2ind(dataset_size,predicted_coords(:,2)', predicted_coords(:,1)', predicted_coords(:,3)');
 end
