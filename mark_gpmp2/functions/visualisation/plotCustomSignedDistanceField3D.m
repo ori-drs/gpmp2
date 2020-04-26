@@ -34,7 +34,7 @@ end
 [x, y, z] = ind2sub(size(field),idx);
 c = field(idx);
 
-figure(2);
+% figure(2);
 h = scatter3(grid_X(y), grid_Y(x), grid_Z(z), 2, c);
 colorbar;
 xlabel('X/m');
