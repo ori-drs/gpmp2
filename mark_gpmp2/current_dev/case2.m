@@ -81,11 +81,11 @@ function full_knowledge_case = case2(datasets, init_values, problem_setup)
 
     if problem_setup.use_trustregion_opt
         parameters = DoglegParams;
-        parameters.setVerbosity('NONE');
+        parameters.setVerbosity('ERROR');
         optimizer = DoglegOptimizer(graph, init_values, parameters);
     else
         parameters = GaussNewtonParams;
-        parameters.setVerbosity('NONE');
+        parameters.setVerbosity('ERROR');
         optimizer = GaussNewtonOptimizer(graph, init_values, parameters);
     end
 
@@ -98,6 +98,8 @@ function full_knowledge_case = case2(datasets, init_values, problem_setup)
     full_knowledge_case.result = result;
     full_knowledge_case.graph_build_t = graph_build_t;
     full_knowledge_case.graph_optimize_t = graph_optimize_t;
-    
+    full_knowledge_case.graph = graph;
+    full_knowledge_case.all_obs_fact_indices = all_obs_fact_indices;
+    full_knowledge_case.obs_fact_indices = obs_fact_indices;
 end
 
