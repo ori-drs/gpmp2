@@ -75,22 +75,22 @@ classdef movingEnvironment3D < handle
 
         end
         
-        function add_object(env, t_start_moving, v_or_t_end, v_or_t_end_value, block_starting_pos, obs_size)
+        function add_object(env, t_start_moving, t_end_moving, block_vel, block_starting_pos, obs_size)
             obj.t_start_moving = t_start_moving;
-            obj.v_or_t_end = v_or_t_end;
-            obj.v_or_t_end_value = v_or_t_end_value;
+            obj.t_end_moving = t_end_moving;
 
             obj.block_starting_pos = block_starting_pos;
             obj.obs_size = obs_size;
+            
+            obj.block_velocity = block_vel;        
 
             % Parameters for block trajectory
-            if v_or_t_end == true % object velocity given
-                obj.block_velocity = v_or_t_end_value;        
-            elseif v_or_t_end == false % t_end given
-                obj.t_end_moving = v_or_t_end_value;
-                obj.block_end_pos = [2.50, 1.50, 1.50];
-                obj.block_velocity = (obj.block_end_pos - obj.block_starting_pos)/(obj.t_end_moving-obj.t_start_moving);
-            end
+%             if t_end_moving == 0 % object velocity given
+%             elseif t_end_moving ~= 0 % t_end given
+%                 obj.t_end_moving = t_end_moving;
+%                 obj.block_end_pos = [2.50, 1.50, 1.50];
+%                 obj.block_velocity = (obj.block_end_pos - obj.block_starting_pos)/(obj.t_end_moving-obj.t_start_moving);
+%             end
             
             env.objects{end+1} = obj;
         
@@ -99,20 +99,24 @@ classdef movingEnvironment3D < handle
         function [obs_pos_to_add, obs_pos] = calculateObjPosition(env, t, object) 
             if t<= object.t_start_moving
                    t_moved = 0;
-                else
+            else
                    t_moved = t - object.t_start_moving;
+                   if object.t_end_moving ~= 0 && t_moved >  object.t_end_moving 
+                        t_moved = object.t_end_moving;
+                   end
+                   
             end
 
             % Calculate object positions - position is start plus v * t
             x = object.block_starting_pos(1) + t_moved * object.block_velocity(1);
             y = object.block_starting_pos(2) + t_moved * object.block_velocity(2);
             z = object.block_starting_pos(3) + t_moved * object.block_velocity(3);
-
-            if object.v_or_t_end == false && t<= object.v_or_t_end_value
-                x = object.block_end_pos(1);
-                y = object.block_end_pos(2);
-                z = object.block_end_pos(3);
-            end
+% 
+%             if object.v_or_t_end == false && t<= object.v_or_t_end_value
+%                 x = object.block_end_pos(1);
+%                 y = object.block_end_pos(2);
+%                 z = object.block_end_pos(3);
+%             end
 
             %  Add each obstacle
             obs_pos_to_add = round([x - env.dataset.origin_x, ...
@@ -152,11 +156,17 @@ classdef movingEnvironment3D < handle
             %   Detailed explanation goes here
             % map
             updateMap(obj, query_t);
-                   
+            
+%                         env.dataset.map = flip(env.dataset.map);          
+
+                       
             % signed distance field
             obj.dataset.field  = gpmp2.signedDistanceField3D(permute(obj.dataset.map, [2 1 3]), ...
-                                                            obj.dataset.cell_size);            
-            
+                                                obj.dataset.cell_size); 
+                                                        
+%             obj.dataset.field  = gpmp2.signedDistanceField3D(permute(obj.dataset.map, [2 1 3]), ...
+%                                                             obj.dataset.cell_size);            
+%             
             % init sdf
             obj.dataset.sdf = gpmp2.SignedDistanceField(obj.dataset.origin_point3, ...
                                                 obj.dataset.cell_size, ...
