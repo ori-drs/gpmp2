@@ -451,6 +451,7 @@ virtual class ObstacleSDFFactorArm : gtsam::NoiseModelFactor {
       size_t poseKey, const gpmp2::ArmModel& arm,
       const gpmp2::SignedDistanceField& sdf, double cost_sigma, double epsilon);
   Vector evaluateError(Vector pose) const;
+  Vector spheresInCollision(Vector pose) const;
 //   void replaceSDFData(const gpmp2::SignedDistanceField& sdf); 
   
   gpmp2::ObstacleSDFFactorArm getSDFModFactor(const gpmp2::SignedDistanceField& sdf);

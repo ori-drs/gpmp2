@@ -80,6 +80,8 @@ public:
   gtsam::Vector evaluateError(const typename Robot::Pose& conf,
       boost::optional<gtsam::Matrix&> H1 = boost::none) const ;
 
+  gtsam::Vector spheresInCollision(const typename Robot::Pose& conf) const ;
+
   void changeSDFData(const std::vector<gtsam::Matrix>& new_data) {
     const_cast<SignedDistanceField&>(sdf_).changeData(new_data);
   }  
