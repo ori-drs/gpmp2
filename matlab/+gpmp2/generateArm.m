@@ -116,6 +116,72 @@ elseif strcmp(arm_str, 'WAMArm')
     end
     arm_model = ArmModel(abs_arm, sphere_vec);
 
+% 6 DOF Kinova Gen2 Non Spherical Arm
+elseif strcmp(arm_str, 'Kinova')
+   % A good default position as shown in user guide [-pi,pi,pi,pi,0,pi/2]'
+   % https://www.kinovarobotics.com/sites/default/files/UG-009_KINOVA_Gen2_Ultra_lightweight_robot_User_guide_EN_R02.pdf
+    
+    % Geometric parameters (m)
+    D1 = 0.2755;
+    D2 = 0.4100;
+    D3 = 0.2073;
+    D4 = 0.0741;
+    D5 = 0.0741;
+    D6 = 0.1600;
+    e2 = 0.0098;
+    
+    % Alternative params
+    aa = (30.0 * pi) / 180.0;
+    sa = sin(aa);
+    s2a = sin(2*aa);
+    d4b = D3 + (sa / s2a) * D4;
+    d5b = (sa / s2a) * D4 + (sa / s2a) * D5;
+    d6b = (sa / s2a) * D5 + D6;
+    
+    
+    % arm: Kinova arm
+    alpha = [pi/2,pi,pi/2,2*aa,2*aa,pi]';
+    a = [0,D2,0,0,0,0]';
+    d = [D1,0,-e2,-d4b,-d5b,-d6b]';
+    theta = [0, 0, 0, 0, 0, 0]';
+    abs_arm = Arm(6, a, alpha, d, base_pose, theta);
+    
+    % physical arm
+    % sphere data [id x y z r]
+    spheres_data = [...
+        0 0.0  -D1  0.0 0.045 % Origin
+        0 0.0  -D1/3  0.0 0.045
+        0 0.0  -2*D1/3  0.0 0.045
+        0 0.0  0.0  0.0 0.045 % joint 1
+        1 0.0  0.0  0.0 0.045
+        1 -D2/4  0.0  0.0 0.045
+        1 -D2/2  0.0  0.0 0.045
+        1 -3*D2/4  0.0  0.0 0.045
+        2 0.0  0.0  0.0 0.045 % joint 2
+        2 0.0  0.0  -D3/3 0.045
+        2 0.0  0.0  -2*D3/3 0.045
+        3 0.0  0.0  0.0 0.045       
+        4 0.0  0.0  -0.05 0.03 % wrist
+        4 0.0  0.0  0.0 0.03 % wrist
+        5 0.0  0.0  -0.09 0.04 % -5cm to get palm
+        5 0.03  0.0  0.01 0.02 % thumb
+        5 0.03  0.0  -0.025 0.02 % thumb
+        5 -0.03 0.03  0.01 0.02 % finger1
+        5 -0.03 0.03  -0.025 0.02 % finger1
+        5 -0.03  -0.03  0.01 0.02 % finger2
+        5 -0.03  -0.03  -0.025 0.02 % finger2
+    ];
+
+    nr_body = size(spheres_data, 1);
+    
+    sphere_vec = BodySphereVector;
+    for i=1:nr_body
+        sphere_vec.push_back(BodySphere(spheres_data(i,1), spheres_data(i,5), ...
+            Point3(spheres_data(i,2:4)')));
+    end
+    arm_model = ArmModel(abs_arm, sphere_vec);
+
+    
 % 7 DOF PR2 right arm
 elseif strcmp(arm_str, 'PR2Arm')
     % arm: PR2 arm
