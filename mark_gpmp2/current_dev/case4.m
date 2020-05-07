@@ -138,6 +138,8 @@ function selective_prediction_case = case4(datasets, init_values, problem_setup,
             inds_ignore = D_change>0.99*min(min(min(D_change))); 
             time_to_collision = -datasets(i+1).field./D_change;
             time_to_collision(time_to_collision<0)=1000;
+            time_to_collision(time_to_collision<0)=10;
+            time_to_collision(time_to_collision>10)=10;
            
             % For each variable/factor set
             for j = i:problem_setup.total_time_step
@@ -155,16 +157,18 @@ function selective_prediction_case = case4(datasets, init_values, problem_setup,
                                     joint_coords(:,1)', ...
                                     joint_coords(:,2)', ...
                                     joint_coords(:,3)');
-                                
-%                 time_to_collision(query_inds)
-                
+                                                
                 % If the collision time occurs within 2s of the joint being there, update                
                 if abs((j-i) - min(time_to_collision(query_inds))) < 2
+%                 if true
                     % Predict the sdf at this point
-                    predicted_map = object_predictor.predict(j*problem_setup.delta_t);
-                    predicted_sdfs{j} = mapToSdf(predicted_map, origin_point3, cell_size);
+%                     disp('Map');
 %                     tic;
-%                     predicted_sdfs{j} = object_predictor.predict_sdf(j*problem_setup.delta_t, cell_size, origin_point3);           
+                    predicted_map = object_predictor.predict(j*problem_setup.delta_t);
+%                     toc;
+%                     disp('SDF');
+%                     tic;                    
+                    predicted_sdfs{j} = mapToSdf(predicted_map, origin_point3, cell_size);
 %                     toc;
                     
                     % Update factors
