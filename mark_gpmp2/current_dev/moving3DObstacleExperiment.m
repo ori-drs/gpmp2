@@ -159,7 +159,7 @@ execute_update_case = case3(datasets, init_values, problem_setup);
 
 disp('Case4: Execute and selectively predict sdf');
 init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
-selective_prediction_case = case4(datasets, init_values, problem_setup);
+selective_prediction_case = case4(datasets, init_values, problem_setup, true);
 
 disp('Case5: Execute and selectively update sdf');
 init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
@@ -171,6 +171,9 @@ collision_t_update_case = case5(datasets, init_values, problem_setup);
 % prediction_case = case6(datasets, init_values, problem_setup);
 
 %% Plot the comparison animation
+import gtsam.*
+import gpmp2.*
+
 figure(3);
 hold on;
 % gpmp2.set3DPlotRange(dataset);
@@ -195,11 +198,9 @@ for i = 0:total_time_step
     
 %     plotRobotModel(arm, conf)
     legend([static_handle(1), full_handle(1), ... 
-        execute_update_handle(1), selective_prediction_handle(1), ...
-        collision_t_update_handle(1)], ...
+        execute_update_handle(1), selective_prediction_handle(1)], ...
         {"No SDF update", "Full knowledge", ...
-        "Update each step", "Selective prediction", ...
-        "Selective update"},...
+        "Update each step", "Selective prediction"},...
         'Location','southoutside',...
         'NumColumns', 3, ...
         'FontSize', 16);
@@ -425,7 +426,7 @@ end
 % 
 % obs_error = 0;
 % for j = 1:total_time_step+1
-%         ind = obs_fact_indices(j);
+%         ind = full_knowledge_case.  obs_fact_indices(j);
 %         fact = full_knowledge_graph.at(ind);
 %         obs_error = obs_error + sum(fact.evaluateError(mid_point_conf));
 % end
