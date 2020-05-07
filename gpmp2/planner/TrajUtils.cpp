@@ -22,6 +22,53 @@ using namespace std;
 namespace gpmp2 {
 
 /* ************************************************************************** */
+gtsam::Values reinitRemainderArmTrajStraightLine(gtsam::Values& traj,
+    const gtsam::Vector& end_conf, const gtsam::Vector& end_vel, size_t current_step) {
+
+  Values new_values;
+  size_t last_step = traj.size()/2 - 1;
+  size_t steps_left = last_step - current_step;
+
+  Vector current_conf = traj.at<Vector>(Symbol('x', current_step));
+  Vector current_v = traj.at<Vector>(Symbol('v', current_step));
+
+  // init pose
+  for (size_t i = 0; i <= steps_left; i++) {
+    Vector conf;
+    Vector vel;
+
+    if (i == 0){
+      conf = current_conf;
+      vel = current_v;
+    }
+    else if (i == steps_left){
+      conf = end_conf;
+      vel = end_vel;
+    }
+    else{
+      conf = static_cast<double>(i) / static_cast<double>(steps_left) * end_conf +
+          (1.0 - static_cast<double>(i) / static_cast<double>(steps_left)) * current_conf;
+      vel = static_cast<double>(i) / static_cast<double>(steps_left) * end_vel +
+          (1.0 - static_cast<double>(i) / static_cast<double>(steps_left)) * current_v;
+    }
+    new_values.insert(Symbol('x', i+current_step), conf);
+    new_values.insert(Symbol('v', i+current_step), vel);
+  }
+
+  // init vel as avg vel
+  // Vector avg_vel = (end_conf - current_conf) / static_cast<double>(steps_left);
+  // Vector avg_vel = (end_conf - current_conf) / static_cast<double>(steps_left);
+  // for (size_t i = 0; i <= steps_left; i++) {
+  //   new_values.insert(Symbol('v', i+current_step), avg_vel);
+  // }
+
+  traj.update(new_values);
+
+  return traj;
+
+}
+
+/* ************************************************************************** */
 gtsam::Values initArmTrajStraightLine(const Vector& init_conf,
     const Vector& end_conf, size_t total_step) {
 

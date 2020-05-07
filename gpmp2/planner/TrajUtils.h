@@ -29,6 +29,17 @@ GPMP2_EXPORT gtsam::Values initArmTrajStraightLine(const gtsam::Vector& init_con
     const gtsam::Vector& end_conf, size_t total_step);
 
 /**
+ * @brief reinitialise the remainder of the trajectory in configuration space as a straight line
+ * @param traj trajectory start configuration
+ * @param end_conf  trajectory end configuration
+ * @param end_vel  trajectory end velocity
+ * @param current_step is how many intervals do you want in the traj
+ * @return values, straight line from current time to end
+ */
+GPMP2_EXPORT gtsam::Values reinitRemainderArmTrajStraightLine(gtsam::Values& traj,
+    const gtsam::Vector& end_conf, const gtsam::Vector& end_vel, size_t current_step);
+
+/**
  * @brief initialize the trajectory in configuration space as a straight line
  * @param init_pose trajectory start pose
  * @param init_conf trajectory start configuration

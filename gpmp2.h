@@ -954,8 +954,14 @@ class ISAM2TrajOptimizerPose2MobileVetLin2Arms {
 // utils for traj init and interpolation
 #include <gpmp2/planner/TrajUtils.h>
 
+/// reinitialization
+gtsam::Values reinitRemainderArmTrajStraightLine(gtsam::Values& traj, 
+                                                Vector end_conf, 
+                                                Vector end_vel, 
+                                                size_t current_step);
+
 /// initialization
-gtsam::Values initArmTrajStraightLine(Vector init_conf, Vector end_conf, size_t total_step);
+gtsam::Values initArmTrajStraightLine(Vector init_conf, Vector end_conf, size_t total_step);   
 gtsam::Values initPose2VectorTrajStraightLine(const gtsam::Pose2& init_pose, Vector init_conf,
     const gtsam::Pose2& end_pose, Vector end_conf, size_t total_step);
 gtsam::Values initPose2TrajStraightLine(const gtsam::Pose2& init_pose,
