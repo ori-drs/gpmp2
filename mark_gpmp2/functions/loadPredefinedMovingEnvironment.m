@@ -71,5 +71,11 @@ elseif strcmp(env_name, 'MovingBlock')
     
 end
 
+if strcmp(env_name, 'Lab')
+
+    % Create the environment
+    env = movingEnvironment3D();
+    env.add_static_scene();
+
 end
 
