@@ -120,7 +120,7 @@ elseif strcmp(arm_str, 'WAMArm')
 elseif strcmp(arm_str, 'Kinova')
    % A good default position as shown in user guide [-pi,pi,pi,pi,0,pi/2]'
    % https://www.kinovarobotics.com/sites/default/files/UG-009_KINOVA_Gen2_Ultra_lightweight_robot_User_guide_EN_R02.pdf
-    
+   % up_conf = [0,pi/2,-pi/2,-pi,pi,0]'
     % Geometric parameters (m)
     D1 = 0.2755;
     D2 = 0.4100;
