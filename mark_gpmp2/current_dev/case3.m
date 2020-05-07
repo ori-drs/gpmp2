@@ -8,6 +8,7 @@ function execute_update_case = case3(datasets, init_values, problem_setup)
     graph = NonlinearFactorGraph;
 
     obs_fact_indices = zeros(1, problem_setup.total_time_step+1);
+    gp_fact_indices = zeros(1, problem_setup.total_time_step+1);
     all_obs_fact_indices = cell(1, problem_setup.total_time_step+1);
     obs_fact_indices_in_timestep = [];
 
@@ -62,6 +63,8 @@ function execute_update_case = case3(datasets, init_values, problem_setup)
             end
 
           % GP factor
+            gp_fact_indices(i+1) = factor_ind_counter;
+
             graph.add(GaussianProcessPriorLinear(last_pose_key, ...
                                                     last_vel_key, ...
                                                     pose_key, ...
@@ -97,11 +100,10 @@ function execute_update_case = case3(datasets, init_values, problem_setup)
     update_timings.optimize_t = zeros(1, problem_setup.total_time_step+1);
 %     update_timings.factors_updated = cell(1, problem_setup.total_time_step+1);
     update_timings.factors_steps_updated = cell(1, problem_setup.total_time_step+1);
+    execute_update_case.gp_cost_evolution = zeros(1, problem_setup.total_time_step+1);
 
     for i = 0:problem_setup.total_time_step
         disp("Case3: Execute and update sdf... step: " + num2str(i));
-
-        results = [results, result];
 
         if i > 0
             % Execute (get next position and add prior to graph)
@@ -133,12 +135,18 @@ function execute_update_case = case3(datasets, init_values, problem_setup)
         end
     
         % Optimize and store result
-        optimizer = GaussNewtonOptimizer(graph, init_values, parameters);
+        optimizer = GaussNewtonOptimizer(graph, result, parameters);
         
         tic;
         result = optimizer.optimize();
         update_timings.optimize_t(i+1) = toc;
-
+        results = [results, result];
+        
+        gp_cost = 0;
+        for ind = gp_fact_indices
+            gp_cost = gp_cost + graph.at(ind).error(result);   
+        end
+        execute_update_case.gp_cost_evolution(i+1) = gp_cost;
     end
     
     execute_update_case.final_result = result;
@@ -147,6 +155,7 @@ function execute_update_case = case3(datasets, init_values, problem_setup)
     execute_update_case.update_timings = update_timings;
     execute_update_case.all_obs_fact_indices = all_obs_fact_indices;
     execute_update_case.obs_fact_indices = obs_fact_indices;
-    
+    execute_update_case.gp_fact_indices = gp_fact_indices;
+
 end
 
