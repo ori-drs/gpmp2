@@ -60,61 +60,71 @@ object_predictor.update(0.5, env.queryEnv(0.5).map);
 % bench_time = toc;
 % 100*(1- my_time/bench_time)
 
-
-
-
-
-
-actual_sdf1 = env.queryEnv(1).field;
-actual_sdf2 = env.queryEnv(1.5).field;
-actual_sdf3 = env.queryEnv(2).field;
-actual_sdf1(actual_sdf1>0.2) = 1;
-actual_sdf2(actual_sdf2>0.2) = 1;
-actual_sdf3(actual_sdf3>0.2) = 1;
-
-
-my_predicted_sdf1 = object_predictor.predict_object_locations(1);
-
-my_predicted_sdf2 = object_predictor.predict_object_locations(1.5);
-my_predicted_sdf3 = object_predictor.predict_object_locations(2);
-my_predicted_sdf1(my_predicted_sdf1>0.2) = 1;
-my_predicted_sdf2(my_predicted_sdf2>0.2) = 1;
-my_predicted_sdf3(my_predicted_sdf3>0.2) = 1;
-
-
-
-% actual_sdf(actual_sdf>0.2) = 1;
-% my_predicted_sdf(my_predicted_sdf>0.2) = 1;
-diff_sdf = actual_sdf3-my_predicted_sdf3;
-
+test_predicted_sdf = object_predictor.predict_object_locations(1);
+actual_sdf = env.queryEnv(1).field;
 
 figure(1); hold on;
-subplot(2,3,1); hold on;
-h1 = plotSignedDistanceField2D(actual_sdf1(:,:,150), origin(1), origin(2), cell_size, epsilon);
-subplot(2,3,2); hold on;
-h2 = plotSignedDistanceField2D(actual_sdf2(:,:,150), origin(1), origin(2), cell_size, epsilon);
-subplot(2,3,3); hold on;
-h3 = plotSignedDistanceField2D(actual_sdf3(:,:,150), origin(1), origin(2), cell_size, epsilon);
-subplot(2,3,4); hold on;
-h4 = plotSignedDistanceField2D(my_predicted_sdf1(:,:,150), origin(1), origin(2), cell_size, epsilon);
-subplot(2,3,5); hold on;
-h5 = plotSignedDistanceField2D(my_predicted_sdf2(:,:,150), origin(1), origin(2), cell_size, epsilon);
-subplot(2,3,6); hold on;
-h6 = plotSignedDistanceField2D(my_predicted_sdf3(:,:,150), origin(1), origin(2), cell_size, epsilon);
+subplot(2,2,1); hold on;
+h1 = plotSignedDistanceField2D(test_predicted_sdf(:,:,150), origin(1), origin(2), cell_size, epsilon);
+subplot(2,2,2); hold on;
+h2 = plotSignedDistanceField2D(actual_sdf(:,:,150), origin(1), origin(2), cell_size, epsilon);
 
-
+% 
+% 
+% actual_sdf1 = env.queryEnv(1).field;
+% actual_sdf2 = env.queryEnv(1.5).field;
+% actual_sdf3 = env.queryEnv(2).field;
+% actual_sdf1(actual_sdf1>0.2) = 1;
+% actual_sdf2(actual_sdf2>0.2) = 1;
+% actual_sdf3(actual_sdf3>0.2) = 1;
+% actual_sdf1(actual_sdf1<0) = 0;
+% actual_sdf2(actual_sdf2<0) = 0;
+% actual_sdf3(actual_sdf3<0) = 0;
+% 
+% my_predicted_sdf1 = object_predictor.predict_object_locations(1);
+% my_predicted_sdf2 = object_predictor.predict_object_locations(1.5);
+% my_predicted_sdf3 = object_predictor.predict_object_locations(2);
+% 
+% my_predicted_sdf1(my_predicted_sdf1>0.2) = 1;
+% my_predicted_sdf2(my_predicted_sdf2>0.2) = 1;
+% my_predicted_sdf3(my_predicted_sdf3>0.2) = 1;
+% my_predicted_sdf1(my_predicted_sdf1<0) = 0;
+% my_predicted_sdf2(my_predicted_sdf2<0) = 0;
+% my_predicted_sdf3(my_predicted_sdf3<0) = 0;
+% 
+% 
+% % actual_sdf(actual_sdf>0.2) = 1;
+% % my_predicted_sdf(my_predicted_sdf>0.2) = 1;
+% diff_sdf = actual_sdf3-my_predicted_sdf3;
+% 
+% 
 % figure(1); hold on;
+% subplot(2,3,1); hold on;
+% h1 = plotSignedDistanceField2D(actual_sdf1(:,:,150), origin(1), origin(2), cell_size, epsilon);
+% subplot(2,3,2); hold on;
+% h2 = plotSignedDistanceField2D(actual_sdf2(:,:,150), origin(1), origin(2), cell_size, epsilon);
+% subplot(2,3,3); hold on;
+% h3 = plotSignedDistanceField2D(actual_sdf3(:,:,150), origin(1), origin(2), cell_size, epsilon);
+% subplot(2,3,4); hold on;
+% h4 = plotSignedDistanceField2D(my_predicted_sdf1(:,:,150), origin(1), origin(2), cell_size, epsilon);
+% subplot(2,3,5); hold on;
+% h5 = plotSignedDistanceField2D(my_predicted_sdf2(:,:,150), origin(1), origin(2), cell_size, epsilon);
+% subplot(2,3,6); hold on;
+% h6 = plotSignedDistanceField2D(my_predicted_sdf3(:,:,150), origin(1), origin(2), cell_size, epsilon);
+% 
+% 
+% % figure(1); hold on;
+% % subplot(1,3,1); hold on;
+% % h1 = plotSignedDistanceField2D(my_predicted_sdf(:,:,150), origin(1), origin(2), cell_size, epsilon);
+% % subplot(1,3,2); hold on;
+% % h2 = plotSignedDistanceField2D(my_predicted_sdf_3(:,:,150), origin(1), origin(2), cell_size, epsilon);
+% % subplot(1,3,3); hold on;
+% % h3 = plotSignedDistanceField2D(my_predicted_sdf_4(:,:,150), origin(1), origin(2), cell_size, epsilon);
+% 
+% figure(2); hold on;
 % subplot(1,3,1); hold on;
-% h1 = plotSignedDistanceField2D(my_predicted_sdf(:,:,150), origin(1), origin(2), cell_size, epsilon);
+% h1 = plotSignedDistanceField2D(my_predicted_sdf3(:,:,150), origin(1), origin(2), cell_size, epsilon);
 % subplot(1,3,2); hold on;
-% h2 = plotSignedDistanceField2D(my_predicted_sdf_3(:,:,150), origin(1), origin(2), cell_size, epsilon);
+% h2 = plotSignedDistanceField2D(actual_sdf3(:,:,150), origin(1), origin(2), cell_size, epsilon);
 % subplot(1,3,3); hold on;
-% h3 = plotSignedDistanceField2D(my_predicted_sdf_4(:,:,150), origin(1), origin(2), cell_size, epsilon);
-
-figure(2); hold on;
-subplot(1,3,1); hold on;
-h1 = plotSignedDistanceField2D(my_predicted_sdf3(:,:,150), origin(1), origin(2), cell_size, epsilon);
-subplot(1,3,2); hold on;
-h2 = plotSignedDistanceField2D(actual_sdf3(:,:,150), origin(1), origin(2), cell_size, epsilon);
-subplot(1,3,3); hold on;
-h3 = plotSignedDistanceField2D(diff_sdf(:,:,150), origin(1), origin(2), cell_size, epsilon);
+% h3 = plotSignedDistanceField2D(diff_sdf(:,:,150), origin(1), origin(2), cell_size, epsilon);
