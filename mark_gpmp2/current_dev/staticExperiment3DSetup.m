@@ -19,7 +19,9 @@ starting_pos = [-0.40, 1.90, 1.5];
 obs_size = [0.60, 0.80, 0.60];
 
 %% Create the environment
-env = movingEnvironment3D();
+env_size = 150;
+res = 0.02;
+env = movingEnvironment3D(env_size, res);
 env.add_static_scene();
 env.add_object(0,...
                 v_or_t_end, ...
