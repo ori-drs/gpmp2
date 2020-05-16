@@ -5,7 +5,6 @@
 close all;
 clear all;
 clc;
-% profile on
 
 import gtsam.*
 import gpmp2.*
@@ -14,8 +13,10 @@ plot_figs = false;
 
 %% Setup
 
+env_size = 150;
+res = 0.02;
 env_name = 'MovingReplanner';
-env = loadPredefinedMovingEnvironment(env_name);
+env = loadPredefinedMovingEnvironment(env_name, env_size, res);
 dataset = env.queryEnv(0);
 [X, Y, Z] = getEnvironmentMesh(dataset);
 use_trustregion_opt = false;
@@ -41,8 +42,10 @@ if plot_figs
     gpmp2.set3DPlotRange(dataset);
     xlabel('x'); ylabel('y'); zlabel('z');
     plot3DEnvironment(dataset, X, Y, Z)
-    plotArm(arm.fk_model(), start_conf, 'b', 2)
-    plotArm(arm.fk_model(), end_conf, 'r', 2)
+    plotRobotModel(arm, end_conf)
+%     plotArm(arm.fk_model(), end_conf, 'r', 2)
+%     plotArm(arm.fk_model(), start_conf, 'b', 2)
+%     plotArm(arm.fk_model(), end_conf, 'r', 2)
 
     figure(2);
     gpmp2.set3DPlotRange(dataset);
@@ -165,6 +168,7 @@ disp('Case8: Execute and update sdf using pruning');
 init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
 pruning_case = case8(datasets, init_values, problem_setup);
 
+
 %% Plot the comparison animation
 import gtsam.*
 import gpmp2.*
@@ -176,10 +180,10 @@ axis(axis_lims);
 % grid on; view(45,45);
 grid on; view(3);
 for i = 0:total_time_step
-    static_conf = static_case.result.atVector(symbol('x', i));
-    full_conf = full_knowledge_case.result.atVector(symbol('x', i));
+    static_conf = static_case.final_result.atVector(symbol('x', i));
+    full_conf = full_knowledge_case.final_result.atVector(symbol('x', i));
     execute_update_conf = execute_update_case.final_result.atVector(symbol('x', i));
-    selective_prediction_conf =selective_prediction_case.final_result.atVector(symbol('x', i));
+%     selective_prediction_conf =selective_prediction_case.final_result.atVector(symbol('x', i));
 %     collision_t_update_conf =collision_t_update_case.final_result.atVector(symbol('x', i));
 %     cla;
     if i > 0
@@ -189,14 +193,14 @@ for i = 0:total_time_step
     static_handle = plotArm(arm.fk_model(), static_conf, 'b', 2);
     full_handle = plotArm(arm.fk_model(), full_conf, 'r', 2);
     execute_update_handle = plotArm(arm.fk_model(), execute_update_conf, 'g', 2);
-    selective_prediction_handle = plotArm(arm.fk_model(), selective_prediction_conf, 'm', 2);
+%     selective_prediction_handle = plotArm(arm.fk_model(), selective_prediction_conf, 'm', 2);
 %     collision_t_update_handle = plotArm(arm.fk_model(), collision_t_update_conf, 'c', 2);
     
 %     plotRobotModel(arm, conf)
     legend([static_handle(1), full_handle(1), ... 
-        execute_update_handle(1), selective_prediction_handle(1)], ...
+        execute_update_handle(1)], ...
         {"No SDF update", "Full knowledge", ...
-        "Update each step", "Selective prediction"},...
+        "Update each step"},...
         'Location','southoutside',...
         'NumColumns', 3, ...
         'FontSize', 16);
@@ -231,7 +235,7 @@ xlabel('x'); ylabel('y'); zlabel('z');
 
 for i = 0:total_time_step
     key_pos = symbol('x', i);
-    static_conf = static_case.result.atVector(key_pos);
+    static_conf = static_case.final_result.atVector(key_pos);
     obs_factor = gpmp2.ObstacleSDFFactorArm(...
         key_pos, arm, datasets(i+1).sdf, cost_sigma, epsilon_dist);
     
@@ -331,7 +335,7 @@ for i = 0:total_time_step
         key_pos, arm, datasets(i+1).sdf, cost_sigma, epsilon_dist);
 
     ind = full_knowledge_case.obs_fact_indices(i+1);
-    conf = full_knowledge_case.result.atVector(key_pos);
+    conf = full_knowledge_case.final_result.atVector(key_pos);
     fact = full_knowledge_case.graph.at(ind);
     
     cla;
@@ -727,31 +731,28 @@ for j = 1:total_time_step+1
         conf = full_knowledge_case.result.atVector(gtsam.symbol('x', j-1));
         fact = full_knowledge_case.graph.at(ind);
         
-%         disp("step: " + num2str(j-1));
         disp(fact.evaluateError(conf));
-%         obs_error = obs_error + sum(fact.evaluateError(conf));
 
 end
-% disp(" Error: " + num2str(obs_error));
 
 
 %% Compare execute update with reinitialisation
 import gtsam.*
 import gpmp2.*
 
-figure(10);
-hold on;
-axis(axis_lims);
-grid on; view(3);
-title("Execute and Update Comparison");
+figure(10); hold on; grid on;
 xlabel('x'); ylabel('y'); zlabel('z');
+
+axis(axis_lims); view(3);
+title("Execute and Update Comparison");
+
 
 for j = 0:total_time_step
 
     cla;
     h1 = plot3DEnvironment(datasets(j+1), X, Y, Z);
     
-    for i = j:total_time_step
+    for i = 1:total_time_step
         key_pos = symbol('x', i);
         obs_factor = gpmp2.ObstacleSDFFactorArm(...
                 key_pos, arm, datasets(i+1).sdf, cost_sigma, epsilon_dist);
@@ -768,6 +769,20 @@ for j = 0:total_time_step
     
     pause(0.2);
 end
+
+
+figure(11); hold on; grid on;
+xlabel('Time Step','FontSize',18); ylabel('GP Cost','FontSize',18);
+h1 = plot(0:total_time_step, execute_update_case.gp_cost_evolution,'b','DisplayName','Execute and Update'); hold on;
+h2 = plot(0:total_time_step, pruning_case.gp_cost_evolution,'r','DisplayName','With Pruning and Reinitialisation');
+plot([17,17,17], [0,700,1400], 'k','LineWidth',2);
+text([15.5], 1430, {'Reinitialisation'},'FontSize',18);
+legend([h1(1), h2(1)], ...
+    {"Execute and Update", "With Pruning and Reinitialisation"},...
+    'Location','east',...
+    'NumColumns', 1, ...
+    'FontSize', 16);
+
 
 
 
