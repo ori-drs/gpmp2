@@ -1,4 +1,4 @@
-function pruning_case = case8(datasets, init_values, problem_setup)
+function pruning_reinit_case = case8(datasets, init_values, problem_setup)
 %CASE3 Summary of this function goes here
 %   Detailed explanation goes here
     import gtsam.*
@@ -106,8 +106,10 @@ function pruning_case = case8(datasets, init_values, problem_setup)
     update_timings.num_factors = zeros(1, problem_setup.total_time_step+1);
     update_timings.optimize_t = zeros(1, problem_setup.total_time_step+1);
     update_timings.factors_steps_updated = cell(1, problem_setup.total_time_step+1);
-    pruning_case.gp_cost_evolution = zeros(1, problem_setup.total_time_step+1);
-
+    pruning_reinit_case.gp_cost_evolution = zeros(1, problem_setup.total_time_step+1);
+    pruning_reinit_case.avg_remaining_gp_cost = zeros(1, problem_setup.total_time_step+1);
+    pruning_reinit_case.all_gp_factor_costs = zeros(numel(gp_fact_indices), problem_setup.total_time_step+1);
+    
     for i = 0:problem_setup.total_time_step
         disp("Case8: Execute and update sdf using pruning... step: " + num2str(i));
 
@@ -155,8 +157,8 @@ function pruning_case = case8(datasets, init_values, problem_setup)
             
             update_timings.factors_t(i+1) = toc;
             update_timings.num_factors(i+1) = num_factors_updated;
-            
-            if i < problem_setup.total_time_step && gp_cost > 1000
+
+            if i < problem_setup.total_time_step && avg_remaining_gp_cost > 50
                 result = gpmp2.reinitRemainderArmTrajStraightLine(result, ...
                                                                 problem_setup.end_conf, ...
                                                                 problem_setup.end_vel, ...
@@ -176,18 +178,24 @@ function pruning_case = case8(datasets, init_values, problem_setup)
         gp_cost = 0;
         for k = i+1:numel(gp_fact_indices)
             gp_cost = gp_cost + graph.at(gp_fact_indices(k)).error(result);   
+            pruning_reinit_case.all_gp_factor_costs(k,i+1) = graph.at(gp_fact_indices(k)).error(result);   
+
         end
-        pruning_case.gp_cost_evolution(i+1) = gp_cost;
+        
+        avg_remaining_gp_cost = gp_cost/(numel(gp_fact_indices)-i);
+        pruning_reinit_case.gp_cost_evolution(i+1) = gp_cost;
+        pruning_reinit_case.avg_remaining_gp_cost(i+1) = avg_remaining_gp_cost;
+
     end
     
-    pruning_case.final_result = result;
-    pruning_case.results = results;
-    pruning_case.graph_build_t = graph_build_t;
-    pruning_case.update_timings = update_timings;
-    pruning_case.all_obs_fact_indices = all_obs_fact_indices;
-    pruning_case.all_gp_fact_indices = all_gp_fact_indices;
-    pruning_case.obs_fact_indices = obs_fact_indices;
-    pruning_case.gp_fact_indices = gp_fact_indices;
+    pruning_reinit_case.final_result = result;
+    pruning_reinit_case.results = results;
+    pruning_reinit_case.graph_build_t = graph_build_t;
+    pruning_reinit_case.update_timings = update_timings;
+    pruning_reinit_case.all_obs_fact_indices = all_obs_fact_indices;
+    pruning_reinit_case.all_gp_fact_indices = all_gp_fact_indices;
+    pruning_reinit_case.obs_fact_indices = obs_fact_indices;
+    pruning_reinit_case.gp_fact_indices = gp_fact_indices;
 
 end
 
