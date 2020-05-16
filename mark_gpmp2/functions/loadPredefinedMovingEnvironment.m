@@ -1,4 +1,4 @@
-function [env] = loadPredefinedMovingEnvironment(env_name)
+function [env] = loadPredefinedMovingEnvironment(env_name, env_size, res)
 %LOADPREDEFINEDMOVINGENVIRONMENT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -36,7 +36,7 @@ if strcmp(env_name, 'MovingReplanner')
     obs_size = [0.15, 0.15, 1.9];
 
     % Create the environment
-    env = movingEnvironment3D();
+    env = movingEnvironment3D(env_size, res);
     env.add_static_scene();
     env.add_object(0,...
                     0, ...
@@ -57,12 +57,13 @@ if strcmp(env_name, 'MovingReplanner')
 elseif strcmp(env_name, 'MovingBlock')
     % Setup
     t_end_moving = 0;
-    v_or_t_end_value = [0,-0.16, 0];
+    v_or_t_end_value = [-0.16,0, 0];
+%     v_or_t_end_value = [0,-0.16, 0];
     starting_pos = [0.40, 0.4, 0.4];
     obs_size = [0.2, 0.2, 0.2];
 
     % Create the environment
-    env = movingEnvironment3D();
+    env = movingEnvironment3D(env_size, res);
     env.add_object(0,...
                     t_end_moving, ...
                     v_or_t_end_value, ...
@@ -74,7 +75,7 @@ end
 if strcmp(env_name, 'Lab')
 
     % Create the environment
-    env = movingEnvironment3D();
+    env = movingEnvironment3D(env_size, res);
     env.add_static_scene();
 
 end
