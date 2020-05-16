@@ -17,18 +17,18 @@ classdef movingEnvironment3D < handle
     end
     
     methods
-        function env = movingEnvironment3D()
+        function env = movingEnvironment3D(env_size, resolution)
             %MOVINGENVIRONMENT Construct an instance of this class
             %   Detailed explanation goes here           
             
             % params
-            env.dataset.cols = 300;
-            env.dataset.rows = 300;
-            env.dataset.z = 300;
+            env.dataset.cols = env_size;
+            env.dataset.rows = env_size;
+            env.dataset.z = env_size;
             env.dataset.origin_x = -1;
             env.dataset.origin_y = -1;
             env.dataset.origin_z = -1;
-            env.dataset.cell_size = 0.01;
+            env.dataset.cell_size = resolution;
             env.dataset.origin_point3 = gtsam.Point3(env.dataset.origin_x, ...
                                                     env.dataset.origin_y, ...
                                                     env.dataset.origin_z);       
@@ -45,30 +45,71 @@ classdef movingEnvironment3D < handle
         
         function add_static_scene(env)
          
-            stat_obs{1} = {[170 220 130], [140, 60, 5]};
-            stat_obs{2} = {[105 195 90], [10, 10, 80]};
-            stat_obs{3} = {[235 195 90], [10, 10, 80]};
-            stat_obs{4} = {[105 245 90], [10, 10, 80]};
-            stat_obs{5} = {[235 245 90], [10, 10, 80]};
+            %  Note these are true for 3mx3mx3m at 1cm res          
+            %stat_obs{1} = {[170 220 130], [140, 60, 5]};
+            %stat_obs{1} = {[0.70 1.20 0.30], [1.40, 0.60, 0.05]};
+            stat_obs{1} = {[0.20 0.70 -0.20], [1.40, 0.60, 0.05]};
             
-            stat_obs{6} = {[250 190 145], [60, 5, 190]};
-            stat_obs{7} = {[250 90 145], [60, 5, 190]};
+            %stat_obs{2} = {[105 195 90], [10, 10, 80]};
+            %stat_obs{2} = {[0.05 0.95 -0.10], [0.10, 0.10, 0.80]};
+            stat_obs{2} = {[-0.45 0.45 -0.60], [0.10, 0.10, 0.80]};
             
-            stat_obs{8} = {[200 190 145], [40, 5, 190]};
+            %stat_obs{3} = {[235 195 90], [10, 10, 80]};
+            %stat_obs{3} = {[1.35 0.95 -0.10], [0.10, 0.10, 0.80]};
+            stat_obs{3} = {[0.85 0.45 -0.60], [0.10, 0.10, 0.80]};
+            
+            %stat_obs{4} = {[105 245 90], [10, 10, 80]};
+            %stat_obs{4} = {[0.05 1.45 -0.10], [0.10, 0.10, 0.80]};
+            stat_obs{4} = {[-0.45 0.95 -0.60], [0.10, 0.10, 0.80]};
+            
+            %stat_obs{5} = {[235 245 90], [10, 10, 80]};
+            %stat_obs{5} = {[1.35 1.45 -0.10], [0.10, 0.10, 0.80]};
+            stat_obs{5} = {[0.85 0.95 -0.60], [0.10, 0.10, 0.80]};
+            
+            %stat_obs{6} = {[250 190 145], [60, 5, 190]};
+            %stat_obs{6} = {[1.50 0.90 0.45], [0.60, 0.05, 1.90]};
+            stat_obs{6} = {[1.00 0.40 -0.05], [0.60, 0.05, 1.90]};
+            
+            %stat_obs{7} = {[250 90 145], [60, 5, 190]};
+            %stat_obs{7} = {[1.50 -0.10 0.45], [0.60, 0.05, 1.90]};
+            stat_obs{7} = {[1.00 -0.60 -0.05], [0.60, 0.05, 1.90]};
+            
+            %stat_obs{8} = {[200 190 145], [40, 5, 190]};
+            %stat_obs{8} = {[1.00 0.90 0.45], [0.40, 0.05, 1.90]};
+            stat_obs{8} = {[0.50 0.40 -0.05], [0.40, 0.05, 1.90]};
+            
+            %stat_obs{9} = {[250 140 240], [60, 100, 5]};
+            %stat_obs{9} = {[1.50 0.40 1.40], [0.60, 1.00, 0.05]};
+            stat_obs{9} = {[1.00 -0.10 0.90], [0.60, 1.00, 0.05]};
+            
+            %stat_obs{10} = {[250 140 190], [60, 100, 5]};
+            %stat_obs{10} = {[1.50 0.40 0.90], [0.60, 1.00, 0.05]};
+            stat_obs{10} = {[1.00 -0.10 0.40], [0.60, 1.00, 0.05]};
+            
+            %stat_obs{11} = {[250 140 140], [60, 100, 5]};
+            %stat_obs{11} = {[1.50 0.40 0.40], [0.60, 1.00, 0.05]};
+            stat_obs{11} = {[1.00 -0.10 -0.10], [0.60, 1.00, 0.05]};
+            
+            %stat_obs{12} = {[250 140 90], [60, 100, 5]};
+            %stat_obs{12} = {[1.50 0.40 -0.10], [0.60, 1.00, 0.05]};
+            stat_obs{12} = {[1.00 -0.10 -0.60], [0.60, 1.00, 0.05]};
 
-            stat_obs{9} = {[250 140 240], [60, 100, 5]};
-            stat_obs{10} = {[250 140 190], [60, 100, 5]};
-            stat_obs{11} = {[250 140 140], [60, 100, 5]};
-            stat_obs{12} = {[250 140 90], [60, 100, 5]};
-                        
+             origin = [env.dataset.origin_x, ...
+                       env.dataset.origin_y, ...
+                       env.dataset.origin_z];
+                   
+%            for i = 1:size(stat_obs, 2)
+%                env.dataset.static_map = add_obstacle(stat_obs{i}{1} -[50,50,50], ...
+%                                stat_obs{i}{2}, ...
+%                                env.dataset.static_map); 
+%            end
 
-            origin = [env.dataset.origin_x, ...
-                      env.dataset.origin_y, ...
-                      env.dataset.origin_z]/env.dataset.cell_size;
-                  
             for i = 1:size(stat_obs, 2)
-                env.dataset.static_map = add_obstacle(stat_obs{i}{1} -[50,50,50], ...
-                                stat_obs{i}{2}, ...
+                obj_cell_coords = round((stat_obs{i}{1} - origin) / env.dataset.cell_size);
+                obj_cell_size = round(stat_obs{i}{2} / env.dataset.cell_size);
+
+                env.dataset.static_map = add_obstacle(obj_cell_coords, ...
+                                obj_cell_size, ...
                                 env.dataset.static_map); 
             end
             env.dataset.static_map = flip(env.dataset.static_map);          
