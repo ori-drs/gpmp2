@@ -98,7 +98,7 @@ function static_case = case1(sdf, init_values, problem_setup)
     result = optimizer.values();
     graph_optimize_t = toc;
     
-    static_case.result = result;
+    static_case.final_result = result;
     static_case.graph_build_t = graph_build_t;
     static_case.graph_optimize_t = graph_optimize_t;
     static_case.graph = graph;
