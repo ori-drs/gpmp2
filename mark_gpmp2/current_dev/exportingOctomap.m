@@ -31,7 +31,7 @@ Z = reshape(Z,1,[])';
 % Offsets to account for the mounted base
 % X = X + 0.14;
 % Y = Y + 0.22;
-% Z = Z + 0.346;
+Z = Z + 0.346;
 
 occupancy_vector = reshape(dataset.map,1,[])';   
 
@@ -53,7 +53,7 @@ show(map3D)
 % Export file
 dir_path = "/home/mark/installs/gpmp2/mark_gpmp2/data/";
 % file_name = dir_path + "moving_replanner_octomap_time_0.bt";
-file_name = dir_path + "lab_octomap_time_0.bt";
+file_name = dir_path + "lab_octomap_with_z_offset_time_0.bt";
 exportOccupancyMap3D(map3D,file_name)
 % 
 % msg = rosmessage('nav_msgs/OccupancyGrid');
