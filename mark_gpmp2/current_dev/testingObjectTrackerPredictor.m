@@ -6,14 +6,17 @@ clc;
 import gtsam.*
 import gpmp2.*
 
+cell_size = 0.01;
+env_size = 300;
+
 env_name = 'MovingReplanner';
-env = loadPredefinedMovingEnvironment(env_name, 300, 0.01);
-    
+env = loadPredefinedMovingEnvironment(env_name, env_size, cell_size);
+
 arm = generateArm('WAMArm');
 arm_model = arm.fk_model();
 
 total_time_step = 30;
-delta_t = 0.1;
+delta_t = 0.5;
 
 dataset = env.queryEnv(0);
 
@@ -21,8 +24,7 @@ origin = [dataset.origin_x, ...
         dataset.origin_y, ...
         dataset.origin_z];
     
-cell_size = 0.01;
-epsilon = 0.2;
+epsilon = 0.5;
 origin_point3 = dataset.origin_point3;
 workspace_size = size(dataset.map);
 
@@ -60,14 +62,37 @@ object_predictor.update(0.5, env.queryEnv(0.5).map);
 % bench_time = toc;
 % 100*(1- my_time/bench_time)
 
-test_predicted_sdf = object_predictor.predict_object_locations(1);
-actual_sdf = env.queryEnv(1).field;
+test_time = delta_t;
+
+tic;
+% profile on 
+test_predicted_sdf = object_predictor.predict_object_locations(test_time);
+% profile viewer 
+my_time = toc;
+
+test_predicted_sdf(test_predicted_sdf>2) = 2;
+
+% 
+tic;
+bench_predicted_sdf = object_predictor.predict_sdf(test_time);
+benc_time = toc;
+format short;
+disp("Time reduced by " + num2str(100*(1- my_time/benc_time)) + "%");
+
+% 
+actual_sdf = env.queryEnv(test_time).field;
+diff = actual_sdf - test_predicted_sdf;
 
 figure(1); hold on;
-subplot(2,2,1); hold on;
+subplot(1,3,1); hold on;
+title('Predicted');
 h1 = plotSignedDistanceField2D(test_predicted_sdf(:,:,150), origin(1), origin(2), cell_size, epsilon);
-subplot(2,2,2); hold on;
+subplot(1,3,2); hold on;
+title('Actual');
 h2 = plotSignedDistanceField2D(actual_sdf(:,:,150), origin(1), origin(2), cell_size, epsilon);
+subplot(1,3,3); hold on;
+title('Diff');
+h3 = plotSignedDistanceField2D(diff(:,:,150), origin(1), origin(2), cell_size, epsilon);
 
 % 
 % 

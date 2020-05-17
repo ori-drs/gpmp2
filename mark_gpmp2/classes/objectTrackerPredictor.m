@@ -12,6 +12,7 @@
         origin_point3
         
         obs_px_velocity
+        obs_coord_velocity
         px_ind_list
         last_centroids
         num_obs
@@ -32,7 +33,7 @@
             obj.num_obs = 0;
             obj.origin_point3 = origin_point3;
             obj.object_sdfs = {};
-            obj.association_thresh = 2000; % TODO - give a more robust threshold
+            obj.association_thresh = 4000; % TODO - give a more robust threshold
             obj.obj_counter = 0;
             obj.obj_sdf_map = containers.Map('KeyType','uint32','ValueType','uint32');
             
@@ -86,12 +87,14 @@
                     % new entry
                     if min_dist < obj.association_thresh
                         px_vel = (centroid - obj.last_centroids(min_ind,:))./obj.delta_t;
-                        obj.obs_px_velocity(j,:) = px_vel;
-                        obj.obj_sdf_map(j) = ind_closest_obj_sdf;
-                        
                         obj_coord_vel = [px_vel(2), px_vel(1), px_vel(3)];
+                        
+                        obj.obs_px_velocity(j,:) = px_vel;
+                        obj.obs_coord_velocity(j,:) = obj_coord_vel;
+                        
+                        obj.obj_sdf_map(j) = ind_closest_obj_sdf;
                         obj.object_sdfs{ind_closest_obj_sdf}.min_coord =  obj.object_sdfs{ind_closest_obj_sdf}.min_coord ... 
-                                                                                + obj.delta_t * obj_coord_vel;
+                                                                                + obj.delta_t * obj_coord_vel; % TODO - use min_coord to centroid and use latest centroid
                                                                                             
                     %Update the new location of thepixel list   
                     else
@@ -148,32 +151,29 @@
             predicted_sdf = obj.static_sdf_field;
 
             for j = 1:obj.num_obs
-                px_vel = obj.obs_px_velocity(j,:);
-                coord_vel = [px_vel(2), px_vel(1), px_vel(3)];
+                coord_vel = obj.obs_coord_velocity(j,:);
                 
                 obj_sdf_ind = obj.obj_sdf_map(j);
                 obj_sdf_data = obj.object_sdfs{obj_sdf_ind};
                 sdf_size = obj_sdf_data.size;
                 lower_coord = obj_sdf_data.min_coord;
                 
-%                 px_velocity_mod = [px_vel(1),px_vel(2),px_vel(3)];
-%                 px_velocity_mod = [-px_vel(2),px_vel(1),px_vel(3)];
                 predicted_coord = round(lower_coord + (coord_vel*forward_t));
                 
-                % Convert static map frame to map frame 
-%                 predicted_coord(1) =  obj.map_size(1) + 1 - predicted_coord(1);
-                
-%                 rows_range = predicted_coord(1)-sdf_size(1) + 1:predicted_coord(1);
                 rows_range  = predicted_coord(1):predicted_coord(1) + sdf_size(1) - 1;
+%                 rows_range  = predicted_coord(1)-sdf_size(1)+1:predicted_coord(1);
                 cols_range  = predicted_coord(2):predicted_coord(2) + sdf_size(2) - 1;
                 z_range     = predicted_coord(3):predicted_coord(3) + sdf_size(3) - 1;
                 
+                flip_rows_range = obj.map_size(1) + 1 - rows_range;
+%                 flip_rows_range = - rows_range;
+                
                 % Find inds out range to remove
-                valid_row_mask  = rows_range    >= 1 & rows_range   <= obj.map_size(1);
+                valid_row_mask  = flip_rows_range    >= 1 & flip_rows_range   <= obj.map_size(1);
                 valid_col_mask  = cols_range    >= 1 & cols_range   <= obj.map_size(2);
                 valid_z_mask    = z_range       >= 1 & z_range      <= obj.map_size(3);
                 
-                rows_range  = rows_range(valid_row_mask);
+                flip_rows_range  = flip_rows_range(valid_row_mask);
                 cols_range  = cols_range(valid_col_mask);
                 z_range     = z_range(valid_z_mask);
     
@@ -184,13 +184,12 @@
                 new_sdf_z_range     = 1:sdf_size(3);
                 new_sdf_z_range     = new_sdf_z_range(valid_z_mask);
                 
-                flip_rows_range = obj.map_size(1) + 1 - rows_range;
 
-                static_sdf_slice    = obj.static_sdf_field(flip_rows_range, cols_range, z_range);
+                static_sdf_slice    = predicted_sdf(flip_rows_range, cols_range, z_range);
                 new_sdf_slice       = obj_sdf_data.field(new_sdf_rows_range, new_sdf_cols_range, new_sdf_z_range);
                 
                 
-                predicted_sdf(flip_rows_range, cols_range , z_range) = min(static_sdf_slice, flip(new_sdf_slice));
+                predicted_sdf(flip_rows_range, cols_range , z_range) = min(static_sdf_slice, new_sdf_slice);
             end
             
             predicted_sdf = permute(predicted_sdf, [2 1 3]);
