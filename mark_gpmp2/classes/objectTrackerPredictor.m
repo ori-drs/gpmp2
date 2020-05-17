@@ -161,12 +161,10 @@
                 predicted_coord = round(lower_coord + (coord_vel*forward_t));
                 
                 rows_range  = predicted_coord(1):predicted_coord(1) + sdf_size(1) - 1;
-%                 rows_range  = predicted_coord(1)-sdf_size(1)+1:predicted_coord(1);
                 cols_range  = predicted_coord(2):predicted_coord(2) + sdf_size(2) - 1;
                 z_range     = predicted_coord(3):predicted_coord(3) + sdf_size(3) - 1;
                 
                 flip_rows_range = obj.map_size(1) + 1 - rows_range;
-%                 flip_rows_range = - rows_range;
                 
                 % Find inds out range to remove
                 valid_row_mask  = flip_rows_range    >= 1 & flip_rows_range   <= obj.map_size(1);
