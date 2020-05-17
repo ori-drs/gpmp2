@@ -13,14 +13,24 @@ plot_figs = false;
 fig_num = 1;
 
 % Run the lab experiments
-env_size = 150;
-res = 0.02;
+env_size = 300;
+res = 0.01;
 all_cases = runMovingLabExperiments(env_size, res);
 problem_setup = all_cases.problem_setup;
 
 
 lab_axis_lims = [-1 1.5 -1.2 1.5 -1 2];
 [X, Y, Z] = getEnvironmentMesh(all_cases.datasets(1));
+
+%% Plot comparison of the convergence for full knowledge and our approximate of sdf
+full_iter_costs = all_cases.full_knowledge_manual_case.iteration_costs;
+pred_iter_costs = all_cases.fast_prediction_manual_case.iteration_costs;
+
+figure(fig_num); hold on;
+plot(0:length(full_iter_costs)-1, full_iter_costs, 'b');
+plot(0:length(pred_iter_costs)-1, pred_iter_costs, 'r');
+fig_num = fig_num + 1;
+
 %% Plots
 if plot_figs
     % plot problem setting
