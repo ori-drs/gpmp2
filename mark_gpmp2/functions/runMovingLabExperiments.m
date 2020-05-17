@@ -1,4 +1,4 @@
-function all_cases = runMovingLabExperiments(env_size, res)
+function all_cases = runMovingLabExperiments(env_size, res, cases_to_run)
 %RUNMOVINGLABEXPERIMENTS Summary of this function goes here
 %   Detailed explanation goes here
 % @author Mark Finean 
@@ -29,7 +29,8 @@ function all_cases = runMovingLabExperiments(env_size, res)
 
     %% Planner settings
     total_time_sec = 3.0;
-    delta_t = 0.05;
+%     delta_t = 0.05;
+    delta_t = 0.1;
     total_time_step = round(total_time_sec/delta_t);
     interp_multiplier = 20;
     total_check_step = interp_multiplier*total_time_step;
@@ -46,7 +47,7 @@ function all_cases = runMovingLabExperiments(env_size, res)
     % algo settings
     cost_sigma = 0.05;
 %     cost_sigma = 0.1;
-    epsilon_dist = 0.5;
+    epsilon_dist = 0.2;
 
     % noise model
     pose_fix_sigma = 0.0001;
@@ -89,46 +90,76 @@ function all_cases = runMovingLabExperiments(env_size, res)
         datasets = [datasets, dataset];
     end   
 
-    %% build graphs
-    disp('Case1: Static sdf');
-    init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
-    static_case = case1(start_sdf, init_values, problem_setup);
-
-    disp('Case2: Full knowledge sdf');
-    init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
-    full_knowledge_case = case2(datasets, init_values, problem_setup);
-
-    disp('Case3: Execute and update sdf');
-    init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
-    execute_update_case = case3(datasets, init_values, problem_setup);
-
-    % disp('Case4: Execute and selectively predict sdf');
-    % init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
-    % selective_prediction_case = case4(datasets, init_values, problem_setup, true);
-
-    % disp('Case5: Execute and selectively update sdf');
-    % init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
-    % collision_t_update_case = case5(datasets, init_values, problem_setup);
-
-    % This should be the same result as full knowledge but MUCH slower
-    % disp('Case6: Execute and predict sdf');
-    % init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
-    % prediction_case = case6(datasets, init_values, problem_setup, true);
-    
-    disp('Case7: Execute and update sdf using reinitialisation');
-    init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
-    execute_update_case_reinit = case7(datasets, init_values, problem_setup);
-
-    disp('Case8: Execute and update sdf using pruning');
-    init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
-    pruning_reinit_case = case8(datasets, init_values, problem_setup);
-
-    all_cases.static_case = static_case;
-    all_cases.full_knowledge_case = full_knowledge_case;
-    all_cases.execute_update_case = execute_update_case;
-    all_cases.execute_update_case_reinit = execute_update_case_reinit;
-    all_cases.pruning_reinit_case = pruning_reinit_case;
     all_cases.problem_setup = problem_setup;
     all_cases.datasets = datasets;
+    
+    %% build graphs
+    
+    for i = cases_to_run
+    
+        switch i
+            case 1
+                disp('Case1: Static sdf');
+                init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
+                static_case = case1(start_sdf, init_values, problem_setup);
+                all_cases.static_case = static_case;
+                
+            case 2
+                disp('Case2: Full knowledge sdf');
+                init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
+                full_knowledge_case = case2(datasets, init_values, problem_setup);
+                all_cases.full_knowledge_case = full_knowledge_case;
+            
+            case 3
+                disp('Case3: Execute and update sdf');
+                init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
+                execute_update_case = case3(datasets, init_values, problem_setup);
+                all_cases.execute_update_case = execute_update_case;
+            
+            case 4
+                disp('Case4: Execute and selectively predict sdf');
+                init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
+                selective_prediction_case = case4(datasets, init_values, problem_setup, true);
+                all_cases.selective_prediction_case = selective_prediction_case;
+
+            case 5
+                disp('Case5: Execute and selectively update sdf');
+                init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
+                collision_t_update_case = case5(datasets, init_values, problem_setup);
+                all_cases.collision_t_update_case = collision_t_update_case;
+  
+            case 6
+                % This should be the same result as full knowledge but MUCH slower
+                disp('Case6: Execute and predict sdf');
+                init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
+                prediction_case = case6(datasets, init_values, problem_setup, true);
+                all_cases.prediction_case = prediction_case;
+           
+            case 7
+                disp('Case7: Execute and update sdf using reinitialisation');
+                init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
+                execute_update_case_reinit = case7(datasets, init_values, problem_setup);
+                all_cases.execute_update_case_reinit = execute_update_case_reinit;
+            
+            case 8
+                disp('Case8: Execute and update sdf using pruning');
+                init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
+                pruning_reinit_case = case8(datasets, init_values, problem_setup);
+                all_cases.pruning_reinit_case = pruning_reinit_case;
+            
+            case 9
+                disp('Case9: Manual fast predictions sdfs');
+                init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
+                fast_prediction_manual_case = case9(datasets, init_values, problem_setup);
+                all_cases.fast_prediction_manual_case = fast_prediction_manual_case;
+            
+            case 10
+                disp('Case10: Manual full knowledge case');
+                init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
+                full_knowledge_manual_case = case10(datasets, init_values, problem_setup);
+                all_cases.full_knowledge_manual_case = full_knowledge_manual_case;
+        end
+    end
+
 end
 
