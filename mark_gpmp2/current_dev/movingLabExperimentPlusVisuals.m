@@ -13,9 +13,10 @@ plot_figs = false;
 fig_num = 1;
 
 % Run the lab experiments
+cases_to_run = [10,9];
 env_size = 300;
 res = 0.01;
-all_cases = runMovingLabExperiments(env_size, res);
+all_cases = runMovingLabExperiments(env_size, res, cases_to_run);
 problem_setup = all_cases.problem_setup;
 
 
@@ -27,9 +28,39 @@ full_iter_costs = all_cases.full_knowledge_manual_case.iteration_costs;
 pred_iter_costs = all_cases.fast_prediction_manual_case.iteration_costs;
 
 figure(fig_num); hold on;
-plot(0:length(full_iter_costs)-1, full_iter_costs, 'b');
-plot(0:length(pred_iter_costs)-1, pred_iter_costs, 'r');
-fig_num = fig_num + 1;
+h1 = plot(0:length(full_iter_costs)-1, full_iter_costs, 'b');
+h2 = plot(0:length(pred_iter_costs)-1, pred_iter_costs, 'r');
+xlabel("Iteration", "FontSize", 16);
+ylabel("Cost", "FontSize", 16);
+set(gca, 'YScale', 'log')
+legend([h1, h2], ...
+    ["Accurate SDF", "Fast Prediction SDF"],...
+    'Location','east',...
+    'NumColumns', 1, ...
+    'FontSize', 16);
+title("\epsilon = 20cm plus 6cm safety");
+fig_num = fig_num + 1; pause(0.5);
+
+
+%% Plot the comparison animation
+
+cases_to_compare = {all_cases.full_knowledge_manual_case, ...
+                    all_cases.fast_prediction_manual_case};
+cases_names = ["Accurate SDF", "Approximation"];
+    
+plotTrajComparison(all_cases, fig_num, lab_axis_lims, ...
+                            cases_to_compare, cases_names, 0.1, true)  
+fig_num = fig_num + 1; pause(0.5);
+
+%% Plot the full knowledge
+plotRobotModelTrajectory(all_cases.fast_prediction_manual_case, all_cases.datasets, all_cases.problem_setup, ...
+                fig_num, lab_axis_lims, 0.2)
+fig_num = fig_num + 1; pause(0.5);
+
+
+plotLineTrajectory(all_cases.fast_prediction_manual_case, all_cases.datasets, all_cases.problem_setup, ...
+                fig_num, lab_axis_lims, true, false, 0.1);
+fig_num = fig_num + 1; pause(0.5);
 
 %% Plots
 if plot_figs
@@ -56,14 +87,14 @@ plotTrajComparison(all_cases, fig_num, lab_axis_lims, ...
 fig_num = fig_num + 1;
 
 %% Plot the static graph
-plotTrajectory(all_cases.static_case, all_cases.datasets, all_cases.problem_setup, ...
+plotLineTrajectory(all_cases.static_case, all_cases.datasets, all_cases.problem_setup, ...
                 fig_num, lab_axis_lims, false, true);
 fig_num = fig_num + 1;
 
 
 %% Plot the full knowledge
 
-plotTrajectory(all_cases.full_knowledge_case, all_cases.datasets, all_cases.problem_setup, ...
+plotLineTrajectory(all_cases.full_knowledge_case, all_cases.datasets, all_cases.problem_setup, ...
                 fig_num, lab_axis_lims, false, true);
 fig_num = fig_num + 1;
 
@@ -99,6 +130,7 @@ plotStateEvolution(all_cases.pruning_reinit_case.final_result, ...
                     all_cases.problem_setup.total_time_sec, ...
                     all_cases.problem_setup.total_time_step, ax, 'x')
 fig_num = fig_num + 1;
+pause(0.2);
 
 figure(fig_num);
 ax = gca;
@@ -140,7 +172,7 @@ function plotSceneEvolution(all_cases, pause_time)
 end
 
 function plotTrajComparison(all_data, fig_num, ax_lims, ...
-                            cases_to_compare, cases_names, pause_time)
+                            cases_to_compare, cases_names, pause_time, remove_env)
     [X, Y, Z] = getEnvironmentMesh(all_data.datasets(1));
     c_order = ['b', 'r', 'g', 'm'];
     figure(fig_num); hold on;
@@ -156,11 +188,13 @@ function plotTrajComparison(all_data, fig_num, ax_lims, ...
     for i = 0:all_data.problem_setup.total_time_step
         case_handles = [];
 
-        if i > 0
-            delete(h1);
+        if ~remove_env
+            if i > 0
+                delete(h1);
+            end
+            h1 = plot3DEnvironment(all_data.datasets(i+1), X, Y, Z);
         end
-        h1 = plot3DEnvironment(all_data.datasets(i+1), X, Y, Z);
-
+        
         for j =1:length(cases_to_compare)
             confs_to_compare{j} = cases_to_compare{j}.final_result.atVector(gtsam.symbol('x', i));
             arm_hand = gpmp2.plotArm(all_data.problem_setup.arm.fk_model(), confs_to_compare{j}, c_order(j), 2);
@@ -177,7 +211,7 @@ function plotTrajComparison(all_data, fig_num, ax_lims, ...
 
 end
 
-function plotTrajectory(traj, datasets, problem, f_num, ax_lims, clear_frames, plot_env, pause_time)
+function plotLineTrajectory(traj, datasets, problem, f_num, ax_lims, clear_frames, plot_env, pause_time)
 
     [X, Y, Z] = getEnvironmentMesh(datasets(1));
 
