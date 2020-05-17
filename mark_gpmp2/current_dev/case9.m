@@ -8,7 +8,6 @@ function fast_prediction_manual_case = case9(datasets, init_values, problem_setu
     dil_env = loadPredefinedMovingEnvironment("DilatedMovingObjects", env_size, datasets(1).cell_size);
     no_stat_env = loadPredefinedMovingEnvironment("MovingReplannerNoStatic", env_size, datasets(1).cell_size);
     lab_env = loadPredefinedMovingEnvironment("Lab", env_size, datasets(1).cell_size);
-    normal_env = loadPredefinedMovingEnvironment("MovingReplanner", env_size, datasets(1).cell_size);
 
     predicted_sdfs = cell(1,problem_setup.total_time_step+1);
 
