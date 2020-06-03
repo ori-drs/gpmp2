@@ -13,7 +13,8 @@ plot_figs = false;
 fig_num = 1;
 
 % Run the lab experiments
-cases_to_run = [10,9];
+% cases_to_run = [10,9];
+cases_to_run = [1,2,3];
 env_size = 300;
 res = 0.01;
 all_cases = runMovingLabExperiments(env_size, res, cases_to_run);
@@ -22,6 +23,10 @@ problem_setup = all_cases.problem_setup;
 
 lab_axis_lims = [-1 1.5 -1.2 1.5 -1 2];
 [X, Y, Z] = getEnvironmentMesh(all_cases.datasets(1));
+
+%% Data wanted for the paper
+
+
 
 %% Plot comparison of the convergence for full knowledge and our approximate of sdf
 full_iter_costs = all_cases.full_knowledge_manual_case.iteration_costs;
@@ -83,7 +88,7 @@ cases_names = ["No SDF update", "Full knowledge", ...
         "Update each step"];
     
 plotTrajComparison(all_cases, fig_num, lab_axis_lims, ...
-                            cases_to_compare, cases_names, 0.1)  
+                            cases_to_compare, cases_names, 0.1, true)  
 fig_num = fig_num + 1;
 
 %% Plot the static graph
