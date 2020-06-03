@@ -12,14 +12,19 @@ import gpmp2.*
 
 %% Setup
 
-% env_name = 'MovingReplanner';
-env_name = 'MovingBlock';
-env = loadPredefinedMovingEnvironment(env_name);
+env_name = 'MovingReplanner';
+% env_name = 'MovingBlock';
+env = loadPredefinedMovingEnvironment(env_name, 300 , 0.01);
 dataset1 = env.queryEnv(0);
-dataset2 = env.queryEnv(1);
+dataset2 = env.queryEnv(0.1);
+%%
+tic;
+field  = gpmp2.signedDistanceField3D(dataset2.map, 0.01); 
+toc;                                                        
 
-data1_path = "/home/mark/installs/gpmp2/mark_gpmp2/data/data1.txt";
-data2_path = "/home/mark/installs/gpmp2/mark_gpmp2/data/data2.txt";
+%%
+data1_path = "/home/mark/installs/gpmp2/mark_gpmp2/data/data1_moving_replanner.txt";
+data2_path = "/home/mark/installs/gpmp2/mark_gpmp2/data/data2_moving_replanner.txt";
 
 file1_ID = fopen(data1_path,'w');
 file2_ID = fopen(data2_path,'w');
