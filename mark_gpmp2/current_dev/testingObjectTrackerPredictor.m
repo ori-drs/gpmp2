@@ -24,7 +24,7 @@ origin = [dataset.origin_x, ...
         dataset.origin_y, ...
         dataset.origin_z];
     
-epsilon = 0.5;
+epsilon = 0.2;
 origin_point3 = dataset.origin_point3;
 workspace_size = size(dataset.map);
 
@@ -50,8 +50,8 @@ object_predictor = objectTrackerPredictor(workspace_size, dataset.static_map,...
 % end
 
 
-object_predictor.update(0, env.queryEnv(0).map); 
-object_predictor.update(0.5, env.queryEnv(0.5).map); 
+object_predictor.update(0.2, env.queryEnv(0.2).map); 
+object_predictor.update(0.6, env.queryEnv(0.6).map); 
 % % profile on;
 % tic;
 % my_predicted_sdf = object_predictor.predict_object_locations(1);
@@ -94,62 +94,118 @@ subplot(1,3,3); hold on;
 title('Diff');
 h3 = plotSignedDistanceField2D(diff(:,:,150), origin(1), origin(2), cell_size, epsilon);
 
+
+
+
+
+
+
+dil_env = loadPredefinedMovingEnvironment("DilatedMovingObjects", env_size, cell_size);
+no_stat_env = loadPredefinedMovingEnvironment("MovingReplannerNoStatic", env_size, cell_size);
+lab_env = loadPredefinedMovingEnvironment("Lab", env_size, cell_size);
+normal_env = loadPredefinedMovingEnvironment("MovingReplanner", env_size, cell_size);
+
+
+t = 1;
+
+dil_dataset = dil_env.queryEnv(t);
+no_stat_dataset = no_stat_env.queryEnv(t);
+lab_dataset = lab_env.queryEnv(t);
+normal_dataset = normal_env.queryEnv(t);
+test_predicted_sdf = object_predictor.predict_object_locations(t);
+
+map_inds = dil_dataset.map == 1;
+inds = permute(dil_dataset.map, [2,1,3]) == 1;
+
+new_sdf_patch = min(lab_dataset.field, no_stat_dataset.field);
+new_map_patch = max(lab_dataset.map, no_stat_dataset.map);
+
+fused_map = lab_dataset.map;
+fused_map(map_inds) = new_map_patch(map_inds);
+
+fused_field = lab_dataset.field;
+fused_field(inds) = new_sdf_patch(inds);
+
+diff = normal_dataset.field - fused_field;
+diff_map =  fused_map - normal_dataset.map;
+% any(any(any(diff_map))) Important that this is false!
+
+predicted_map_inds = permute(test_predicted_sdf, [2,1,3]) <=0;
+predicted_map = zeros(size(fused_map));
+predicted_map(predicted_map_inds) = 1;
+
+
+[X, Y, Z] = getEnvironmentMesh(normal_dataset);
+
+% %Plot the fused map
+% figure(2); hold on; 
+% set(gcf,'Position',[1350 500 1200 1400]);
+% title('Normal 3D Environment')
+% grid on;
+% view(3);
+% gpmp2.set3DPlotRange(normal_dataset);
+% xlabel('x'); ylabel('y'); zlabel('z');
+% plot3DEnvironment(normal_dataset, X, Y, Z)
 % 
+% figure(3); hold on; 
+% set(gcf,'Position',[1350 500 1200 1400]);
+% title('Fused 3D Environment')
+% grid on;
+% view(3);
+% gpmp2.set3DPlotRange(normal_dataset);
+% xlabel('x'); ylabel('y'); zlabel('z');
+% plot3DEnvironment(fused_map, X, Y, Z)
 % 
-% actual_sdf1 = env.queryEnv(1).field;
-% actual_sdf2 = env.queryEnv(1.5).field;
-% actual_sdf3 = env.queryEnv(2).field;
-% actual_sdf1(actual_sdf1>0.2) = 1;
-% actual_sdf2(actual_sdf2>0.2) = 1;
-% actual_sdf3(actual_sdf3>0.2) = 1;
-% actual_sdf1(actual_sdf1<0) = 0;
-% actual_sdf2(actual_sdf2<0) = 0;
-% actual_sdf3(actual_sdf3<0) = 0;
+% figure(4); hold on; 
+% set(gcf,'Position',[1350 500 1200 1400]);
+% title('Predicted 3D Environment')
+% grid on;
+% view(3);
+% gpmp2.set3DPlotRange(normal_dataset);
+% xlabel('x'); ylabel('y'); zlabel('z');
+% plot3DEnvironment(predicted_map, X, Y, Z)
 % 
-% my_predicted_sdf1 = object_predictor.predict_object_locations(1);
-% my_predicted_sdf2 = object_predictor.predict_object_locations(1.5);
-% my_predicted_sdf3 = object_predictor.predict_object_locations(2);
-% 
-% my_predicted_sdf1(my_predicted_sdf1>0.2) = 1;
-% my_predicted_sdf2(my_predicted_sdf2>0.2) = 1;
-% my_predicted_sdf3(my_predicted_sdf3>0.2) = 1;
-% my_predicted_sdf1(my_predicted_sdf1<0) = 0;
-% my_predicted_sdf2(my_predicted_sdf2<0) = 0;
-% my_predicted_sdf3(my_predicted_sdf3<0) = 0;
-% 
-% 
-% % actual_sdf(actual_sdf>0.2) = 1;
-% % my_predicted_sdf(my_predicted_sdf>0.2) = 1;
-% diff_sdf = actual_sdf3-my_predicted_sdf3;
-% 
-% 
-% figure(1); hold on;
-% subplot(2,3,1); hold on;
-% h1 = plotSignedDistanceField2D(actual_sdf1(:,:,150), origin(1), origin(2), cell_size, epsilon);
-% subplot(2,3,2); hold on;
-% h2 = plotSignedDistanceField2D(actual_sdf2(:,:,150), origin(1), origin(2), cell_size, epsilon);
-% subplot(2,3,3); hold on;
-% h3 = plotSignedDistanceField2D(actual_sdf3(:,:,150), origin(1), origin(2), cell_size, epsilon);
-% subplot(2,3,4); hold on;
-% h4 = plotSignedDistanceField2D(my_predicted_sdf1(:,:,150), origin(1), origin(2), cell_size, epsilon);
-% subplot(2,3,5); hold on;
-% h5 = plotSignedDistanceField2D(my_predicted_sdf2(:,:,150), origin(1), origin(2), cell_size, epsilon);
-% subplot(2,3,6); hold on;
-% h6 = plotSignedDistanceField2D(my_predicted_sdf3(:,:,150), origin(1), origin(2), cell_size, epsilon);
-% 
-% 
-% % figure(1); hold on;
-% % subplot(1,3,1); hold on;
-% % h1 = plotSignedDistanceField2D(my_predicted_sdf(:,:,150), origin(1), origin(2), cell_size, epsilon);
-% % subplot(1,3,2); hold on;
-% % h2 = plotSignedDistanceField2D(my_predicted_sdf_3(:,:,150), origin(1), origin(2), cell_size, epsilon);
-% % subplot(1,3,3); hold on;
-% % h3 = plotSignedDistanceField2D(my_predicted_sdf_4(:,:,150), origin(1), origin(2), cell_size, epsilon);
-% 
-% figure(2); hold on;
-% subplot(1,3,1); hold on;
-% h1 = plotSignedDistanceField2D(my_predicted_sdf3(:,:,150), origin(1), origin(2), cell_size, epsilon);
-% subplot(1,3,2); hold on;
-% h2 = plotSignedDistanceField2D(actual_sdf3(:,:,150), origin(1), origin(2), cell_size, epsilon);
-% subplot(1,3,3); hold on;
-% h3 = plotSignedDistanceField2D(diff_sdf(:,:,150), origin(1), origin(2), cell_size, epsilon);
+
+height = 7;
+
+figure(5); hold on;
+subplot(1,3,1); hold on;
+title('Fused Field');
+h1 = plotSignedDistanceField2D(fused_field(:,:,height), origin(1), origin(2), cell_size);
+subplot(1,3,2); hold on;
+title('Actual');
+h2 = plotSignedDistanceField2D(normal_dataset.field(:,:,height), origin(1), origin(2), cell_size);
+subplot(1,3,3); hold on;
+title('Diff');
+h3 = plotSignedDistanceField2D(diff(:,:,height), origin(1), origin(2), cell_size);
+
+
+
+diff = test_predicted_sdf - fused_field;
+
+figure(6); hold on;
+subplot(1,3,1); hold on;
+title('Predicted');
+h1 = plotSignedDistanceField2D(test_predicted_sdf(:,:,height), origin(1), origin(2), cell_size);
+subplot(1,3,2); hold on;
+title('Fused');
+h2 = plotSignedDistanceField2D(fused_field(:,:,height), origin(1), origin(2), cell_size);
+subplot(1,3,3); hold on;
+title('Diff');
+h3 = plotSignedDistanceField2D(diff(:,:,height), origin(1), origin(2), cell_size);
+
+
+
+
+for i = 1:300
+    if ~all(all(all(predicted_map(:,:,i) == normal_dataset.map(:,:,i))))
+        disp(i);
+    end
+end
+
+
+
+
+
+
+
