@@ -35,75 +35,41 @@ classdef movingEnvironment3D < handle
                                                 
             env.dataset.static_map = zeros(env.dataset.rows, ...
                                     env.dataset.cols, ...
-                                    env.dataset.z);   
-%             env.add_static_scene;          
-%             env.add_static_scene();
-            
-%             add_object(t_start_moving, v_or_t_end, v_or_t_end_value, block_starting_pos, obs_size)                                    
+                                    env.dataset.z);                            
            
         end
         
         function add_static_scene(env)
          
             %  Note these are true for 3mx3mx3m at 1cm res          
-            %stat_obs{1} = {[170 220 130], [140, 60, 5]};
-            %stat_obs{1} = {[0.70 1.20 0.30], [1.40, 0.60, 0.05]};
             stat_obs{1} = {[0.20 0.70 -0.20], [1.40, 0.60, 0.05]};
             
-            %stat_obs{2} = {[105 195 90], [10, 10, 80]};
-            %stat_obs{2} = {[0.05 0.95 -0.10], [0.10, 0.10, 0.80]};
             stat_obs{2} = {[-0.45 0.45 -0.60], [0.10, 0.10, 0.80]};
             
-            %stat_obs{3} = {[235 195 90], [10, 10, 80]};
-            %stat_obs{3} = {[1.35 0.95 -0.10], [0.10, 0.10, 0.80]};
             stat_obs{3} = {[0.85 0.45 -0.60], [0.10, 0.10, 0.80]};
             
-            %stat_obs{4} = {[105 245 90], [10, 10, 80]};
-            %stat_obs{4} = {[0.05 1.45 -0.10], [0.10, 0.10, 0.80]};
             stat_obs{4} = {[-0.45 0.95 -0.60], [0.10, 0.10, 0.80]};
             
-            %stat_obs{5} = {[235 245 90], [10, 10, 80]};
-            %stat_obs{5} = {[1.35 1.45 -0.10], [0.10, 0.10, 0.80]};
             stat_obs{5} = {[0.85 0.95 -0.60], [0.10, 0.10, 0.80]};
             
-            %stat_obs{6} = {[250 190 145], [60, 5, 190]};
-            %stat_obs{6} = {[1.50 0.90 0.45], [0.60, 0.05, 1.90]};
             stat_obs{6} = {[1.00 0.40 -0.05], [0.60, 0.05, 1.90]};
             
-            %stat_obs{7} = {[250 90 145], [60, 5, 190]};
-            %stat_obs{7} = {[1.50 -0.10 0.45], [0.60, 0.05, 1.90]};
             stat_obs{7} = {[1.00 -0.60 -0.05], [0.60, 0.05, 1.90]};
-            
-            %stat_obs{8} = {[200 190 145], [40, 5, 190]};
-            %stat_obs{8} = {[1.00 0.90 0.45], [0.40, 0.05, 1.90]};
+
             stat_obs{8} = {[0.50 0.40 -0.05], [0.40, 0.05, 1.90]};
             
-            %stat_obs{9} = {[250 140 240], [60, 100, 5]};
-            %stat_obs{9} = {[1.50 0.40 1.40], [0.60, 1.00, 0.05]};
             stat_obs{9} = {[1.00 -0.10 0.90], [0.60, 1.00, 0.05]};
-            
-            %stat_obs{10} = {[250 140 190], [60, 100, 5]};
-            %stat_obs{10} = {[1.50 0.40 0.90], [0.60, 1.00, 0.05]};
+
             stat_obs{10} = {[1.00 -0.10 0.40], [0.60, 1.00, 0.05]};
-            
-            %stat_obs{11} = {[250 140 140], [60, 100, 5]};
-            %stat_obs{11} = {[1.50 0.40 0.40], [0.60, 1.00, 0.05]};
+
             stat_obs{11} = {[1.00 -0.10 -0.10], [0.60, 1.00, 0.05]};
-            
-            %stat_obs{12} = {[250 140 90], [60, 100, 5]};
-            %stat_obs{12} = {[1.50 0.40 -0.10], [0.60, 1.00, 0.05]};
+
             stat_obs{12} = {[1.00 -0.10 -0.60], [0.60, 1.00, 0.05]};
 
              origin = [env.dataset.origin_x, ...
                        env.dataset.origin_y, ...
                        env.dataset.origin_z];
                    
-%            for i = 1:size(stat_obs, 2)
-%                env.dataset.static_map = add_obstacle(stat_obs{i}{1} -[50,50,50], ...
-%                                stat_obs{i}{2}, ...
-%                                env.dataset.static_map); 
-%            end
-
             for i = 1:size(stat_obs, 2)
                 obj_cell_coords = round((stat_obs{i}{1} - origin) / env.dataset.cell_size);
                 obj_cell_size = round(stat_obs{i}{2} / env.dataset.cell_size);
@@ -124,14 +90,6 @@ classdef movingEnvironment3D < handle
             obj.obs_size = obs_size;
             
             obj.block_velocity = block_vel;        
-
-            % Parameters for block trajectory
-%             if t_end_moving == 0 % object velocity given
-%             elseif t_end_moving ~= 0 % t_end given
-%                 obj.t_end_moving = t_end_moving;
-%                 obj.block_end_pos = [2.50, 1.50, 1.50];
-%                 obj.block_velocity = (obj.block_end_pos - obj.block_starting_pos)/(obj.t_end_moving-obj.t_start_moving);
-%             end
             
             env.objects{end+1} = obj;
         
@@ -152,12 +110,6 @@ classdef movingEnvironment3D < handle
             x = object.block_starting_pos(1) + t_moved * object.block_velocity(1);
             y = object.block_starting_pos(2) + t_moved * object.block_velocity(2);
             z = object.block_starting_pos(3) + t_moved * object.block_velocity(3);
-% 
-%             if object.v_or_t_end == false && t<= object.v_or_t_end_value
-%                 x = object.block_end_pos(1);
-%                 y = object.block_end_pos(2);
-%                 z = object.block_end_pos(3);
-%             end
 
             %  Add each obstacle
             obs_pos_to_add = round([x - env.dataset.origin_x, ...
@@ -198,16 +150,10 @@ classdef movingEnvironment3D < handle
             % map
             updateMap(obj, query_t);
             
-%                         env.dataset.map = flip(env.dataset.map);          
-
-                       
             % signed distance field
             obj.dataset.field  = gpmp2.signedDistanceField3D(permute(obj.dataset.map, [2 1 3]), ...
                                                 obj.dataset.cell_size); 
                                                         
-%             obj.dataset.field  = gpmp2.signedDistanceField3D(permute(obj.dataset.map, [2 1 3]), ...
-%                                                             obj.dataset.cell_size);            
-%             
             % init sdf
             obj.dataset.sdf = gpmp2.SignedDistanceField(obj.dataset.origin_point3, ...
                                                 obj.dataset.cell_size, ...
@@ -244,7 +190,7 @@ z_inds_in_range = Z>=1 & Z<= size(map,3);
 Z = Z(z_inds_in_range);
 
 
-% occupency grid
+% occupancy grid
 map(Y, X, Z) = ones(size(Y, 2), size(X, 2), size(Z, 2)); 
 
 end
