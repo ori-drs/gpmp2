@@ -22,6 +22,13 @@
         obj_counter
         epsilon
         static_sdf_field
+        
+        
+        
+        % Timing params
+        init_static_field_time
+        calc_obj_sdfs_time
+        sdf_coord_track_time
     end
     
     methods
@@ -48,8 +55,13 @@
             end
             
             obj.cell_size = cell_size;
-            obj.update_static_sdf_field(); % calc and sets the static sdf field initially
             
+            tic;
+            obj.update_static_sdf_field(); % calc and sets the static sdf field initially
+            obj.init_static_field_time = toc;
+            
+            obj.calc_obj_sdfs_time = 0;
+            obj.sdf_coord_track_time = 0;
         end
         
         function obj = update(obj, current_t, latest_map)
@@ -76,7 +88,6 @@
                 
                 % Get centroid
                 centroid = round(regions(j).Centroid); % note this is in [col,row,z]
-%                 centroid(2) = centroid
                 obs_centroids(j, :) = centroid;
                 
                 if obj.num_obs>0
@@ -87,25 +98,29 @@
                     % new entry
                     if min_dist < obj.association_thresh
                         px_vel = (centroid - obj.last_centroids(min_ind,:))./obj.delta_t;
-                        obj_coord_vel = [px_vel(2), px_vel(1), px_vel(3)];
-                        
                         obj.obs_px_velocity(j,:) = px_vel;
-                        obj.obs_coord_velocity(j,:) = obj_coord_vel;
                         
+                        tic;
+                        obj_coord_vel = [px_vel(2), px_vel(1), px_vel(3)];  
+                        obj.obs_coord_velocity(j,:) = obj_coord_vel;
                         obj.obj_sdf_map(j) = ind_closest_obj_sdf;
                         obj.object_sdfs{ind_closest_obj_sdf}.min_coord =  obj.object_sdfs{ind_closest_obj_sdf}.min_coord ... 
                                                                                 + obj.delta_t * obj_coord_vel; % TODO - use min_coord to centroid and use latest centroid
-                                                                                            
+                        obj.sdf_coord_track_time = obj.sdf_coord_track_time + toc;                                                                    
                     %Update the new location of thepixel list   
                     else
                         obj.obs_px_velocity(j,:) = [0,0,0];
+                        tic;
                         obj.object_sdfs{obj.obj_counter+1} = obj.find_sdf_object(conn_comps.PixelIdxList{j});
+                        obj.calc_obj_sdfs_time = obj.calc_obj_sdfs_time + toc;
                         obj.obj_counter = obj.obj_counter + 1; % New object seen
                         obj.obj_sdf_map(j) = obj.obj_counter;    
                     end
                 % First observation
                 else
+                    tic;
                     obj.object_sdfs{end+1} = obj.find_sdf_object(conn_comps.PixelIdxList{j});
+                    obj.calc_obj_sdfs_time = obj.calc_obj_sdfs_time + toc;
                     obj.obj_counter = obj.obj_counter + 1; % New object seen
                     obj.obj_sdf_map(obj.obj_counter) = j;
                 end
@@ -191,11 +206,12 @@
             end
             
             predicted_sdf = permute(predicted_sdf, [2 1 3]);
-
+            
         end
         
         function obj = update_static_sdf_field(obj)
-            obj.static_sdf_field = gpmp2.signedDistanceField3D(flip(obj.static_map), obj.cell_size);                                                  
+            obj.static_sdf_field = gpmp2.signedDistanceField3D(flip(obj.static_map), obj.cell_size);  
+            permute(obj.static_sdf_field, [2 1 3]); % Only for equivalent timing comparison
         end
                     
        function predicted_map = predict(obj, t)
@@ -226,8 +242,10 @@
                 predicted_map(predicted_occupancy_inds) = 1;                                   
             end  
            
+            predicted_map  = permute(predicted_map, [2 1 3]);
+            
             % Convert map to sdf
-            field  = gpmp2.signedDistanceField3D(permute(predicted_map, [2 1 3]), obj.cell_size);            
+            field  = gpmp2.signedDistanceField3D(predicted_map, obj.cell_size);            
             
 %             % init sdf
 %             predicted_sdf = gpmp2.SignedDistanceField(obj.origin_point3, ...
