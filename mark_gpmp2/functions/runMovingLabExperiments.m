@@ -9,7 +9,8 @@ function all_cases = runMovingLabExperiments(env_size, res, cases_to_run)
 
     %% Setup
     env_name = 'MovingReplanner';
-    env = loadPredefinedMovingEnvironment(env_name, env_size, res);
+%     env = loadPredefinedMovingEnvironment(env_name, env_size, res);
+    env = loadPaperEnvs(1, env_size, res, 0.6);
     dataset = env.queryEnv(0);
 %     [X, Y, Z] = getEnvironmentMesh(dataset);
     use_trustregion_opt = false;
