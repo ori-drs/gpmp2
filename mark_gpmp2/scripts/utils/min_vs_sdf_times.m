@@ -50,3 +50,26 @@ er.Color = [0 0 0];
 er.LineStyle = 'none';  
 xlabel('Object Size (Voxels)')
 ylabel('Compute Time (ms)')
+
+
+%% Min times vs on GPU
+
+size_m = [300,300,300];
+tic;
+A = rand(size_m);
+for i = 1:20
+    B = rand(size_m);
+    C = min(A,B);
+end
+cpu_time = toc;
+
+tic;
+gpu_A = gpuArray(rand(size_m));
+
+for i = 1:20
+    gpu_B = gpuArray(rand(size_m));
+    gpu_C = min(gpu_A, gpu_B);
+end
+gpu_time = toc;
+
+disp("Time ratio:" + num2str(100 * (gpu_time/cpu_time)));
