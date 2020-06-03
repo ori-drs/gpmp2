@@ -1,4 +1,4 @@
-function plotStateEvolution(result, delta_t, total_time_sec, total_time_step, handle, v_or_x)
+function plotStateEvolution(result, delta_t, total_time_sec, total_time_step, v_or_x)
 %PLOTSTATEEVOLUTION Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -13,8 +13,9 @@ time_steps = 0:delta_t:total_time_sec;
 %         conf_v_series = horzcat(conf_v_series, v_conf);
     end
     
-    plot(handle, time_steps, conf_x_series)
-    hold on;
+%     plot(handle, time_steps, conf_x_series)
+    plot(time_steps, conf_x_series)
+%     hold on;
 %     plot(handle, time_steps, conf_v_series)
 %     legend('x1','x2','v1','v2')
     xlabel('Time (s)');
