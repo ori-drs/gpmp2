@@ -962,6 +962,8 @@ gtsam::Values reinitRemainderArmTrajStraightLine(gtsam::Values& traj,
 
 /// initialization
 gtsam::Values initArmTrajStraightLine(Vector init_conf, Vector end_conf, size_t total_step);   
+void setArmSeed(size_t seed);   
+gtsam::Values initArmTrajRandom(Vector init_conf, Vector end_conf, size_t total_step);   
 gtsam::Values initPose2VectorTrajStraightLine(const gtsam::Pose2& init_pose, Vector init_conf,
     const gtsam::Pose2& end_pose, Vector end_conf, size_t total_step);
 gtsam::Values initPose2TrajStraightLine(const gtsam::Pose2& init_pose,

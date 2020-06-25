@@ -14,6 +14,7 @@
 #include <gtsam/base/Matrix.h>
 #include <gtsam/base/Vector.h>
 #include <gtsam/geometry/Pose2.h>
+// #include <stdlib.h>
 
 
 namespace gpmp2 {
@@ -27,6 +28,23 @@ namespace gpmp2 {
  */
 GPMP2_EXPORT gtsam::Values initArmTrajStraightLine(const gtsam::Vector& init_conf,
     const gtsam::Vector& end_conf, size_t total_step);
+
+/**
+ * @brief initial the trajectory in configuration space as random
+ * @param init_conf trajectory start configuration
+ * @param end_conf  trajectory end configuration
+ * @param total_step is how many intervals do you want in the traj
+ * @return values
+ */
+GPMP2_EXPORT gtsam::Values initArmTrajRandom(const gtsam::Vector& init_conf,
+    const gtsam::Vector& end_conf, size_t total_step);
+
+/**
+ * @brief set the random seed used to generate trajectories
+ * @param seed is how many intervals do you want in the traj
+ * @return void
+ */
+GPMP2_EXPORT void setArmSeed(size_t seed);
 
 /**
  * @brief reinitialise the remainder of the trajectory in configuration space as a straight line
