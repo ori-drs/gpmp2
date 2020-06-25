@@ -5,14 +5,15 @@ function problem_setup = paperGetProblemSetup(start_conf, end_conf, total_time_s
 %   Detailed explanation goes here
 
     arm = gpmp2.generateArm('WAMArm');
-    arm_model = arm.fk_model();
+%     arm_model = arm.fk_model();
 
     total_time_step = round(total_time_sec/delta_t);
     total_check_step = interp_multiplier*total_time_step;
     check_inter = total_check_step / total_time_step - 1;
     
     use_trustregion_opt = false;
-
+    use_LM = false;
+    
     start_vel = zeros(7,1);
     end_vel = zeros(7,1);
     
@@ -48,6 +49,7 @@ function problem_setup = paperGetProblemSetup(start_conf, end_conf, total_time_s
     problem_setup.arm = arm;
     problem_setup.Qc_model = Qc_model;
     problem_setup.use_trustregion_opt = use_trustregion_opt;
+    problem_setup.use_LM = use_LM;
     problem_setup.limit_x = limit_x;    
     problem_setup.limit_v = limit_v;
 end

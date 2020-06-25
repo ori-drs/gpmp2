@@ -39,8 +39,9 @@ xlabel('x (m)'); ylabel('y (m)'); zlabel('z (m)');
 plot3DEnvironment(lab_dataset, X, Y, Z+1, 1, [171, 104, 87]/255)
 
 plot3DEnvironment(pillars_env.queryEnv(0), X, Y, Z+1, 1, [0 0.5 1])
-plot3DEnvironment(pillars_env.queryEnv(0.7), X, Y, Z+1, 0.5, [0 0.5 1])
-plot3DEnvironment(pillars_env.queryEnv(1.4), X, Y, Z+1, 0.2, [0 0.5 1])
+plot3DEnvironment(pillars_env.queryEnv(0.7), X, Y, Z+1, 0.8, [0 0.5 1])
+plot3DEnvironment(pillars_env.queryEnv(1.4), X, Y, Z+1, 0.5, [0 0.5 1])
+plot3DEnvironment(pillars_env.queryEnv(2.0), X, Y, Z+1, 0.3, [0 0.5 1])
 axis(lab_axis_lims);
 axis("equal");
 
