@@ -14,7 +14,8 @@ function all_cases = runMovingLabExperiments(env_size, res, cases_to_run)
     dataset = env.queryEnv(0);
 %     [X, Y, Z] = getEnvironmentMesh(dataset);
     use_trustregion_opt = false;
-
+    use_LM = false;
+    
     %% Problem setup
 
     replanner_start_conf = [-0.8,-1.70,1.64,1.29,1.1,-0.106,2.2]';
@@ -75,6 +76,7 @@ function all_cases = runMovingLabExperiments(env_size, res, cases_to_run)
     problem_setup.arm = arm;
     problem_setup.Qc_model = Qc_model;
     problem_setup.use_trustregion_opt = use_trustregion_opt;
+    problem_setup.use_LM = use_LM;
 
     % initial values by batch
     init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
