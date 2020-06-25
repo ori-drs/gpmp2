@@ -49,6 +49,27 @@ classdef liveEnvironment < handle
             env.dataset.obs_poses = {};
         end
         
+        function add_table_static_scene(env)
+         
+            %  Note these are true for 3mx3mx3m at 1cm res          
+             stat_obs{1} = {[0, 0, -0.4], [1, 1, 0.08]};
+            
+             origin = [env.dataset.origin_x, ...
+                       env.dataset.origin_y, ...
+                       env.dataset.origin_z];
+                   
+            for i = 1:size(stat_obs, 2)
+                obj_cell_coords = round((stat_obs{i}{1} - origin) / env.dataset.cell_size);
+                obj_cell_size = round(stat_obs{i}{2} / env.dataset.cell_size);
+
+                env.dataset.static_map = add_obstacle(obj_cell_coords, ...
+                                obj_cell_size, ...
+                                env.dataset.static_map); 
+            end
+            env.dataset.static_map = flip(env.dataset.static_map);          
+
+        end
+                
         function add_static_scene(env)
          
             %  Note these are true for 3mx3mx3m at 1cm res          
