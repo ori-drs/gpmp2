@@ -5,12 +5,12 @@ clc;
 import gtsam.*
 import gpmp2.*
 
-%%
+
 total_time_sec = 3.0;
 delta_t = 0.1;
 interp_multiplier = 20;
-cost_sigma = 0.05;
-epsilon_dist = 0.2;    
+cost_sigma = 0.03;
+epsilon_dist = 0.25;    
 limit_v = false;
 limit_x = false;
 
@@ -18,9 +18,9 @@ cell_size = 0.04;
 env_size = 75;
 origin = [-1,-1,-1];
 
-%% Setup ROS interactions
+% Setup ROS interactions
 % rosinit;
-node = ros.Node('/matlab_node5');
+node = ros.Node('/matlab_node');
 
 traj_publisher = trajectoryPublisher(delta_t);
 sub = ros.Subscriber(node,'/joint_states','sensor_msgs/JointState');
@@ -28,6 +28,8 @@ pub = ros.Publisher(node,'/start_simulation','std_msgs/String');
 strMsg = rosmessage('std_msgs/String');
 
 env = liveEnvironment(node, env_size, cell_size, origin);
+env.add_table_static_scene();
+
 start_sdf = env.getSDF();
 
 tracker = liveTracker([env_size,env_size,env_size], env.dataset.static_map, ...
@@ -35,17 +37,16 @@ tracker = liveTracker([env_size,env_size,env_size], env.dataset.static_map, ...
                             
 pause(2);
 
-%% Setup problem
-% arm = myGenerateArm('Panda', gtsam.Pose3(gtsam.Rot3(eye(3)), gtsam.Point3([0,0,1.5]')));
-% arm_model = arm.fk_model();
+% Setup problem
 base_pos = [0, 0, 0.5];
 
 current_joint_msg = sub.LatestMessage;
 start_conf = current_joint_msg.Position(3:end);
-% end_conf = [0, -0.785, 0, -2.356, 0, 1.57, 0.785]';
+end_conf = [0, -0.785, 0, -2.356, 0, 1.57, 0.785]';
 % end_conf = start_conf;
-end_conf =  [1.57,           0.185,   0,       -1.70,   0,        3.14,   0]';
-
+% end_conf =  [1.57,           0.185,   0,       -1.70,   0,        3.14,   0]';
+% end_conf =  [1.3877,-0.4045,-0.0316,-1.0321,-2.7601,2.4433,0.5000]';
+    
 total_time_step = round(total_time_sec/delta_t);
 problem_setup = pandaProblemSetup(start_conf, end_conf, total_time_sec, delta_t, ...
                                      cost_sigma, epsilon_dist, interp_multiplier, ...
@@ -65,12 +66,19 @@ for i = 1:total_time_step+1
 end
 %% Setup problem and graph
 
+pause(4);
+
+datasets = [];
+results = [];
+times = []; times = [times, 0];
+pub_msgs = [];
+confs = zeros(7, 100);
+
 panda_planner = pandaPlanner(start_sdf, problem_setup);
 disp('Ready to simulate and execute');
 % Start the simulation
 t_update = 0;
 pub.send(strMsg); 
-
 i=1;
 t_step = 0;
 t_start = tic;
@@ -84,88 +92,78 @@ result = panda_planner.optimize(init_values);
 disp('Publishing trajectory');
 traj_publisher.publish(result, t_step);
 
-% profile on
-datasets = []; datasets = [datasets, env.dataset];
-results = []; results = [results, result];
-times = []; times = [times, 0];
+datasets = [datasets, env.dataset];
+results = [results, result];
+last_lock = 0;
 
+% profile on
 while t_update < total_time_sec
     % Get latest conf and sdf to update
     disp('Updating map and conf');
-    latest_msg = sub.LatestMessage;
-    curr_conf = latest_msg.Position(3:end);
-    curr_vel = latest_msg.Velocity(3:end);
-    env.updateMap();
-    
     t_update = toc(t_start);
+%     latest_msg = sub.LatestMessage;
+%     curr_conf = latest_msg.Position(3:end);
+%     curr_vel = latest_msg.Velocity(3:end);
+    env.updateMap();
+%     confs(:,i) = curr_conf;
+    
     disp(t_update);
     times = [times, t_update];
     t_step = floor(t_update/delta_t);
         
-    curr_sdf = env.getSDF();
+    curr_sdf = env.getSDF(); % Only needed to update sdf
     datasets = [datasets, env.dataset];
     
     disp('Updating tracker');
     tracker.update(t_update, env.dataset.map);
     
-    disp('Calculating SDF');
-%     field = tracker.predict_sdf(t_update);
-
+%     panda_planner.update_confs(t_step, curr_conf, curr_vel);
+    
+    for p = last_lock:t_step
+        panda_planner.update_confs(p, ...
+                                    result.atVector(gtsam.symbol('x', p)), ...
+                                    result.atVector(gtsam.symbol('v', p)));
+    end
+    last_lock = t_step + 1;
+    
     disp('Updating factor graph');
     for t = t_step:total_time_step
-%         field = tracker.predict_composite_sdf(t);
-        field = tracker.predict_field(t*delta_t);
+        forward_t = (t-t_step)*delta_t;
+        field = tracker.predict_composite_sdf(forward_t);
+%         field = tracker.predict_field(t*delta_t);
 
-        for z = 1:size(field, 3)
-            sdfs{t}.initFieldData(z-1, field(:,:,z)');
+        for z = 1:env_size
+            sdfs{t+1}.initFieldData(z-1, field(:,:,z)');
         end
 
-        panda_planner.update_confs(t_step, curr_conf, curr_vel);
-        panda_planner.update_sdf(t, sdfs{t});
+        panda_planner.update_sdf(t, sdfs{t+1});
     end
 
     disp('Reoptimising');
     result = panda_planner.optimize(init_values);
+%     result = panda_planner.optimize(result);
     results = [results, result];
     
     % Execute
     disp('Publishing trajectory');
-    traj_publisher.publish(result, t_step);
+    if t_step < total_time_step -1
+        traj_publisher.publish(result, t_step);
+%         for k = 1:size(traj_publisher.rGoalMsg.Trajectory.Points,1)
+%             pub_msgs(((t_step + k-1)*7)+(1:7),i) = traj_publisher.rGoalMsg.Trajectory.Points(k).Positions;
+%         end
+    end
     t_update = toc(t_start);
+    
+    
     i = i + 1;
-
+%     profile off
 end
 
 % profile viewer
 
 %% 
-
-% lab_axis_lims = [-1 2 -1 2 -1 2];
-% 
-% [X, Y, Z] = getEnvironmentMesh(datasets(1));
-% figure(2); hold on; cla;
-% set(gcf,'Position',[1350 500 1200 1400]);
-% axis(lab_axis_lims); grid on; view(3);
-% xlabel('x'); ylabel('y'); zlabel('z');
-% 
-% frame = 5;
-% traj = results(frame);
-% 
-% h1 = plot3DEnvironment(datasets(frame), X, Y, Z);
-% 
-% for i = 0:problem_setup.total_time_step
-%     key_pos = gtsam.symbol('x', i);
-%     conf = traj.atVector(key_pos);
-% 
-% %     gpmp2.plotRobotModel(problem_setup.arm, conf);
-%     gpmp2.plotArm(problem_setup.arm.fk_model(), conf, 'r', 2);
-% %     pause(0.2);
-% end
-% 
-
 frame = 4;
 traj = results(frame);
-
 
 lab_axis_lims = [-1 2 -1 2 -1 2];
 
@@ -176,18 +174,25 @@ axis(lab_axis_lims); grid on; view(3);
 xlabel('x'); ylabel('y'); zlabel('z');
 
 
-h1 = plot3DEnvironment(datasets(frame), X, Y, Z);
+% h1 = plot3DEnvironment(datasets(frame), X, Y, Z);
+h1 = plot3DEnvironment(datasets(frame).map, X, Y, Z);
 
-for i = 0:problem_setup.total_time_step
+
+t_s = floor(times(frame)/delta_t);
+
+for i = t_s:problem_setup.total_time_step
+%     cla;
     key_pos = gtsam.symbol('x', i);
     conf = traj.atVector(key_pos);
     obs_factor = gpmp2.ObstacleSDFFactorArm(...
         key_pos, problem_setup.arm, datasets(frame).sdf, problem_setup.cost_sigma, ...
         problem_setup.epsilon_dist);
 
+%     h1 = plot3DEnvironment(datasets(i+1).map, X, Y, Z);
+
+%     static_handle = gpmp2.plotRobotModel(problem_setup.arm, conf);
 
     if any(obs_factor.spheresInCollision(conf))
-%         disp('COLLISION');
         static_handle = gpmp2.plotArm(problem_setup.arm.fk_model(), conf, 'r', 2);
     else
         static_handle = gpmp2.plotArm(problem_setup.arm.fk_model(), conf, 'b', 2);
@@ -195,3 +200,41 @@ for i = 0:problem_setup.total_time_step
 
     pause(0);
 end
+
+% 
+% 
+% frame = 1;
+% load('/home/mark/installs/gpmp2/mark_gpmp2/data/live_panda_actual_maps.mat');
+% 
+% lab_axis_lims = [-1 2 -1 2 -1 2];
+% 
+% [X, Y, Z] = getEnvironmentMesh(datasets(1));
+% figure(2); hold on; cla;
+% set(gcf,'Position',[1350 500 1200 1400]);
+% axis(lab_axis_lims); grid on; view(3);
+% xlabel('x'); ylabel('y'); zlabel('z');
+% 
+% t_ind = 1;
+% t_s = 0;
+% 
+% for i = 0:problem_setup.total_time_step
+%     
+%     if i >= ceil(times(t_ind+1)/delta_t)
+%         t_ind = t_ind + 1;
+%     end
+%     
+%     traj = results(t_ind);
+% 
+%     cla;
+%     key_pos = gtsam.symbol('x', i);
+%     conf = traj.atVector(key_pos);
+%     obs_factor = gpmp2.ObstacleSDFFactorArm(...
+%         key_pos, problem_setup.arm, datasets(frame).sdf, problem_setup.cost_sigma, ...
+%         problem_setup.epsilon_dist);
+% 
+%     h1 = plot3DEnvironment(even_actual_maps{i+1}, X, Y, Z);
+% 
+%     static_handle = gpmp2.plotRobotModel(problem_setup.arm, conf);
+% 
+%     pause(0.2);
+% end
