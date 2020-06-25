@@ -110,14 +110,6 @@ function case_results = updateCase(datasets, init_values, problem_setup)
    
     % At this point the graph is exactly the same of the static graph
     
-    if problem_setup.use_trustregion_opt
-        parameters = DoglegParams;
-        parameters.setVerbosity('NONE');
-    else
-        parameters = GaussNewtonParams;
-        parameters.setVerbosity('NONE');
-    end
-    
     results = [];
     result = init_values;
 
@@ -129,7 +121,7 @@ function case_results = updateCase(datasets, init_values, problem_setup)
     case_results.gp_cost_evolution = zeros(1, problem_setup.total_time_step+1);
 
     for i = 0:problem_setup.total_time_step
-        disp("Case3: Execute and update sdf... step: " + num2str(i));
+%         disp("Execute and update sdf... step: " + num2str(i));
 
         if i > 0
             % Execute (get next position and add prior to graph)
@@ -160,11 +152,27 @@ function case_results = updateCase(datasets, init_values, problem_setup)
             update_timings.num_factors(i+1) = num_factors_updated;
         end
     
-        % Optimize and store result
-        optimizer = GaussNewtonOptimizer(graph, result, parameters);
-        
+        % Optimize and store result        
+        if problem_setup.use_LM
+            parameters = LevenbergMarquardtParams;
+            parameters.setVerbosity('NONE');
+            parameters.setlambdaInitial(1000.0);
+            optimizer = LevenbergMarquardtOptimizer(graph, result, parameters);
+
+        elseif problem_setup.use_trustregion_opt
+            parameters = DoglegParams;
+            parameters.setVerbosity('NONE');
+            optimizer = DoglegOptimizer(graph, result, parameters);
+        else
+            parameters = GaussNewtonParams;
+            parameters.setVerbosity('NONE');
+            optimizer = GaussNewtonOptimizer(graph, result, parameters);
+        end
+    
         tic;
-        result = optimizer.optimize();
+%         result = optimizer.optimize();
+        optimizer.optimize();
+        result = optimizer.values();
         update_timings.optimize_t(i+1) = toc;
         results = [results, result];
         
@@ -176,7 +184,7 @@ function case_results = updateCase(datasets, init_values, problem_setup)
     end
     
     case_results.final_result = result;
-    %case_results.results = results;
+    case_results.results = results;
     case_results.graph_build_t = graph_build_t;
     case_results.update_timings = update_timings;
     %case_results.all_obs_fact_indices = all_obs_fact_indices;
