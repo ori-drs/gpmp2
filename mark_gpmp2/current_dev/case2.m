@@ -79,7 +79,13 @@ function full_knowledge_case = case2(datasets, init_values, problem_setup)
 
     graph_build_t = toc;
 
-    if problem_setup.use_trustregion_opt
+    if problem_setup.use_LM
+        parameters = LevenbergMarquardtParams;
+        parameters.setVerbosity('NONE');
+        parameters.setlambdaInitial(1000.0);
+        optimizer = LevenbergMarquardtOptimizer(graph, init_values, parameters);
+
+    elseif problem_setup.use_trustregion_opt
         parameters = DoglegParams;
         parameters.setVerbosity('NONE');
         optimizer = DoglegOptimizer(graph, init_values, parameters);
@@ -88,7 +94,7 @@ function full_knowledge_case = case2(datasets, init_values, problem_setup)
         parameters.setVerbosity('NONE');
         optimizer = GaussNewtonOptimizer(graph, init_values, parameters);
     end
-
+    
 
     tic;
     optimizer.optimize();

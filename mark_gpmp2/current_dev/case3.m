@@ -135,8 +135,22 @@ function execute_update_case = case3(datasets, init_values, problem_setup)
         end
     
         % Optimize and store result
-        optimizer = GaussNewtonOptimizer(graph, result, parameters);
-        
+        if problem_setup.use_LM
+            parameters = LevenbergMarquardtParams;
+            parameters.setVerbosity('NONE');
+            parameters.setlambdaInitial(1000.0);
+            optimizer = LevenbergMarquardtOptimizer(graph, result, parameters);
+
+        elseif problem_setup.use_trustregion_opt
+            parameters = DoglegParams;
+            parameters.setVerbosity('NONE');
+            optimizer = DoglegOptimizer(graph, result, parameters);
+        else
+            parameters = GaussNewtonParams;
+            parameters.setVerbosity('NONE');
+            optimizer = GaussNewtonOptimizer(graph, result, parameters);
+        end
+    
         tic;
         result = optimizer.optimize();
         update_timings.optimize_t(i+1) = toc;

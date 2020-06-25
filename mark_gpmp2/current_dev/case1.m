@@ -83,7 +83,13 @@ function static_case = case1(sdf, init_values, problem_setup)
 
     graph_build_t = toc;
 
-    if problem_setup.use_trustregion_opt
+    if problem_setup.use_LM
+        parameters = LevenbergMarquardtParams;
+        parameters.setVerbosity('NONE');
+        parameters.setlambdaInitial(1000.0);
+        optimizer = LevenbergMarquardtOptimizer(graph, init_values, parameters);
+
+    elseif problem_setup.use_trustregion_opt
         parameters = DoglegParams;
         parameters.setVerbosity('NONE');
         optimizer = DoglegOptimizer(graph, init_values, parameters);
