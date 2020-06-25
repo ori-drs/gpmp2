@@ -247,19 +247,18 @@
             % Convert map to sdf
             field  = gpmp2.signedDistanceField3D(predicted_map, obj.cell_size);            
             
-%             % init sdf
+            % init sdf
 %             predicted_sdf = gpmp2.SignedDistanceField(obj.origin_point3, ...
 %                                                 obj.cell_size, ...
 %                                                 size(field, 1), ...
 %                                                 size(field, 2), ...
 %                                                 size(field, 3));
 % 
-%             predicted_sdf.initFieldData(0, field(:,:,1)');
-%             predicted_sdf.initFieldData(1, field(:,:,2)');
-%             predicted_sdf.initFieldData(2, field(:,:,3)');
-    
+%             for z = 1:size(field, 3)
+%                 predicted_sdf.initFieldData(z-1, field(:,:,z)');
+%             end
         end
-     
+        
     end
 end
 
