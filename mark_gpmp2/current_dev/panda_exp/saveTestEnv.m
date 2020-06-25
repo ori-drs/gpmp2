@@ -46,6 +46,7 @@ datasets = []; datasets = [datasets, env.dataset];
 times = []; times = [times, 0];
 
 predicted_maps = {};
+actual_maps = {};
 while t_update < total_time_sec
     % Get latest conf and sdf to update
     disp('Updating map and conf');
@@ -58,11 +59,12 @@ while t_update < total_time_sec
 %     t_step = floor(t_update/delta_t);
     
     disp('Updating tracker');
-    tracker.update(t_update, env.dataset.map);
+%     tracker.update(t_update, env.dataset.map);
     
-    curr_sdf = env.getSDF();
-    datasets = [datasets, env.dataset];
-    predicted_maps{end+1} = tracker.predict_sdf(t_update);
+%     curr_sdf = env.getSDF();
+%     datasets = [datasets, env.dataset];
+%     predicted_maps{end+1} = tracker.predict_sdf(t_update);
+    actual_maps{end+1} = env.dataset.map;
 
 end
 
@@ -73,17 +75,20 @@ end
 
 %%
 
+t_range = [0:delta_t:total_time_sec]';
+[~, inds] = min(abs(times - t_range), [], 2);
+even_actual_maps = actual_maps(inds);
 lab_axis_lims = [-1 2 -1 2 -1 2];
 
 [X, Y, Z] = getEnvironmentMesh(datasets(1));
 figure(2); hold on; cla;
-set(gcf,'Position',[1350 500 1200 1400]);
-axis(lab_axis_lims); grid on; view(3);
+% set(gcf,'Position',[1350 500 1200 1400]);
+% axis(lab_axis_lims); grid on; view(3);
 xlabel('x'); ylabel('y'); zlabel('z');
 
 
 
-for i = 1:length(predicted_maps)
+for i = 1:length(even_actual_maps)
 % for i = 1:length(datasets)
 %     key_pos = gtsam.symbol('x', i);
 %     conf = traj.atVector(key_pos);
@@ -91,7 +96,7 @@ for i = 1:length(predicted_maps)
 %         key_pos, problem_setup.arm, datasets(frame).sdf, problem_setup.cost_sigma, ...
 %         problem_setup.epsilon_dist);
     cla;
-    h1 = plot3DEnvironment(predicted_maps{i}, X, Y, Z);
+    h1 = plot3DEnvironment(even_actual_maps{i}, X, Y, Z);
 %     h1 = plot3DEnvironment(datasets(i), X, Y, Z);
 
 %     if any(obs_factor.spheresInCollision(conf))
@@ -101,5 +106,8 @@ for i = 1:length(predicted_maps)
 %         static_handle = gpmp2.plotArm(problem_setup.arm.fk_model(), conf, 'b', 2);
 %     end
 
-    pause(0.2);
+    pause(0.05);
 end
+
+t_range = [0:delta_t:total_time_sec]';
+[vals, inds] = min(abs(times - t_range), [], 2)
