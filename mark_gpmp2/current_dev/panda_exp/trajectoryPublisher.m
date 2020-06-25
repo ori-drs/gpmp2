@@ -24,6 +24,8 @@ classdef trajectoryPublisher
             [obj.rArm, obj.rGoalMsg] = rosactionclient('/panda_arm_controller/follow_joint_trajectory');
             waitForServer(obj.rArm);
             
+            obj.rGoalMsg.Trajectory.JointNames = obj.joint_names;
+ 
             % Disable feedback
             obj.rArm.FeedbackFcn = [];
             obj.rArm.ActivationFcn = [];
@@ -46,9 +48,7 @@ classdef trajectoryPublisher
             end
 
             obj.rGoalMsg.Trajectory.Points = traj_points;
-            obj.rGoalMsg.Trajectory.JointNames = obj.joint_names;
 
-%             sendGoalAndWait(obj.rArm,obj.rGoalMsg);
             sendGoal(obj.rArm,obj.rGoalMsg);
        end
     end
