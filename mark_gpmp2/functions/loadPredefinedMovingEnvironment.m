@@ -1,4 +1,4 @@
-function [env] = loadPredefinedMovingEnvironment(env_name, env_size, res)
+function [env] = loadPredefinedMovingEnvironment(env_name, env_size, res, origin)
 %LOADPREDEFINEDMOVINGENVIRONMENT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -26,6 +26,10 @@ function [env] = loadPredefinedMovingEnvironment(env_name, env_size, res)
 %                     starting_pos2, ...
 %                     obs_size);
 
+if nargin < 4
+    origin = [-1,-1,-1];
+end
+
 
 if strcmp(env_name, 'MovingReplannerEasy')
 
@@ -34,7 +38,7 @@ if strcmp(env_name, 'MovingReplannerEasy')
     obs_size = [0.15, 0.15, 1.9];
 
     % Create the environment
-    env = movingEnvironment3D(env_size, res);
+    env = movingEnvironment3D(env_size, res, origin);
     env.add_static_scene();
     env.add_object(0,...
                     0, ...
@@ -53,7 +57,7 @@ elseif strcmp(env_name, 'MovingReplanner')
     obs_size = [0.15, 0.15, 1.9];
 
     % Create the environment
-    env = movingEnvironment3D(env_size, res);
+    env = movingEnvironment3D(env_size, res, origin);
     env.add_static_scene();
     env.add_object(0,...
                     0, ...
@@ -82,12 +86,12 @@ elseif strcmp(env_name, 'MovingReplannerNoStatic')
     obs_size = [0.15, 0.15, 1.9];
 
     % Create the environment
-    env = movingEnvironment3D(env_size, res);
-    env.add_object(0,...
-                    0, ...
-                    block_vel1, ...
-                    starting_pos1, ...
-                    obs_size);
+    env = movingEnvironment3D(env_size, res, origin);
+%     env.add_object(0,...
+%                     0, ...
+%                     block_vel1, ...
+%                     starting_pos1, ...
+%                     obs_size);
 
     env.add_object(0,...
                     2, ...
@@ -107,7 +111,7 @@ elseif strcmp(env_name, 'DilatedMovingObjects')
 %     obs_size = [1.25, 1.25, 2.9];
 
     % Create the environment
-    env = movingEnvironment3D(env_size, res);
+    env = movingEnvironment3D(env_size, res, origin);
     env.add_object(0,...
                     0, ...
                     block_vel1, ...
@@ -128,7 +132,7 @@ elseif strcmp(env_name, 'OneDilatedMovingObject')
     obs_size = [0.67, 0.67, 2.42];
 
     % Create the environment
-    env = movingEnvironment3D(env_size, res);
+    env = movingEnvironment3D(env_size, res, origin);
     env.add_object(0,...
                     0, ...
                     block_vel1, ...
@@ -148,14 +152,13 @@ elseif strcmp(env_name, 'MovingBlock')
     obs_size = [0.2, 0.2, 0.2];
 
     % Create the environment
-    env = movingEnvironment3D(env_size, res);
+    env = movingEnvironment3D(env_size, res, origin);
     env.add_object(0,...
                     t_end_moving, ...
                     v_or_t_end_value, ...
                     starting_pos, ...
                     obs_size);   
     
-end
 
 % elseif strcmp(env_name, 'SimpleSuperpositionExample')
 %     % Setup
@@ -174,11 +177,62 @@ end
 %     
 % end
 
-if strcmp(env_name, 'Lab')
+elseif strcmp(env_name, 'Lab')
 
     % Create the environment
-    env = movingEnvironment3D(env_size, res);
+    env = movingEnvironment3D(env_size, res, origin);
     env.add_static_scene();
 
+    
+elseif strcmp(env_name, 'PandaEnvStatic')
+
+    starting_pos1 = [0.3, 0.25, -0.05];
+    block_vel1 = [-0.6, 0, 0];
+    starting_pos2 = [0.55, -0.95, -0.05];
+    block_vel2 = [-0.17,0.6, 0];
+    obs_size = [0.15, 0.15, 1.9];
+    
+    block_vel1 = [0, 0, 0];
+    block_vel2 = [0, 0, 0];
+    
+    % Create the environment
+    env = movingEnvironment3D(env_size, res, origin);
+    env.add_static_scene();
+    env.add_object(0,...
+                    0, ...
+                    block_vel1, ...
+                    starting_pos1, ...
+                    obs_size);
+
+    env.add_object(0,...
+                    2, ...
+                    block_vel2, ...
+                    starting_pos2, ...
+                    obs_size);
+
+ 
+elseif strcmp(env_name, 'PandaEnvOnePillar')
+
+    starting_pos1 = [0.3, 0.25, -0.05];
+    starting_pos2 = [0.55, -0.95, -0.05];
+    block_vel2 = [-0.17,0.6, 0];
+    obs_size = [0.15, 0.15, 1.9];
+    
+    % Create the environment
+    env = movingEnvironment3D(env_size, res, origin);
+    env.add_static_scene();
+
+    env.add_object(0,...
+                    2, ...
+                    block_vel2, ...
+                    starting_pos2, ...
+                    obs_size);
+
+elseif strcmp(env_name, 'Empty')
+
+    % Create the environment
+    env = movingEnvironment3D(env_size, res, origin);
+
+                
 end
 
