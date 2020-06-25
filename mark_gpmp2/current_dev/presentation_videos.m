@@ -25,7 +25,7 @@ lab_axis_lims = [-1 1.5 -1.2 1.5 -1 2];
 [X, Y, Z] = getEnvironmentMesh(all_cases.datasets(1));
 
 %% Map vs sdf
-figure(f_num); hold on;
+figure(fig_num); hold on;
 set(gcf,'Position',[1350 500 1200 1400]);
 grid on; 
 origin = [-1,-1,-1];
