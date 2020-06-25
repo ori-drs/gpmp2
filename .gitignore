@@ -5,3 +5,5 @@ gpmp2/.vscode/settings.json
 *.m~
 
 mark_gpmp2/data/
+
+.vscode/settings.json
