@@ -15,17 +15,14 @@ fig_num = 1;
 % Run the lab experiments
 % cases_to_run = [10,9];
 cases_to_run = [1,2,3];
-env_size = 300;
-res = 0.01;
+env_size = 150;
+res = 0.02;
 all_cases = runMovingLabExperiments(env_size, res, cases_to_run);
 problem_setup = all_cases.problem_setup;
 
 
 lab_axis_lims = [-1 1.5 -1.2 1.5 -1 2];
 [X, Y, Z] = getEnvironmentMesh(all_cases.datasets(1));
-
-%% Data wanted for the paper
-
 
 
 %% Plot comparison of the convergence for full knowledge and our approximate of sdf
@@ -58,12 +55,12 @@ plotTrajComparison(all_cases, fig_num, lab_axis_lims, ...
 fig_num = fig_num + 1; pause(0.5);
 
 %% Plot the full knowledge
-plotRobotModelTrajectory(all_cases.fast_prediction_manual_case, all_cases.datasets, all_cases.problem_setup, ...
+plotRobotModelTrajectory(all_cases.full_knowledge_case, all_cases.datasets, all_cases.problem_setup, ...
                 fig_num, lab_axis_lims, 0.2)
 fig_num = fig_num + 1; pause(0.5);
 
 
-plotLineTrajectory(all_cases.fast_prediction_manual_case, all_cases.datasets, all_cases.problem_setup, ...
+plotLineTrajectory(all_cases.full_knowledge_case, all_cases.datasets, all_cases.problem_setup, ...
                 fig_num, lab_axis_lims, true, false, 0.1);
 fig_num = fig_num + 1; pause(0.5);
 
@@ -150,9 +147,9 @@ function plotSetupProblem(all_cases)
     set(gcf,'Position',[1350 500 1200 1400]);
     title('3D Environment')
     grid on;
-%     view(3);
+    view(3);
     view(-1.007130428616419e+02, 50.314206527540222);
-    campos([-11.08977871940202,2.4122839520229,16.916622755708733]);
+%     campos([-11.08977871940202,2.4122839520229,16.916622755708733]);
     
     gpmp2.set3DPlotRange(all_cases.datasets(1));
     xlabel('x'); ylabel('y'); zlabel('z');
