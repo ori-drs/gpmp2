@@ -17,17 +17,27 @@ classdef movingEnvironment3D < handle
     end
     
     methods
-        function env = movingEnvironment3D(env_size, resolution)
+        function env = movingEnvironment3D(env_size, resolution, origin)
             %MOVINGENVIRONMENT Construct an instance of this class
             %   Detailed explanation goes here           
             
             % params
+            if nargin > 2
+                env.dataset.origin_x = origin(1);
+                env.dataset.origin_y = origin(2);
+                env.dataset.origin_z = origin(3);
+            else
+                env.dataset.origin_x = -1;
+                env.dataset.origin_y = -1;
+                env.dataset.origin_z = -1;
+            end
+                
+                      
             env.dataset.cols = env_size;
             env.dataset.rows = env_size;
             env.dataset.z = env_size;
-            env.dataset.origin_x = -1;
-            env.dataset.origin_y = -1;
-            env.dataset.origin_z = -1;
+
+
             env.dataset.cell_size = resolution;
             env.dataset.origin_point3 = gtsam.Point3(env.dataset.origin_x, ...
                                                     env.dataset.origin_y, ...
