@@ -8,10 +8,15 @@ classdef liveEnvironment < handle
         fixed_scene = {}
         sub
         obs_size
+        
+        obstacle
+        obstacle_id
+        obstacle_offset
+        scene
     end
     
     methods
-        function env = liveEnvironment(node, env_size, resolution, origin)
+        function env = liveEnvironment(node, env_size, resolution, origin, obstacle, scene)
             %MOVINGENVIRONMENT Construct an instance of this class
             %   Detailed explanation goes here           
             
@@ -25,11 +30,29 @@ classdef liveEnvironment < handle
                 env.dataset.origin_y = -1;
                 env.dataset.origin_z = -1;
             end
-                
+            
+            env.obstacle = obstacle;
+            env.scene = scene;
             env.sub = ros.Subscriber(node,'/gazebo/model_states','gazebo_msgs/ModelStates');
             pause(2);
             
-            env.obs_size = [0.15,0.15,0.15];
+            if obstacle == "block"
+                env.obs_size = [0.15,0.15,0.15];
+                env.obstacle_id = find(strcmp(env.sub.LatestMessage.Name, 'block'));
+                env.obstacle_offset = 0;
+            elseif obstacle == "person"
+                env.obs_size = [0.5, 0.75, 2.0];
+                env.obstacle_id = find(strcmp(env.sub.LatestMessage.Name, 'person_walking'));
+                env.obstacle_offset = 1;
+            elseif obstacle == "panda_cylinder"
+                env.obs_size = [0.5, 0.5, 2.0];
+                env.obstacle_id = find(strcmp(env.sub.LatestMessage.Name, 'panda_cylinder'));
+                env.obstacle_offset = 1;
+            elseif obstacle == "hsrb"
+                env.obs_size = [0.55, 0.55, 1.2];
+                env.obstacle_id = find(strcmp(env.sub.LatestMessage.Name, 'hsrb'));
+                env.obstacle_offset = 0.6;            
+            end
             
             env.dataset.cols = env_size;
             env.dataset.rows = env_size;
@@ -51,9 +74,30 @@ classdef liveEnvironment < handle
         
         function add_table_static_scene(env)
          
-            %  Note these are true for 3mx3mx3m at 1cm res          
-             stat_obs{1} = {[0, 0, -0.4], [1, 1, 0.08]};
-            
+            if strcmp(env.scene, "tables")
+                % Table
+                stat_obs{1} = {[-0.31, 0, 0.2], [0.80, 1.2 , 0.4]};
+
+                stat_obs{2} = {[1.05, 0, 0.2], [0.80, 1.2 , 0.4]};
+
+             
+            elseif strcmp(env.scene, "bookshelf")
+                    %              stat_obs{1} = {[0, 0, 0.4], [1.2, 0.63, 0.08]};
+                 % Table
+                 stat_obs{1} = {[-0.31, 0, 0.2], [0.80, 1.2 , 0.4]};
+
+                 % Top of bookshelf
+                 stat_obs{2} = {[0.85, 0, 1.25], [0.4, 0.9,  0.02]};
+
+                 % Top of shelf
+                 stat_obs{3} = {[0.85, 0, 0.84], [ 0.4, 0.9, 0.02]};
+
+                 % Side
+                 stat_obs{4} = {[0.85, 0.45, 0.6], [0.4, 0.02, 1.2]};
+                 stat_obs{5} = {[0.85, -0.45, 0.6], [0.4, 0.02, 1.2]};
+                 
+            end
+
              origin = [env.dataset.origin_x, ...
                        env.dataset.origin_y, ...
                        env.dataset.origin_z];
@@ -116,12 +160,13 @@ classdef liveEnvironment < handle
         
         function obs_pos_to_add = calculateObjPosition(env, msg) 
             
-            block_pos = msg.Pose(5).Position;
+%             block_pos = msg.Pose(4).Position;
+            block_pos = msg.Pose(env.obstacle_id).Position;
 
             % Calculate object positions - position is start plus v * t
             x = block_pos.X;
             y = block_pos.Y;
-            z = block_pos.Z;
+            z = block_pos.Z + env.obstacle_offset;
 
             %  Add each obstacle
             obs_pos_to_add = round([x - env.dataset.origin_x, ...
@@ -139,7 +184,7 @@ classdef liveEnvironment < handle
             
             msg = env.sub.LatestMessage;
             
-            if length(msg.Pose) > 4
+            if length(msg.Pose) > 3
                 obs_pos_to_add = env.calculateObjPosition(msg);
 
                 env.dataset.map = add_obstacle(obs_pos_to_add, ...
