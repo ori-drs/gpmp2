@@ -431,6 +431,8 @@ class SignedDistanceField {
   void print(string s) const;
   void saveSDF(string filename);
   void loadSDF(string filename);
+  void replaceSDFData(const gpmp2::SignedDistanceField& sdf);
+
 };
 
 
@@ -453,6 +455,7 @@ virtual class ObstacleSDFFactorArm : gtsam::NoiseModelFactor {
   Vector evaluateError(Vector pose) const;
   Vector spheresInCollision(Vector pose) const;
 //   void replaceSDFData(const gpmp2::SignedDistanceField& sdf); 
+  void replaceSDFData(const gpmp2::SignedDistanceField& sdf); 
   
   gpmp2::ObstacleSDFFactorArm getSDFModFactor(const gpmp2::SignedDistanceField& sdf);
 };
@@ -466,7 +469,7 @@ virtual class ObstacleSDFFactorGPArm : gtsam::NoiseModelFactor {
       const gpmp2::ArmModel& arm, const gpmp2::SignedDistanceField& sdf,
       double cost_sigma, double epsilon, const gtsam::noiseModel::Base* Qc_model,
       double delta_t, double tau);
-//   void replaceSDFData(const gpmp2::SignedDistanceField& sdf);
+  void replaceSDFData(const gpmp2::SignedDistanceField& sdf);
   gpmp2::ObstacleSDFFactorGPArm getSDFModFactor(const gpmp2::SignedDistanceField& sdf);
   
 };

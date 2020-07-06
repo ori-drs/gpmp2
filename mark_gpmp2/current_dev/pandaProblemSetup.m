@@ -6,7 +6,16 @@ function problem_setup = pandaProblemSetup(start_conf, end_conf, total_time_sec,
     import gtsam.*
     import gpmp2.*
     
-    arm = myGenerateArm('Panda', Pose3(Rot3(eye(3)), Point3(base_pos')));
+    rot = eye(3);
+%     theta = pi/2;
+%     rot = [[cos(theta), -sin(theta), 0],...
+%            [sin(theta), cos(theta), 0],...
+%            [0,0,1]];    
+%    rot = [[0, -1, 0],...
+%        [1, 0, 0],...
+%        [0,0,1]];
+    
+    arm = myGenerateArm('Panda', Pose3(Rot3(rot), Point3(base_pos')));
     arm_model = arm.fk_model();
 
     total_time_step = round(total_time_sec/delta_t);

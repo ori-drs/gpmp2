@@ -100,6 +100,9 @@ end
 %% Setup problem and graph
 % pause(4);
 
+loop_times = zeros(10);
+
+% for r = 1:10
 datasets = [];
 results = [];
 times = []; times = [times, 0];
@@ -129,12 +132,10 @@ result = panda_planner.optimize(init_values);
 % disp('Publishing trajectory');
 traj_publisher.publish(result, t_step);
 
-% datasets = [datasets, env.dataset];
 % results = [results, result];
 last_lock = 0;
 
-% profile on
-
+time_to_predict = [];
 while t_update < total_time_sec
     % Get latest conf and sdf to update
 %     disp('Updating map and conf');
@@ -156,8 +157,6 @@ while t_update < total_time_sec
     tracker.update(t_update, env.dataset.map);
     disp(num2str(tracker.num_obs));
 
-%     panda_planner.update_confs(t_step, curr_conf, curr_vel);
-
     for p = last_lock:t_step
         panda_planner.update_confs(p, ...
                                     result.atVector(gtsam.symbol('x', p)), ...
@@ -168,10 +167,11 @@ while t_update < total_time_sec
 %     disp('Updating factor graph');
     for t = t_step:total_time_step
         forward_t = (t-t_step)*delta_t;
-%         forward_t = t_step*delta_t;
+        t_predict_ref = toc(t_start);
         field = tracker.predict_composite_sdf(forward_t);
-%         field = tracker.predict_field(t*delta_t);
-
+        t_predict = toc(t_start) - t_predict_ref;
+        time_to_predict(end+1) = t_predict;
+        
         for z = 1:env_size
             sdfs{t+1}.initFieldData(z-1, field(:,:,z)');
         end
@@ -188,171 +188,13 @@ while t_update < total_time_sec
     disp('Publishing trajectory');
     if t_step < total_time_step -1
         traj_publisher.publish(result, t_step);
-%         for k = 1:size(traj_publisher.rGoalMsg.Trajectory.Points,1)
-%             pub_msgs(((t_step + k-1)*7)+(1:7),i) = traj_publisher.rGoalMsg.Trajectory.Points(k).Positions;
-%         end
     end
     t_update = toc(t_start);
 
 
     i = i + 1;
-%     profile off
 end
-
-
-% profile viewer
-
-%% 
-
-disp_traj = displayTrajectory(node, 0.01);
-disp_traj.publish(results(1), 1);
-
-plot_graphs = true;
-
-if plot_graphs
-
-    frame = 8;
-    traj = results(frame);
-
-    lab_axis_lims = [-1 2 -1 2 -1 2];
-
-    [X, Y, Z] = getEnvironmentMesh(datasets(1));
-    figure(2); hold on; cla;
-%     set(gcf,'Position',[1350 500 1200 1400]);
-%     axis(lab_axis_lims); 
-    grid on; 
-    view(3);
-    xlabel('x'); ylabel('y'); zlabel('z');
-
-
-    % h1 = plot3DEnvironment(datasets(frame), X, Y, Z);
-    h1 = plot3DEnvironment(datasets(frame).map, X, Y, Z);
-
-
-    t_s = floor(times(frame)/delta_t);
-    step_size = 3;
-    for i = t_s:step_size:problem_setup.total_time_step
-%     for i = problem_setup.total_time_step:step_size:problem_setup.total_time_step
-    %     cla;
-        key_pos = gtsam.symbol('x', i);
-        conf = traj.atVector(key_pos);
-        obs_factor = gpmp2.ObstacleSDFFactorArm(...
-            key_pos, problem_setup.arm, datasets(frame).sdf, problem_setup.cost_sigma, ...
-            problem_setup.epsilon_dist);
-
-        h1 = plot3DEnvironment(datasets(frame).map, X, Y, Z);
-
-        static_handle = gpmp2.plotRobotModel(problem_setup.arm, conf);
-
-%         if any(obs_factor.spheresInCollision(conf))
-%             static_handle = gpmp2.plotArm(problem_setup.arm.fk_model(), conf, 'r', 2);
-%         else
-%             static_handle = gpmp2.plotArm(problem_setup.arm.fk_model(), conf, 'b', 2);
-%         end
-
-        pause(0.1);
-    end
-
-end
-
-
-%% Plot each frame
-plot_graphs = true;
-
-if plot_graphs
-
-    [X, Y, Z] = getEnvironmentMesh(datasets(1));
-    figure(2); hold on; cla;
-    lab_axis_lims = [-1 2 -1 2 -1 2];
-    %     set(gcf,'Position',[1350 500 1200 1400]);
-    %     axis(lab_axis_lims); 
-    grid on; 
-    view(3);
-    xlabel('x'); ylabel('y'); zlabel('z');
-        
-    for frame = 1:length(results)
-        cla;
-        traj = results(frame);
-
-        h1 = plot3DEnvironment(datasets(frame).map, X, Y, Z);
-
-
-        t_s = floor(times(frame)/delta_t);
-        
-        key_pos = gtsam.symbol('x', t_s);
-        conf = traj.atVector(key_pos);
-        obs_factor = gpmp2.ObstacleSDFFactorArm(...
-            key_pos, problem_setup.arm, datasets(frame).sdf, problem_setup.cost_sigma, ...
-            problem_setup.epsilon_dist);
-
-        h1 = plot3DEnvironment(datasets(frame).map, X, Y, Z);
-
-        static_handle = gpmp2.plotRobotModel(problem_setup.arm, conf);
-
-%         if any(obs_factor.spheresInCollision(conf))
-%             static_handle = gpmp2.plotArm(problem_setup.arm.fk_model(), conf, 'r', 2);
-%         else
-%             static_handle = gpmp2.plotArm(problem_setup.arm.fk_model(), conf, 'b', 2);
-%         end
-
-        pause(0.5);
-    end
-end
-
-
-%% Plot the end effector trajectory and how it progresses
-
-lab_axis_lims = [-1 2 -1 2 -1 2];
-
-[X, Y, Z] = getEnvironmentMesh(datasets(1));
-figure(2); hold on; cla;
-set(gcf,'Position',[1350 500 1200 1400]);
-axis(lab_axis_lims); grid on; view(3);
-xlabel('x'); ylabel('y'); zlabel('z');
-
-h1 = plot3DEnvironment(datasets(2).map, X, Y, Z);
-
-
-plotEndEffectorTrajectory(problem_setup.arm.fk_model(), results(1), 'g');
-hold on;
-plotEndEffectorTrajectory(problem_setup.arm.fk_model(), results(10), 'm');
-
-
-
-% 
-% 
-% frame = 1;
-% load('/home/mark/installs/gpmp2/mark_gpmp2/data/live_panda_actual_maps.mat');
-% 
-% lab_axis_lims = [-1 2 -1 2 -1 2];
-% 
-% [X, Y, Z] = getEnvironmentMesh(datasets(1));
-% figure(2); hold on; cla;
-% set(gcf,'Position',[1350 500 1200 1400]);
-% axis(lab_axis_lims); grid on; view(3);
-% xlabel('x'); ylabel('y'); zlabel('z');
-% 
-% t_ind = 1;
-% t_s = 0;
-% 
-% for i = 0:problem_setup.total_time_step
 %     
-%     if i >= ceil(times(t_ind+1)/delta_t)
-%         t_ind = t_ind + 1;
-%     end
-%     
-%     traj = results(t_ind);
-% 
-%     cla;
-%     key_pos = gtsam.symbol('x', i);
-%     conf = traj.atVector(key_pos);
-%     obs_factor = gpmp2.ObstacleSDFFactorArm(...
-%         key_pos, problem_setup.arm, datasets(frame).sdf, problem_setup.cost_sigma, ...
-%         problem_setup.epsilon_dist);
-% 
-%     h1 = plot3DEnvironment(even_actual_maps{i+1}, X, Y, Z);
-% 
-%     static_handle = gpmp2.plotRobotModel(problem_setup.arm, conf);
-% 
-%     pause(0.2);
+%     pause(5);
+%     loop_times(r+1) = times(3)-times((2));
 % end
