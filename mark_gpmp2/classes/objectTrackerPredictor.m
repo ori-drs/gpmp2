@@ -226,6 +226,25 @@
                                                                     obj.px_ind_list{j});
                 predicted_map(predicted_occupancy_inds) = 1;                                   
             end  
+       end
+
+        function field = predict_field(obj, t)
+
+            predicted_map = obj.static_map;
+            
+            for j = 1:obj.num_obs
+                predicted_occupancy_inds = getPredictedOccupancyInds(t - obj.current_t,...
+                                                                    obj.obs_px_velocity(j,:),...
+                                                                    obj.map_size,...
+                                                                    obj.px_ind_list{j});
+                predicted_map(predicted_occupancy_inds) = 1;                                   
+            end  
+           
+            predicted_map  = permute(predicted_map, [2 1 3]);
+            
+            % Convert map to sdf
+            field  = gpmp2.signedDistanceField3D(predicted_map, obj.cell_size);            
+
         end
         
         function field = predict_sdf(obj, t)
