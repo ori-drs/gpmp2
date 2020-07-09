@@ -220,6 +220,9 @@ classdef liveEnvironment < handle
             val = obj.dataset.sdf;
         end
         
+        function resetMap(obj)
+            env.dataset.map = flip(env.dataset.static_map);  
+        end
     end
 end
 
