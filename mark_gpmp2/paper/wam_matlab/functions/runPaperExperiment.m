@@ -18,13 +18,13 @@ function experiment_results = runPaperExperiment(env_size, res, start_conf, end_
     limit_v = false;
     limit_x = false;
     
-    env = loadPaperEnvs(env_num, env_size, res, speed);
+    env = loadWAMExperimentEnv(env_num, env_size, res, speed);
 
     
     % Planner settings
     total_time_step = round(total_time_sec/delta_t);
 
-    problem_setup = paperGetProblemSetup(start_conf, end_conf, total_time_sec, delta_t, ...
+    problem_setup = WAMExperimentProblemSetup(start_conf, end_conf, total_time_sec, delta_t, ...
                                          cost_sigma, epsilon_dist, interp_multiplier, limit_x, limit_v);
                                             
                                      

@@ -9,10 +9,8 @@ function all_cases = runMovingLabExperiments(env_size, res, cases_to_run)
 
     %% Setup
     env_name = 'MovingReplanner';
-%     env = loadPredefinedMovingEnvironment(env_name, env_size, res);
-    env = loadPaperEnvs(1, env_size, res, 0.6);
+    env = loadWAMExperimentEnv(1, env_size, res, 0.6);
     dataset = env.queryEnv(0);
-%     [X, Y, Z] = getEnvironmentMesh(dataset);
     use_trustregion_opt = false;
     use_LM = false;
     
@@ -31,7 +29,6 @@ function all_cases = runMovingLabExperiments(env_size, res, cases_to_run)
 
     %% Planner settings
     total_time_sec = 3.0;
-%     delta_t = 0.05;
     delta_t = 0.1;
     total_time_step = round(total_time_sec/delta_t);
     interp_multiplier = 20;
@@ -48,7 +45,6 @@ function all_cases = runMovingLabExperiments(env_size, res, cases_to_run)
 
     % algo settings
     cost_sigma = 0.05;
-%     cost_sigma = 0.1;
     epsilon_dist = 0.2;
 
     % noise model

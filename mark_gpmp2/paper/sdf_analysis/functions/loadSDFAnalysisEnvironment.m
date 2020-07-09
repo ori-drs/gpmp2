@@ -1,4 +1,4 @@
-function [env] = loadPredefinedMovingEnvironment(env_name, env_size, res)
+function [env] = loadSDFAnalysisEnvironment(env_name, env_size, res)
 %LOADPREDEFINEDMOVINGENVIRONMENT Summary of this function goes here
 %   Detailed explanation goes here
 

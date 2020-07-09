@@ -1,11 +1,10 @@
-function problem_setup = paperGetProblemSetup(start_conf, end_conf, total_time_sec, delta_t, ...
+function problem_setup = WAMExperimentProblemSetup(start_conf, end_conf, total_time_sec, delta_t, ...
                                          cost_sigma, epsilon_dist, interp_multiplier, limit_x, limit_v)
                                      
 %PAPERGETPROBLEMSETUP Summary of this function goes here
 %   Detailed explanation goes here
 
     arm = gpmp2.generateArm('WAMArm');
-%     arm_model = arm.fk_model();
 
     total_time_step = round(total_time_sec/delta_t);
     total_check_step = interp_multiplier*total_time_step;

@@ -30,7 +30,7 @@ bench_times = zeros(num_envs, total_time_step + 1);
 
 for j = 1:length(env_list)
     env_name = env_list(j);
-    env = loadPaperEnvironment(env_name, env_size, cell_size);
+    env = loadSDFAnalysisEnvironment(env_name, env_size, cell_size);
     dataset = env.queryEnv(0);
     
     origin = [dataset.origin_x, ...
@@ -49,19 +49,22 @@ for j = 1:length(env_list)
         % Give two initial measurements
         object_predictor.update(0.2, env.queryEnv(0.2).map); 
         object_predictor.update(0.6, env.queryEnv(0.6).map); 
+        
+        % Record the times taken
         static_field_times(j, i+1) = object_predictor.init_static_field_time;
         calc_obj_sdfs_time_times(j, i+1) = object_predictor.calc_obj_sdfs_time;
         tracking_times(j, i+1) = object_predictor.sdf_coord_track_time;
 
 
-
+        % Record time to predict composite sdf
         tic;
         test_predicted_sdf = object_predictor.predict_object_locations(test_time);
         my_time = toc;
         my_times(j, i+1) = my_time;
-
+        
+        % Record time to predict exact sdf
         tic;
-        bench_predicted_sdf = object_predictor.predict_sdf(test_time);
+        bench_predicted_sdf = object_predictor.predict_field(test_time);
         bench_time = toc;
         bench_times(j, i+1) = bench_time;
 
@@ -107,8 +110,9 @@ function stats = getStats(data)
     
 end
 
-
-
+% Save results
+% writetable(T,"/home/mark/installs/gpmp2/mark_gpmp2/paper/sdf_analysis/data/sdf_timing_table")
+% save('/home/mark/installs/gpmp2/mark_gpmp2/paper/sdf_analysis/data/sdf_timing_results','bench_stats','init_stats', 'prediction_stats')
 
 
 

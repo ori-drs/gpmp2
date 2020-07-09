@@ -5,8 +5,6 @@ clc;
 import gtsam.*
 import gpmp2.*
 
-
-
 scene = "tables"; % "bookshelf" 
 obstacle = "hsrb";
 

@@ -1,4 +1,4 @@
-function [env] = loadPaperEnvs(env_num, env_size, res, speed)
+function [env] = loadWAMExperimentEnv(env_num, env_size, res, speed)
 %LOADPAPERENVS Summary of this function goes here
 %   Detailed explanation goes here
 
