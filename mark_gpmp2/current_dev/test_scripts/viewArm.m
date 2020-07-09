@@ -1,6 +1,6 @@
 import gpmp2.*
 
-arm = myGenerateArm('Panda');
+arm = generateArm('Panda');
 
 figure(1)
 hold on;

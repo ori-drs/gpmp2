@@ -15,7 +15,7 @@ function problem_setup = pandaProblemSetup(start_conf, end_conf, total_time_sec,
 %        [1, 0, 0],...
 %        [0,0,1]];
     
-    arm = myGenerateArm('Panda', Pose3(Rot3(rot), Point3(base_pos')));
+    arm = generateArm('Panda', Pose3(Rot3(rot), Point3(base_pos')));
     arm_model = arm.fk_model();
 
     total_time_step = round(total_time_sec/delta_t);

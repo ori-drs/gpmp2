@@ -12,7 +12,7 @@ env_size = 300;
 origin = [-1,-1,-1];
 epsilon = 0.2;
 
-arm = myGenerateArm('Panda', Pose3(Rot3(eye(3)), Point3([0, 0, 0.5]')));
+arm = generateArm('Panda', Pose3(Rot3(eye(3)), Point3([0, 0, 0.5]')));
 arm_model = arm.fk_model();
 
 

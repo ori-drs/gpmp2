@@ -1,7 +1,7 @@
 cost_sigma = 0.03;
 epsilon_dist = 0.25;    
 
-arm = myGenerateArm('Panda');
+arm = generateArm('Panda');
 pose_key = gtsam.symbol('x', 0);
 
 

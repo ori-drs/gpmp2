@@ -16,7 +16,7 @@ end_conf = [0, -0.785, 0, -2.356, 0, 1.57, 0.785]';
 env = loadPredefinedMovingEnvironment('Empty', 150, 0.02, [-1,-1,-1]);
 dataset = env.queryEnv(0);
 
-arm = myGenerateArm('Panda', Pose3(Rot3(eye(3)), Point3([0,-0.1,-0.5]')));
+arm = generateArm('Panda', Pose3(Rot3(eye(3)), Point3([0,-0.1,-0.5]')));
 arm_model = arm.fk_model();
 
 total_time_sec = 3.0;

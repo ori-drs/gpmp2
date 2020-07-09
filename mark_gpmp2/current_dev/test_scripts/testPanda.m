@@ -17,7 +17,7 @@ dataset = env.queryEnv(0);
 
 
 %% arm model
-arm = myGenerateArm('Panda', Pose3(Rot3(eye(3)), Point3([0,-0.1,-0.5]')));
+arm = generateArm('Panda', Pose3(Rot3(eye(3)), Point3([0,-0.1,-0.5]')));
 arm_model = arm.fk_model();
 
 % Problem setup

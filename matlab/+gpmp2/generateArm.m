@@ -230,7 +230,52 @@ elseif strcmp(arm_str, 'PR2Arm')
             Point3(spheres_data(i,2:4)')));
     end
     arm_model = ArmModel(abs_arm, sphere_vec);
+    
+% Panda arm
+elseif strcmp(arm_str, 'Panda')
+    % arm: panda arm
+    alpha = [-1.5708,    1.5708,   1.5708,  -1.5708,  1.5708,  1.5708,  0]'; % 0
+    a     = [0,          0,        0.0825,  -0.0825,  0,        0.088,  0]'; % 0
+    d     = [0.333,      0,        0.316,   0,        0.384,    0,      0.107]'; % 0.107
+    theta = [0, 0, 0, 0, 0, 0, -1.5708/2]'; % 0    
+    abs_arm = Arm(7, a, alpha, d, base_pose, theta);
 
+    % physical arm
+    % sphere data [id x y z r]
+    spheres_data = [...
+          0 0.03000 0.215000 0.000000 0.120000
+          0 0.00000 0.120000 0.000000 0.080000
+          0 0.00000 0.000000 -0.06000 0.080000
+          
+          1 0.06000 0.000000 0.000000 0.080000
+          1 0.00000 0.000000 0.150000 0.080000
+          1 0.00000 0.000000 0.250000 0.060000
+
+          2 0.00000 0.000000 0.000000 0.120000
+          
+          3 0.00000 0.000000 0.120000 0.090000
+          
+          4 0.00000 -0.13000 -0.10000 0.080000
+          4 0.00000 0.000000 -0.04000 0.100000
+          
+          5 0.00000 0.000000 0.000000 0.080000
+          
+          6 0.00000 0.050000 0.010000 0.060000
+          6 0.00000 0.050000 0.090000 0.030000
+          6 0.00000 -0.05000 0.010000 0.060000
+          6 0.00000 -0.05000 0.090000 0.030000
+            ];
+   
+    nr_body = size(spheres_data, 1);
+    
+    sphere_vec = BodySphereVector;
+    for i=1:nr_body
+        sphere_vec.push_back(BodySphere(spheres_data(i,1), spheres_data(i,5), ...
+            Point3(spheres_data(i,2:4)')));
+    end
+    arm_model = ArmModel(abs_arm, sphere_vec);
+
+   
 % 6 DOF JACO2 arm
 elseif strcmp(arm_str, 'JACO2Arm')
     % arm: JACO2 6DOF arm
