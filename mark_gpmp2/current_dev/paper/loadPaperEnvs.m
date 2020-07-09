@@ -18,7 +18,7 @@ env = movingEnvironment3D(env_size, res);
 switch env_num
 
     case 1
-        % Just the second block
+        % Just the second pillar
         env.add_static_scene();
 
         env.add_object(0,...
@@ -28,7 +28,7 @@ switch env_num
                         pillar_size);
                     
     case 4
-        % Just the second block
+        % Just the second pillar
         env.add_static_scene();
 
         env.add_object(0,...
