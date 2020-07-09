@@ -55,7 +55,7 @@ end
 %%
 % Reset experiment
 start_conf = setConf('right_ready');
-end_conf = setConf('forward_conf');
+end_conf = setConf('forward');
 init_values = gpmp2.initArmTrajStraightLine(start_conf, end_conf, total_time_step);
 problem_setup = pandaProblemSetup(start_conf, end_conf, total_time_sec, delta_t, ...
                                      cost_sigma, epsilon_dist, interp_multiplier, ...
@@ -193,9 +193,9 @@ function pub = simulationPublisher(node, obstacle)
 
     switch obstacle    
         case 'person'
-            pub = ros.Publisher(node,'/start_moving_person','std_msgs/String');    
+            pub = ros.Publisher(node,'/start_moving_person','std_msgs/Float32');    
         case 'cylinder'
-            pub = ros.Publisher(node,'/start_moving_panda_cylinder','std_msgs/String');    
+            pub = ros.Publisher(node,'/start_moving_panda_cylinder','std_msgs/Float32');    
         case 'hsrb'
             pub = ros.Publisher(node,'/start_moving_hsrb','std_msgs/Float32');
     end

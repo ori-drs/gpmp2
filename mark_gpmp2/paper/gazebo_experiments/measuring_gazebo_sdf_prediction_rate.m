@@ -28,12 +28,10 @@ node = ros.Node('/matlab_node');
 traj_publisher = trajectoryPublisher(delta_t);
 sub = ros.Subscriber(node,'/joint_states','sensor_msgs/JointState');
 
-% pub = ros.Publisher(node,'/start_simulation','std_msgs/String');
-% person_pub = ros.Publisher(node,'/start_moving_person','std_msgs/String');
-hsrb_pub = ros.Publisher(node,'/start_moving_hsrb','std_msgs/String');
-% panda_cylinder_pub = ros.Publisher(node,'/start_moving_panda_cylinder','std_msgs/String');
+start_sim_pub = simulationPublisher(node, obstacle);
 
-strMsg = rosmessage('std_msgs/String');
+velocity_Msg = rosmessage('std_msgs/Float32');
+velocity_Msg.Data = 1.4;
 
 env = liveEnvironment(node, env_size, cell_size, origin, obstacle, scene);
 env.add_table_static_scene();
@@ -48,29 +46,11 @@ pause(2);
 % Setup problem
 base_pos = [0, 0, 0.4];
 
-current_joint_msg = sub.LatestMessage;
-curr_conf = current_joint_msg.Position(3:end);
-ready_conf = [0, -0.785, 0, -2.356, 0, 1.57, 0.785]';
-% end_conf = start_conf;
-% side_conf =  [1.57,           0.185,   0,       -1.70,   0,        3.14,   0]';
-% end_conf =  [1.3877,-0.4045,-0.0316,-1.0321,-2.7601,2.4433,0.5000]';
+start_conf = setConf('right_ready');
+end_conf = setConf('forward');
 
-left_forward_conf = [0.20, 0.63, 0.24, -2.01, -0.28, 2.61, 1.42]';
-right_forward_conf = [-0.65, 0.65, 0.18, -1.94, -0.21, 2.58, 0.46]';
-in_shelf_conf = [-2.40, -1.44, 1.11, -1.76, 2.41, 1.78, 2.80]';
-right_conf = [-0.32, -1.76, -1.42, -2.69, -1.52, 1.33, 0]';
-right_ready_conf = [-1.57, -0.785, 0, -2.356, 0, 1.57, 0.785]';
-forward_conf = [0, 0.94, -0.07, -1.27, 0.07, 2.21, 0.70]';
-
-% Shelf confs
-top_shelf_conf = [-1.32, 1.42, 1.85, -1.54, -2.61, 2.70, 1.85]';
-behind_conf = [-3.14, -0.785, 0, -2.356, 0, 1.57, 0.785]';
-left_conf = [1.90, 0.64, 0.01, -1.72, -0.01, 2.36, 1.14]';
-left_in_shelf_conf = [-0.51, 1.26, 1.80, -1.23, -2.80, 2.20, 2.0]';
-
-start_conf = curr_conf;
-end_conf = forward_conf;
-% end_conf = right_ready_conf;
+traj_publisher.goToConfig(start_conf);
+pause(3);
 
 total_time_step = round(total_time_sec/delta_t);
 problem_setup = pandaProblemSetup(start_conf, end_conf, total_time_sec, delta_t, ...
@@ -95,59 +75,41 @@ end
 %% Setup problem and graph
 % pause(4);
 
-loop_times = zeros(10);
-
-% for r = 1:10
-datasets = [];
-results = [];
 times = []; times = [times, 0];
-pub_msgs = [];
-confs = zeros(7, 100);
 
 panda_planner = pandaPlanner(start_sdf, problem_setup);
 
 disp('Ready to simulate and execute');
+
 % Start the simulation
 t_update = 0;
-hsrb_pub.send(strMsg); 
+start_sim_pub.send(velocity_Msg); 
 
 i=1;
 t_step = 0;
 t_start = tic;
 
 env.updateMap();
+
 % First optimisation
-% disp('Optimising');
 result = panda_planner.optimize(init_values);
 
 % Execute
-% disp('Publishing trajectory');
 traj_publisher.publish(result, t_step);
 
-% results = [results, result];
 last_lock = 0;
 
 time_to_predict = [];
 while t_update < total_time_sec
     % Get latest conf and sdf to update
-%     disp('Updating map and conf');
     t_update = toc(t_start);
-    latest_msg = sub.LatestMessage;
-    curr_conf = latest_msg.Position(3:end);
-    curr_vel = latest_msg.Velocity(3:end);
-    env.updateMap();
-%     confs(:,i) = curr_conf;
 
-    disp(t_update);
+    env.updateMap();
+
     times = [times, t_update];
     t_step = floor(t_update/delta_t);
 
-    curr_sdf = env.getSDF(); % Only needed to update sdf
-%     datasets = [datasets, env.dataset];
-
-%     disp('Updating tracker');
     tracker.update(t_update, env.dataset.map);
-    disp(num2str(tracker.num_obs));
 
     for p = last_lock:t_step
         panda_planner.update_confs(p, ...
@@ -171,10 +133,7 @@ while t_update < total_time_sec
         panda_planner.update_sdf(t, sdfs{t+1});
     end
 
-%     disp('Reoptimising');
     result = panda_planner.optimize(init_values);
-%     result = panda_planner.optimize(result);
-%     results = [results, result];
 
     % Execute
     disp('Publishing trajectory');
@@ -186,7 +145,70 @@ while t_update < total_time_sec
 
     i = i + 1;
 end
-%     
-%     pause(5);
-%     loop_times(r+1) = times(3)-times((2));
-% end
+
+
+%% Analyse the prediction frequency
+
+% We want, the min, max, average + initial cosat
+row_names = {'Prediction Time (ms)'; 'Frequency (Hz)'};
+min_time = min(time_to_predict) * 1000;
+median_time = median(time_to_predict) * 1000;
+mean_time = mean(time_to_predict) * 1000;
+max_time = max(time_to_predict) * 1000;
+time_std_dev = std(time_to_predict) * 1000;
+
+Min = [min(time_to_predict) * 1000; 1/max(time_to_predict)];
+Median = [median(time_to_predict) * 1000; 1/median(time_to_predict)];
+Mean = [mean(time_to_predict) * 1000; 1/mean(time_to_predict)];
+Max = [max(time_to_predict) * 1000; 1/min(time_to_predict) ];
+Std = [std(time_to_predict) * 1000; std(1./time_to_predict)];
+
+T = table(row_names, Min, Median, Mean, Max, Std)
+
+% Save results
+% writetable(T,"/home/mark/installs/gpmp2/mark_gpmp2/paper/gazebo_experiments/data/sdf_prediction_rate")
+% save('/home/mark/installs/gpmp2/mark_gpmp2/paper/gazebo_experiments/data/sdf_prediction_time','time_to_predict')
+
+
+
+
+%% Functions
+
+function conf = setConf(conf_name)
+
+    switch conf_name
+        case 'ready'
+            conf = [0, -0.785, 0, -2.356, 0, 1.57, 0.785]';
+        case 'left_forward'
+            conf = [0.20, 0.63, 0.24, -2.01, -0.28, 2.61, 1.42]';
+        case 'right_forward'
+            conf = [-0.65, 0.65, 0.18, -1.94, -0.21, 2.58, 0.46]';
+        case 'in_shelf'
+            conf = [-2.40, -1.44, 1.11, -1.76, 2.41, 1.78, 2.80]';
+        case 'right_ready'
+            conf = [-1.57, -0.785, 0, -2.356, 0, 1.57, 0.785]';
+        case 'forward'
+            conf = [0, 0.94, -0.07, -1.27, 0.07, 2.21, 0.70]';
+        case 'top_shelf'
+            conf = [-1.32, 1.42, 1.85, -1.54, -2.61, 2.70, 1.85]';
+        case 'behind'
+            conf = [-3.14, -0.785, 0, -2.356, 0, 1.57, 0.785]';
+        case 'left'
+            conf = [1.90, 0.64, 0.01, -1.72, -0.01, 2.36, 1.14]';
+        case 'left_in_shelf'
+            conf = [-0.51, 1.26, 1.80, -1.23, -2.80, 2.20, 2.0]';
+    end
+end
+
+function pub = simulationPublisher(node, obstacle)
+
+    switch obstacle    
+        case 'person'
+            pub = ros.Publisher(node,'/start_moving_person','std_msgs/Float32');    
+        case 'cylinder'
+            pub = ros.Publisher(node,'/start_moving_panda_cylinder','std_msgs/Float32');    
+        case 'hsrb'
+            pub = ros.Publisher(node,'/start_moving_hsrb','std_msgs/Float32');
+    end
+
+end

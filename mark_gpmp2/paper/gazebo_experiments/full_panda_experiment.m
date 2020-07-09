@@ -5,8 +5,6 @@ clc;
 import gtsam.*
 import gpmp2.*
 
-
-
 scene = "tables"; % "bookshelf" 
 obstacle = "hsrb";
 
@@ -23,6 +21,8 @@ cell_size = 0.04;
 env_size = 96;
 origin = [-1,-1,-1];
 
+base_pos = [0, 0, 0.4];
+
 % Setup ROS interactions
 node = ros.Node('/matlab_node');
 
@@ -31,7 +31,7 @@ sub = ros.Subscriber(node,'/joint_states','sensor_msgs/JointState');
 start_sim_pub = simulationPublisher(node, obstacle);
 
 velocity_Msg = rosmessage('std_msgs/Float32');
-velocity_Msg.Data = 1.4;
+velocity_Msg.Data = 1.2;
 
 env = liveEnvironment(node, env_size, cell_size, origin, obstacle, scene);
 env.add_table_static_scene();
@@ -44,31 +44,13 @@ tracker = liveTracker([env_size,env_size,env_size], env.dataset.static_map, ...
 pause(2);
 
 % Setup problem
-base_pos = [0, 0, 0.4];
+start_conf = setConf('right_ready');
+end_conf = setConf('forward');
 
-current_joint_msg = sub.LatestMessage;
-curr_conf = current_joint_msg.Position(3:end);
-ready_conf = [0, -0.785, 0, -2.356, 0, 1.57, 0.785]';
-% end_conf = start_conf;
-% side_conf =  [1.57,           0.185,   0,       -1.70,   0,        3.14,   0]';
-% end_conf =  [1.3877,-0.4045,-0.0316,-1.0321,-2.7601,2.4433,0.5000]';
+traj_publisher.goToConfig(start_conf);
+pause(3);
 
-left_forward_conf = [0.20, 0.63, 0.24, -2.01, -0.28, 2.61, 1.42]';
-right_forward_conf = [-0.65, 0.65, 0.18, -1.94, -0.21, 2.58, 0.46]';
-in_shelf_conf = [-2.40, -1.44, 1.11, -1.76, 2.41, 1.78, 2.80]';
-right_conf = [-0.32, -1.76, -1.42, -2.69, -1.52, 1.33, 0]';
-right_ready_conf = [-1.57, -0.785, 0, -2.356, 0, 1.57, 0.785]';
-forward_conf = [0, 0.94, -0.07, -1.27, 0.07, 2.21, 0.70]';
 
-% Shelf confs
-top_shelf_conf = [-1.32, 1.42, 1.85, -1.54, -2.61, 2.70, 1.85]';
-behind_conf = [-3.14, -0.785, 0, -2.356, 0, 1.57, 0.785]';
-left_conf = [1.90, 0.64, 0.01, -1.72, -0.01, 2.36, 1.14]';
-left_in_shelf_conf = [-0.51, 1.26, 1.80, -1.23, -2.80, 2.20, 2.0]';
-start_conf = curr_conf;
-
-end_conf = forward_conf;
-% end_conf = right_ready_conf;
 
 total_time_step = round(total_time_sec/delta_t);
 problem_setup = pandaProblemSetup(start_conf, end_conf, total_time_sec, delta_t, ...
@@ -381,9 +363,9 @@ function pub = simulationPublisher(node, obstacle)
 
     switch obstacle    
         case 'person'
-            pub = ros.Publisher(node,'/start_moving_person','std_msgs/String');    
+            pub = ros.Publisher(node,'/start_moving_person','std_msgs/Float32');    
         case 'cylinder'
-            pub = ros.Publisher(node,'/start_moving_panda_cylinder','std_msgs/String');    
+            pub = ros.Publisher(node,'/start_moving_panda_cylinder','std_msgs/Float32');    
         case 'hsrb'
             pub = ros.Publisher(node,'/start_moving_hsrb','std_msgs/Float32');
     end
