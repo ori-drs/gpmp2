@@ -33,9 +33,6 @@ classdef trajectoryPublisher
         end
         
         function publish(obj,traj, curr_step)
-            %METHOD1 Summary of this method goes here
-            %   Detailed explanation goes here
-            
             num_points = traj.size/2;
             traj_points = [];
             
@@ -48,6 +45,18 @@ classdef trajectoryPublisher
             end
 
             obj.rGoalMsg.Trajectory.Points = traj_points;
+
+            sendGoal(obj.rArm,obj.rGoalMsg);
+        end
+       
+       function goToConfig(obj,config)
+            
+            po = rosmessage('trajectory_msgs/JointTrajectoryPoint');
+            po.TimeFromStart = rosduration(2);               
+            po.Positions = config;
+            po.Velocities = zeros(1,7);
+
+            obj.rGoalMsg.Trajectory.Points = po;
 
             sendGoal(obj.rArm,obj.rGoalMsg);
        end
