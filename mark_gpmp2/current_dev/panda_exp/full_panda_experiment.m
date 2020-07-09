@@ -5,6 +5,11 @@ clc;
 import gtsam.*
 import gpmp2.*
 
+
+
+scene = "tables"; % "bookshelf" 
+obstacle = "hsrb";
+
 plot_graphs = false;
 total_time_sec = 3;
 delta_t = 0.1;
@@ -14,26 +19,19 @@ epsilon_dist = 0.3;
 limit_v = false;
 limit_x = false;
 
-scene = "tables"; % "bookshelf" 
-obstacle = "hsrb";
-
 cell_size = 0.04;
 env_size = 96;
 origin = [-1,-1,-1];
 
 % Setup ROS interactions
-% rosinit;
 node = ros.Node('/matlab_node');
 
 traj_publisher = trajectoryPublisher(delta_t);
 sub = ros.Subscriber(node,'/joint_states','sensor_msgs/JointState');
+start_sim_pub = simulationPublisher(node, obstacle);
 
-% pub = ros.Publisher(node,'/start_simulation','std_msgs/String');
-% person_pub = ros.Publisher(node,'/start_moving_person','std_msgs/String');
-hsrb_pub = ros.Publisher(node,'/start_moving_hsrb','std_msgs/String');
-% panda_cylinder_pub = ros.Publisher(node,'/start_moving_panda_cylinder','std_msgs/String');
-
-strMsg = rosmessage('std_msgs/String');
+velocity_Msg = rosmessage('std_msgs/Float32');
+velocity_Msg.Data = 1.4;
 
 env = liveEnvironment(node, env_size, cell_size, origin, obstacle, scene);
 env.add_table_static_scene();
@@ -111,10 +109,8 @@ panda_planner = pandaPlanner(start_sdf, problem_setup);
 disp('Ready to simulate and execute');
 % Start the simulation
 t_update = 0;
-% pub.send(strMsg); 
-% person_pub.send(strMsg); 
-hsrb_pub.send(strMsg); 
-% panda_cylinder_pub.send(strMsg); 
+
+start_sim_pub.send(velocity_Msg); 
 
 i=1;
 t_step = 0;
@@ -356,3 +352,19 @@ plotEndEffectorTrajectory(problem_setup.arm.fk_model(), results(10), 'm');
 % 
 %     pause(0.2);
 % end
+
+
+%% Functions
+
+function pub = simulationPublisher(node, obstacle)
+
+    switch obstacle    
+        case 'person'
+            pub = ros.Publisher(node,'/start_moving_person','std_msgs/String');    
+        case 'cylinder'
+            pub = ros.Publisher(node,'/start_moving_panda_cylinder','std_msgs/String');    
+        case 'hsrb'
+            pub = ros.Publisher(node,'/start_moving_hsrb','std_msgs/Float32');
+    end
+
+end
