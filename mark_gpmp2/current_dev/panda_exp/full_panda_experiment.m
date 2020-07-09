@@ -66,11 +66,6 @@ behind_conf = [-3.14, -0.785, 0, -2.356, 0, 1.57, 0.785]';
 left_conf = [1.90, 0.64, 0.01, -1.72, -0.01, 2.36, 1.14]';
 left_in_shelf_conf = [-0.51, 1.26, 1.80, -1.23, -2.80, 2.20, 2.0]';
 start_conf = curr_conf;
-% end_conf = forward_conf;
-% end_conf = right_ready_conf;
-% end_conf = behind_conf;
-% end_conf = top_shelf_conf;
-% end_conf = left_conf;
 
 end_conf = forward_conf;
 % end_conf = right_ready_conf;
@@ -355,6 +350,32 @@ plotEndEffectorTrajectory(problem_setup.arm.fk_model(), results(10), 'm');
 
 
 %% Functions
+
+function conf = setConf(conf_name)
+
+    switch conf_name
+        case 'ready'
+            conf = [0, -0.785, 0, -2.356, 0, 1.57, 0.785]';
+        case 'left_forward'
+            conf = [0.20, 0.63, 0.24, -2.01, -0.28, 2.61, 1.42]';
+        case 'right_forward'
+            conf = [-0.65, 0.65, 0.18, -1.94, -0.21, 2.58, 0.46]';
+        case 'in_shelf'
+            conf = [-2.40, -1.44, 1.11, -1.76, 2.41, 1.78, 2.80]';
+        case 'right_ready'
+            conf = [-1.57, -0.785, 0, -2.356, 0, 1.57, 0.785]';
+        case 'forward'
+            conf = [0, 0.94, -0.07, -1.27, 0.07, 2.21, 0.70]';
+        case 'top_shelf'
+            conf = [-1.32, 1.42, 1.85, -1.54, -2.61, 2.70, 1.85]';
+        case 'behind'
+            conf = [-3.14, -0.785, 0, -2.356, 0, 1.57, 0.785]';
+        case 'left'
+            conf = [1.90, 0.64, 0.01, -1.72, -0.01, 2.36, 1.14]';
+        case 'left_in_shelf'
+            conf = [-0.51, 1.26, 1.80, -1.23, -2.80, 2.20, 2.0]';
+    end
+end
 
 function pub = simulationPublisher(node, obstacle)
 
