@@ -61,6 +61,7 @@ for i = 1:num_combos
     
 end
 
+% writematrix(results_log,'straight_line_results_log_cost_0_005.csv')
 
 %%
 start_conf = configs(:, conf_combo(7,1));
