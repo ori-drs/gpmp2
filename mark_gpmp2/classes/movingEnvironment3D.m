@@ -1,27 +1,14 @@
 classdef movingEnvironment3D < handle
-    %MOVINGENVIRONMENT Summary of this class goes here
-    %   Detailed explanation goes here
-    
+
     properties 
-%         t_start_moving
-%         v_or_t_end
-%         v_or_t_end_value
-%         block_starting_pos
-        dataset
-%         block_velocity
-%         t_end_moving
-%         block_end_pos
-        
+        dataset    
         objects = {};
         fixed_scene = {}
     end
     
     methods
         function env = movingEnvironment3D(env_size, resolution, origin)
-            %MOVINGENVIRONMENT Construct an instance of this class
-            %   Detailed explanation goes here           
-            
-            % params
+
             if nargin > 2
                 env.dataset.origin_x = origin(1);
                 env.dataset.origin_y = origin(2);
@@ -49,9 +36,32 @@ classdef movingEnvironment3D < handle
            
         end
         
+        
+        function add_hsr_static_scene(env)
+         
+            % Table
+            stat_obs{1} = {[-0.31, 0, 0.2], [0.80, 1.2 , 0.4]};
+            stat_obs{2} = {[1.05, 0, 0.2], [0.80, 1.2 , 0.4]};
+
+
+            origin = [env.dataset.origin_x, ...
+                       env.dataset.origin_y, ...
+                       env.dataset.origin_z];
+                   
+            for i = 1:size(stat_obs, 2)
+                obj_cell_coords = round((stat_obs{i}{1} - origin) / env.dataset.cell_size);
+                obj_cell_size = round(stat_obs{i}{2} / env.dataset.cell_size);
+
+                env.dataset.static_map = add_obstacle(obj_cell_coords, ...
+                                obj_cell_size, ...
+                                env.dataset.static_map); 
+            end
+            env.dataset.static_map = flip(env.dataset.static_map);          
+
+        end
+        
         function add_static_scene(env)
          
-            %  Note these are true for 3mx3mx3m at 1cm res          
             stat_obs{1} = {[0.20 0.70 -0.20], [1.40, 0.60, 0.05]};
             
             stat_obs{2} = {[-0.45 0.45 -0.60], [0.10, 0.10, 0.80]};
@@ -104,7 +114,7 @@ classdef movingEnvironment3D < handle
             env.objects{end+1} = obj;
         
         end
-%       
+       
         function [obs_pos_to_add, obs_pos] = calculateObjPosition(env, t, object) 
             if t<= object.t_start_moving
                    t_moved = 0;
@@ -155,9 +165,7 @@ classdef movingEnvironment3D < handle
         end
 
         function val = queryEnv(obj, query_t)
-            %METHOD1 Summary of this method goes here
-            %   Detailed explanation goes here
-            % map
+
             updateMap(obj, query_t);
             
             % signed distance field
