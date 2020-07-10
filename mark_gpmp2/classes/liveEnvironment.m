@@ -1,7 +1,5 @@
 classdef liveEnvironment < handle
-    %MOVINGENVIRONMENT Summary of this class goes here
-    %   Detailed explanation goes here
-    
+
     properties 
         dataset
         objects = {};
@@ -17,10 +15,7 @@ classdef liveEnvironment < handle
     
     methods
         function env = liveEnvironment(node, env_size, resolution, origin, obstacle, scene)
-            %MOVINGENVIRONMENT Construct an instance of this class
-            %   Detailed explanation goes here           
-            
-            % params
+
             if nargin > 2
                 env.dataset.origin_x = origin(1);
                 env.dataset.origin_y = origin(2);
@@ -82,7 +77,6 @@ classdef liveEnvironment < handle
 
              
             elseif strcmp(env.scene, "bookshelf")
-                    %              stat_obs{1} = {[0, 0, 0.4], [1.2, 0.63, 0.08]};
                  % Table
                  stat_obs{1} = {[-0.31, 0, 0.2], [0.80, 1.2 , 0.4]};
 
@@ -113,54 +107,10 @@ classdef liveEnvironment < handle
             env.dataset.static_map = flip(env.dataset.static_map);          
 
         end
-                
-        function add_static_scene(env)
-         
-            %  Note these are true for 3mx3mx3m at 1cm res          
-            stat_obs{1} = {[0.20 0.70 -0.20], [1.40, 0.60, 0.05]};
-            
-            stat_obs{2} = {[-0.45 0.45 -0.60], [0.10, 0.10, 0.80]};
-            
-            stat_obs{3} = {[0.85 0.45 -0.60], [0.10, 0.10, 0.80]};
-            
-            stat_obs{4} = {[-0.45 0.95 -0.60], [0.10, 0.10, 0.80]};
-            
-            stat_obs{5} = {[0.85 0.95 -0.60], [0.10, 0.10, 0.80]};
-            
-            stat_obs{6} = {[1.00 0.40 -0.05], [0.60, 0.05, 1.90]};
-            
-            stat_obs{7} = {[1.00 -0.60 -0.05], [0.60, 0.05, 1.90]};
-
-            stat_obs{8} = {[0.50 0.40 -0.05], [0.40, 0.05, 1.90]};
-            
-            stat_obs{9} = {[1.00 -0.10 0.90], [0.60, 1.00, 0.05]};
-
-            stat_obs{10} = {[1.00 -0.10 0.40], [0.60, 1.00, 0.05]};
-
-            stat_obs{11} = {[1.00 -0.10 -0.10], [0.60, 1.00, 0.05]};
-
-            stat_obs{12} = {[1.00 -0.10 -0.60], [0.60, 1.00, 0.05]};
-
-             origin = [env.dataset.origin_x, ...
-                       env.dataset.origin_y, ...
-                       env.dataset.origin_z];
-                   
-            for i = 1:size(stat_obs, 2)
-                obj_cell_coords = round((stat_obs{i}{1} - origin) / env.dataset.cell_size);
-                obj_cell_size = round(stat_obs{i}{2} / env.dataset.cell_size);
-
-                env.dataset.static_map = add_obstacle(obj_cell_coords, ...
-                                obj_cell_size, ...
-                                env.dataset.static_map); 
-            end
-            env.dataset.static_map = flip(env.dataset.static_map);          
-
-        end
-        
-        
+          
+   
         function obs_pos_to_add = calculateObjPosition(env, msg) 
             
-%             block_pos = msg.Pose(4).Position;
             block_pos = msg.Pose(env.obstacle_id).Position;
 
             % Calculate object positions - position is start plus v * t

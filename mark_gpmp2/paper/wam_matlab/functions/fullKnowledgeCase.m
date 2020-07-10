@@ -4,6 +4,7 @@ function case_results = fullKnowledgeCase(datasets, init_values, problem_setup)
     import gtsam.*
     import gpmp2.*
 
+    %% TODO - Remove this. This should be robot independent
     joint_limit_vec_down = [-2.6, -2, -2.8, -0.9, -4.8, -1.6, -2.2]';
     joint_limit_vec_up = [2.6, 2.0, 2.8, 3.1, 1.3, 1.6, 2.2]';
     joint_limit_thresh = 0.001 * ones(7,1);
@@ -13,7 +14,7 @@ function case_results = fullKnowledgeCase(datasets, init_values, problem_setup)
     joint_vel_limit_vec = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]';
     joint_vel_limit_thresh = 0.01 * ones(7,1);
     joint_vel_limit_model = noiseModel.Isotropic.Sigma(7, 0.1);
-
+    %%
     
     tic;
     graph = NonlinearFactorGraph;
