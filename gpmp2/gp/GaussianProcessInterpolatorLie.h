@@ -12,7 +12,13 @@
 #include <gtsam/base/Lie.h>
 #include <gtsam/base/Vector.h>
 #include <gtsam/base/Matrix.h>
+<<<<<<< HEAD
 #include <iostream>
+=======
+
+#include <iostream>
+
+>>>>>>> master
 
 namespace gpmp2 {
 
