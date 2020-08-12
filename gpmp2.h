@@ -14,6 +14,7 @@ virtual class gtsam::noiseModel::Base;
 virtual class gtsam::NonlinearFactor;
 virtual class gtsam::NonlinearFactorGraph;
 virtual class gtsam::NoiseModelFactor;
+class gtsam::VariableIndex;
 
 namespace gpmp2 {
 
@@ -430,6 +431,8 @@ class SignedDistanceField {
   void print(string s) const;
   void saveSDF(string filename);
   void loadSDF(string filename);
+  void replaceSDFData(const gpmp2::SignedDistanceField& sdf);
+
 };
 
 
@@ -443,7 +446,6 @@ class PlanarSDF {
   void changeData(const Matrix& new_data);
 };
 
-
 // obstacle avoid factor
 #include <gpmp2/obstacle/ObstacleSDFFactorArm.h>
 virtual class ObstacleSDFFactorArm : gtsam::NoiseModelFactor {
@@ -451,6 +453,11 @@ virtual class ObstacleSDFFactorArm : gtsam::NoiseModelFactor {
       size_t poseKey, const gpmp2::ArmModel& arm,
       const gpmp2::SignedDistanceField& sdf, double cost_sigma, double epsilon);
   Vector evaluateError(Vector pose) const;
+  Vector spheresInCollision(Vector pose) const;
+//   void replaceSDFData(const gpmp2::SignedDistanceField& sdf); 
+  void replaceSDFData(const gpmp2::SignedDistanceField& sdf); 
+  
+  gpmp2::ObstacleSDFFactorArm getSDFModFactor(const gpmp2::SignedDistanceField& sdf);
 };
 
 
@@ -462,6 +469,9 @@ virtual class ObstacleSDFFactorGPArm : gtsam::NoiseModelFactor {
       const gpmp2::ArmModel& arm, const gpmp2::SignedDistanceField& sdf,
       double cost_sigma, double epsilon, const gtsam::noiseModel::Base* Qc_model,
       double delta_t, double tau);
+  void replaceSDFData(const gpmp2::SignedDistanceField& sdf);
+  gpmp2::ObstacleSDFFactorGPArm getSDFModFactor(const gpmp2::SignedDistanceField& sdf);
+  
 };
 
 
@@ -800,6 +810,36 @@ double CollisionCostPose2MobileVetLin2Arms(
 gtsam::Values optimize(const gtsam::NonlinearFactorGraph& graph, const gtsam::Values& init_values,
     const gpmp2::TrajOptimizerSetting& setting, bool iter_no_increase);
 
+/// iSAM2 incremental trajectory optimizers for dynamic environments
+#include <gpmp2/planner/ISAM2DynamicTrajOptimizer.h>
+
+/// 3D replanner
+class ISAM2DynamicTrajOptimizer3DArm {
+  ISAM2DynamicTrajOptimizer3DArm(const gpmp2::ArmModel& arm, const gpmp2::SignedDistanceField& sdf,
+      const gpmp2::TrajOptimizerSetting& setting);
+
+  void initFactorGraph(Vector start_conf, Vector start_vel,
+      Vector goal_conf, Vector goal_vel);
+  void initValues(const gtsam::Values& init_values);
+  void update();
+
+  /// Replanning interfaces
+  void changeGoalConfigAndVel(Vector goal_conf, Vector goal_vel);
+  void removeGoalConfigAndVel();
+  void fixConfigAndVel(size_t state_idx, Vector conf_fix, Vector vel_fix);
+  void addPoseEstimate(size_t state_idx, Vector pose, Matrix pose_cov);
+  void addStateEstimate(size_t state_idx, Vector pose, Matrix pose_cov, Vector vel, Matrix vel_cov);
+
+  /// accesses
+  gtsam::Values values() const;
+  gtsam::VariableIndex getVariableIndex() const;
+
+  void printStats() const;
+  void printVariableIndex() const;
+
+};
+
+
 /// iSAM2 incremental trajectory optimizers
 #include <gpmp2/planner/ISAM2TrajOptimizer.h>
 
@@ -822,6 +862,7 @@ class ISAM2TrajOptimizer2DArm {
 
   /// accesses
   gtsam::Values values() const;
+
 };
 
 /// 3D replanner
@@ -843,6 +884,7 @@ class ISAM2TrajOptimizer3DArm {
 
   /// accesses
   gtsam::Values values() const;
+
 };
 
 /// 2D mobile arm replanner
@@ -864,6 +906,7 @@ class ISAM2TrajOptimizerPose2MobileArm2D {
 
   /// accesses
   gtsam::Values values() const;
+
 };
 
 /// 3D mobile arm replanner
@@ -885,6 +928,7 @@ class ISAM2TrajOptimizerPose2MobileArm {
 
   /// accesses
   gtsam::Values values() const;
+
 };
 
 
@@ -906,14 +950,23 @@ class ISAM2TrajOptimizerPose2MobileVetLin2Arms {
 
   /// accesses
   gtsam::Values values() const;
+
 };
 
 
 // utils for traj init and interpolation
 #include <gpmp2/planner/TrajUtils.h>
 
+/// reinitialization
+gtsam::Values reinitRemainderArmTrajStraightLine(gtsam::Values& traj, 
+                                                Vector end_conf, 
+                                                Vector end_vel, 
+                                                size_t current_step);
+
 /// initialization
-gtsam::Values initArmTrajStraightLine(Vector init_conf, Vector end_conf, size_t total_step);
+gtsam::Values initArmTrajStraightLine(Vector init_conf, Vector end_conf, size_t total_step);   
+void setArmSeed(size_t seed);   
+gtsam::Values initArmTrajRandom(Vector init_conf, Vector end_conf, size_t total_step);   
 gtsam::Values initPose2VectorTrajStraightLine(const gtsam::Pose2& init_pose, Vector init_conf,
     const gtsam::Pose2& end_pose, Vector end_conf, size_t total_step);
 gtsam::Values initPose2TrajStraightLine(const gtsam::Pose2& init_pose,

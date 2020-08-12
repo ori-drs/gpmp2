@@ -24,7 +24,8 @@ double sdf_wrapper(const SignedDistanceField& field, const Point3& p) {
 /* ************************************************************************** */
 TEST(SDFutils, test) {
   // data
-  vector<Matrix> data;
+  vector<Matrix> data, data2;
+
   data.push_back((Matrix(5, 5) <<
       1.7321, 1.4142, 1.4142, 1.4142, 1.7321,
       1.4142, 1, 1, 1, 1.4142,
@@ -43,6 +44,29 @@ TEST(SDFutils, test) {
       1.4142, 1, 1, 1, 1.4142,
       1.4142, 1, 1, 1, 1.4142,
       1.7321, 1.4142, 1.4142, 1.4142, 1.7321).finished());
+
+
+  data2.push_back((Matrix(5, 5) <<
+      0, 0.5, 1.0, 1.5, 2.0,
+      0, 0.5, 1.0, 1.5, 2.0,
+      0, 0.5, 1.0, 1.5, 2.0,
+      0, 0.5, 1.0, 1.5, 2.0,
+      0, 0.5, 1.0, 1.5, 2.0).finished());
+  data2.push_back((Matrix(5, 5) <<
+      0, 0.5, 1.0, 1.5, 2.0,
+      1, 0, 0, 0, 1,
+      1, 0, 0, 0, 1,
+      1, 0, 0, 0, 1,
+      1.4142, 1, 1, 1,4142).finished());
+  data2.push_back((Matrix(5, 5) <<
+      1.7321, 1.4142, 1.4142, 1.4142, 1.7321,
+      1.4142, 1, 1, 1, 1.4142,
+      0, 0.5, 1.0, 1.5, 2.0,
+      1.4142, 1, 1, 1, 1.4142,
+      1.7321, 1.4142, 1.4142, 1.4142, 1.7321).finished());
+
+
+
   Point3 origin(-0.2, -0.2, -0.1);
   double cell_size = 0.1;
 
@@ -83,6 +107,14 @@ TEST(SDFutils, test) {
   grad_exp = numericalDerivative11(boost::function<double(const Point3&)>(
       boost::bind(sdf_wrapper, field, _1)), p, 1e-6);
   EXPECT(assert_equal(grad_exp, grad_act, 1e-6));
+
+
+
+  // changing data
+  SignedDistanceField field2(origin, cell_size, data2);
+  field.changeData(data2);
+  EXPECT_DOUBLES_EQUAL(field.signed_distance(1), field2.signed_distance(1), 1e-9);
+
 }
 
 /* ************************************************************************** */

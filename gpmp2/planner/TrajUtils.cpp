@@ -22,6 +22,85 @@ using namespace std;
 namespace gpmp2 {
 
 /* ************************************************************************** */
+gtsam::Values reinitRemainderArmTrajStraightLine(gtsam::Values& traj,
+    const gtsam::Vector& end_conf, const gtsam::Vector& end_vel, size_t current_step) {
+
+  Values new_values;
+  size_t last_step = traj.size()/2 - 1;
+  size_t steps_left = last_step - current_step;
+
+  Vector current_conf = traj.at<Vector>(Symbol('x', current_step));
+  Vector current_v = traj.at<Vector>(Symbol('v', current_step));
+
+  // init pose
+  for (size_t i = 0; i <= steps_left; i++) {
+    Vector conf;
+    Vector vel;
+
+    if (i == 0){
+      conf = current_conf;
+      vel = current_v;
+    }
+    else if (i == steps_left){
+      conf = end_conf;
+      vel = end_vel;
+    }
+    else{
+      conf = static_cast<double>(i) / static_cast<double>(steps_left) * end_conf +
+          (1.0 - static_cast<double>(i) / static_cast<double>(steps_left)) * current_conf;
+      vel = static_cast<double>(i) / static_cast<double>(steps_left) * end_vel +
+          (1.0 - static_cast<double>(i) / static_cast<double>(steps_left)) * current_v;
+    }
+    new_values.insert(Symbol('x', i+current_step), conf);
+    new_values.insert(Symbol('v', i+current_step), vel);
+  }
+
+  traj.update(new_values);
+
+  return traj;
+
+}
+
+/* ************************************************************************** */
+gtsam::Values initArmTrajRandom(const Vector& init_conf,
+    const Vector& end_conf, size_t total_step) {
+
+  Values init_values;
+  int dof = init_conf.size();
+  double rand_num;
+
+  // init pose
+  for (size_t i = 0; i <= total_step; i++) {
+    Vector conf;
+    if (i == 0)
+      conf = init_conf;
+    else if (i == total_step)
+      conf = end_conf;
+    else
+
+      conf = init_conf;  
+      for (size_t i = 0; i < dof; i++) {
+        rand_num = (2*M_PI) * ( (double)rand() / (double)RAND_MAX ) - (1*M_PI);
+        conf(i) = rand_num;
+      }
+
+    init_values.insert(Symbol('x', i), conf);
+  }
+
+  // init vel as zero motion
+  Vector zero_vel = Vector::Zero(dof);
+  for (size_t i = 0; i <= total_step; i++)
+    init_values.insert(Symbol('v', i), zero_vel);
+
+  return init_values;
+}
+
+/* ************************************************************************** */
+void setArmSeed(size_t seed) {
+  srand (seed);
+}
+
+/* ************************************************************************** */
 gtsam::Values initArmTrajStraightLine(const Vector& init_conf,
     const Vector& end_conf, size_t total_step) {
 

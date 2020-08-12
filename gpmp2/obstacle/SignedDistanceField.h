@@ -68,6 +68,25 @@ public:
 
   ~SignedDistanceField() {}
 
+  std::vector<gtsam::Matrix> getData() const {
+    return data_;
+  }
+
+  // // to change the SDF dynamically
+  // void replaceSDFData(SignedDistanceField& sdf) {
+  //   std::vector<gtsam::Matrix> temp = sdf.getData();
+  //   changeData(temp);
+  // }
+
+  void changeData(const std::vector<gtsam::Matrix>& new_data) {
+    std::vector<gtsam::Matrix> temp = new_data; // This copies
+    data_ = temp;
+  }
+
+  void replaceSDFData(const SignedDistanceField& sdf) {
+    data_ = sdf.getData();
+  }
+
   /// insert data matrix to each layer of sdf
   /// @param z_idx the z index of 3-D sdf
   /// @param field_layer matrix of each slice of 3-D sdf, Matrix represent the X (col) & Y (row)
@@ -185,7 +204,7 @@ public:
     std::cout << "field size:       " << field_cols_ << " x "
         << field_rows_ << " x " << field_z_ << std::endl;
   }
-
+  
   /// save to file
   void saveSDF(const std::string filename);
 

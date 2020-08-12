@@ -34,7 +34,8 @@ inline Vector convertSDFtoErr(const Vector& sdf, double eps) {
 }
 
 // data
-SignedDistanceField sdf;
+SignedDistanceField sdf, sdf2;
+vector<Matrix> field(3), field2(3);
 
 /* ************************************************************************** */
 TEST(ObstacleSDFFactorArm, data) {
@@ -42,7 +43,6 @@ TEST(ObstacleSDFFactorArm, data) {
   double cell_size = 0.1;
   // zero orgin
   Point3 origin(0,0,0);
-  vector<Matrix> field(3);
 
   field[0] = (Matrix(7,7) <<
       0.2828, 0.2236, 0.2000, 0.2000, 0.2000, 0.2236, 0.2828,
@@ -69,7 +69,33 @@ TEST(ObstacleSDFFactorArm, data) {
       0.3000, 0.2449, 0.2236, 0.2236, 0.2236, 0.2449, 0.3000,
       0.3464, 0.3000, 0.2828, 0.2828, 0.2828, 0.3000, 0.3464).finished();
 
+  field2[0] = (Matrix(7, 7) <<
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000).finished();
+  field2[1] = (Matrix(7, 7) <<
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000).finished();
+  field2[2] = (Matrix(7, 7) <<
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,
+    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000,    1.0000).finished();
+
   sdf = SignedDistanceField(origin, cell_size, field);
+  sdf2 = SignedDistanceField(origin, cell_size, field2);
 }
 
 /* ************************************************************************** */
@@ -91,6 +117,7 @@ TEST(ObstacleSDFFactorArm, error) {
 
   double obs_eps = 0.2;
   ObstacleSDFFactorArm factor(0, arm, sdf, 1.0, obs_eps);
+  ObstacleSDFFactorArm factor2(0, arm, sdf2, 1.0, obs_eps);
 
   // just check cost of two link joint
   Vector2 q;
@@ -117,6 +144,35 @@ TEST(ObstacleSDFFactorArm, error) {
       boost::bind(&errorWrapper, factor, _1)), q, 1e-6);
   EXPECT(assert_equal(err_exp, err_act, 1e-6));
   EXPECT(assert_equal(H1_exp, H1_act, 1e-6));
+
+  // changing sdf data origin zero case
+  Matrix H1_1, H1_2, H1_3;
+  Vector err_1, err_2, err_3;
+
+  q = Vector2(0, 0);
+  factor.changeSDFData(field2);
+  err_1 = factor.evaluateError(q, H1_1);
+  err_2 = factor2.evaluateError(q, H1_2);
+
+  EXPECT(assert_equal(H1_1, H1_2, 1e-6));
+  EXPECT(assert_equal(err_1, err_2, 1e-6));
+
+  // changing sdf data 45 deg case
+  ObstacleSDFFactorArm factor1(0, arm, sdf, 1.0, obs_eps);
+  // ObstacleSDFFactorArm initial_factor(0, arm, sdf, 1.0, obs_eps);
+
+  q = Vector2(M_PI/4.0, 0);
+  factor1.changeSDFData(field2);
+  // initial_factor.replaceSDFData(sdf2);
+  err_1 = factor1.evaluateError(q, H1_1);
+  err_2 = factor2.evaluateError(q, H1_2);
+  // err_3 = initial_factor.evaluateError(q, H1_3);
+
+  EXPECT(assert_equal(H1_1, H1_2, 1e-6));
+  EXPECT(assert_equal(err_1, err_2, 1e-6));
+
+  // EXPECT(assert_equal(H1_1, H1_3, 1e-6));
+  // EXPECT(assert_equal(err_1, err_3, 1e-6));
 }
 
 

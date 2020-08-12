@@ -21,7 +21,6 @@
 
 namespace gpmp2 {
 
-
 /// hinge loss obstacle cost function
 inline double hingeLossObstacleCost(const gtsam::Point3& point, const SignedDistanceField& sdf,
     double eps, gtsam::OptionalJacobian<1, 3> H_point = boost::none) {

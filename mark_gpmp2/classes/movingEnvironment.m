@@ -34,14 +34,12 @@ classdef movingEnvironment
             elseif v_or_t_end == false % t_end given
                 obj.t_end_moving = v_or_t_end_value;
                 obj.block_end_pos = [2.50, 1.50];
-                obj.block_velocity = (block_end_pos - block_starting_pos)/(t_end_moving-t_start_moving);
+                obj.block_velocity = (obj.block_end_pos - obj.block_starting_pos)/(obj.t_end_moving-obj.t_start_moving);
             end
             
             % params
             obj.dataset.cols = 300;
             obj.dataset.rows = 300;
-%             obj.dataset.origin_x = 0;
-%             obj.dataset.origin_y = 0;
             obj.dataset.origin_x = -1;
             obj.dataset.origin_y = -1;
             obj.dataset.cell_size = 0.01;

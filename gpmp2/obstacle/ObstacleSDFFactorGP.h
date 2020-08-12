@@ -78,6 +78,13 @@ public:
         pose1Key, vel1Key, pose2Key, vel2Key), GPbase_(Qc_model, delta_t, tau),
         epsilon_(epsilon), robot_(robot), sdf_(sdf) {}
 
+  ObstacleSDFFactorGP(
+      const gtsam::SharedNoiseModel& noiseModel, GPBase gpbase, gtsam::Key pose1Key, gtsam::Key vel1Key, gtsam::Key pose2Key, gtsam::Key vel2Key,
+      const Robot& robot, const SignedDistanceField& sdf, double epsilon) :
+
+        Base(noiseModel, pose1Key, vel1Key, pose2Key, vel2Key), GPbase_(gpbase),
+        epsilon_(epsilon), robot_(robot), sdf_(sdf) {}
+
   virtual ~ObstacleSDFFactorGP() {}
   
   
@@ -89,6 +96,18 @@ public:
       boost::optional<gtsam::Matrix&> H1 = boost::none, boost::optional<gtsam::Matrix&> H2 = boost::none,
       boost::optional<gtsam::Matrix&> H3 = boost::none, boost::optional<gtsam::Matrix&> H4 = boost::none) const ;
 
+  void changeSDFData(const std::vector<gtsam::Matrix>& new_data) {
+    const_cast<SignedDistanceField&>(sdf_).changeData(new_data);
+  }
+
+  ObstacleSDFFactorGP getSDFModFactor(const SignedDistanceField& sdf){
+    return ObstacleSDFFactorGP(this->noiseModel(), GPbase_, this->key1(), this->key2(), this->key3(), this->key4(),
+                              robot_ , sdf, epsilon_);
+  }  
+
+  void replaceSDFData(const SignedDistanceField& sdf) {
+    const_cast<SignedDistanceField&>(sdf_).replaceSDFData(sdf);
+  }
 
   /// @return a deep copy of this factor
   virtual gtsam::NonlinearFactor::shared_ptr clone() const {
