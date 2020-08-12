@@ -38,8 +38,9 @@ function experiment_results = runHSRExperiment(env_size, res, start_conf, end_co
 % 
     init_values = initArmTrajStraightLine(start_conf, end_conf, total_time_step);
     
-    eval_case = fullKnowledgeCase(datasets, init_values, problem_setup);
-    
+    eval_gp_graph = evaluationCaseNoObs(problem_setup);
+    eval_obs_graph = evaluationCaseObs(datasets, problem_setup);
+     
     static_case = staticUpdateCase(datasets, init_values, problem_setup);
 
     full_knowledge_case = fullKnowledgeUpdateCase(datasets, init_values, problem_setup);
@@ -47,9 +48,12 @@ function experiment_results = runHSRExperiment(env_size, res, start_conf, end_co
     execute_update_case = updateCase(datasets, init_values, problem_setup);
 
     %% Use the full knowledge scenario to evaluate all scenarios with cost
-    static_case.actual_cost = eval_case.graph.error(static_case.final_result);
-    full_knowledge_case.actual_cost = eval_case.graph.error(full_knowledge_case.final_result);
-    execute_update_case.actual_cost = eval_case.graph.error(execute_update_case.final_result);
+    static_case.gp_cost = eval_gp_graph.error(static_case.final_result);
+    full_knowledge_case.gp_cost = eval_gp_graph.error(full_knowledge_case.final_result);
+    execute_update_case.gp_cost = eval_gp_graph.error(execute_update_case.final_result);
+    static_case.obs_cost = eval_obs_graph.error(static_case.final_result);
+    full_knowledge_case.obs_cost = eval_obs_graph.error(full_knowledge_case.final_result);
+    execute_update_case.obs_cost = eval_obs_graph.error(execute_update_case.final_result);
     
     %% Check for collisions
  

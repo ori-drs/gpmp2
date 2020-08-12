@@ -12,7 +12,7 @@ import gtsam.*
 % Run the lab experiments
 env_size = 96;
 res = 0.04;
-speeds = 0:0.1:3.0;
+speeds = 1.0:0.1:2.0;
 
 base_pos = [0, 0, 0.4];
 
@@ -30,7 +30,7 @@ conf_combo = [conf_combo; fliplr(conf_combo)]; % Include reverse as well
 
 num_exps = size(conf_combo,1) * size(speeds,2);
 
-results_log = zeros(num_exps, 8); % 8 fields
+results_log = zeros(num_exps, 11); % 11 fields
 
 exp_num = 1;
 for i = 1: size(conf_combo,1)
@@ -44,14 +44,17 @@ for i = 1: size(conf_combo,1)
         disp("Experiment " + num2str(exp_num) + "/" + num2str(num_exps));
         all_cases = runHSRExperiment(env_size, res, start_conf,  end_conf, speed);
 
-        results_log(exp_num,:) =  [1, ...
+        results_log(exp_num,:) =  [i, ...
                             speed, ...
                             all_cases.static_case.num_collisions, ...
                             all_cases.execute_update_case.num_collisions,...
                             all_cases.full_knowledge_case.num_collisions,...
-                            all_cases.static_case.actual_cost, ...
-                            all_cases.execute_update_case.actual_cost,...
-                            all_cases.full_knowledge_case.actual_cost];
+                            all_cases.static_case.gp_cost, ...
+                            all_cases.execute_update_case.gp_cost,...
+                            all_cases.full_knowledge_case.gp_cost, ...
+                            all_cases.static_case.obs_cost, ...
+                            all_cases.execute_update_case.obs_cost,...
+                            all_cases.full_knowledge_case.obs_cost];
         exp_num = exp_num + 1;
 
     end
@@ -59,6 +62,6 @@ for i = 1: size(conf_combo,1)
 end
 
 %% Save results
-% writematrix(results_log,'/home/mark/installs/gpmp2/mark_gpmp2/current_dev/hsr_results.csv')
+% writematrix(results_log,'/home/mark/installs/gpmp2/mark_gpmp2/current_dev/hsr_results_full.csv')
 
                     

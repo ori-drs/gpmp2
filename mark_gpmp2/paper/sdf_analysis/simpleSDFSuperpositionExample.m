@@ -85,20 +85,55 @@ imshow(~fullmap(:,:,150)')
 figure(2); hold on;
 gpmp2.plotSignedDistanceField2D(permute(full_field(:,:,150), [2 1 3]), -1.5, -1.5, cell_size);
 colormap(jet)
+c1 = colorbar;
 
 % Plot the real sdf
 figure(3); hold on;
 gpmp2.plotSignedDistanceField2D(permute(fused_field(:,:,150), [2 1 3]), -1.5, -1.5, cell_size);
-colormap(jet)
+c2_map = colormap(jet);
+c2 = colorbar;
+c2.Label.String = '(m)';
+c2.Label.FontSize = 16;
+c2.Label.Rotation = 0;
+c2.Label.Position = [4.5,0.6,0];
+c2.FontSize = 16;
 
 % Plot the necessary sdf regions
 figure(4); hold on;
 imshow(~needed_map(:,:,150)')
 
+% Individual spheres
+x_range = (obs_sphere_1_center(1) - obs_sphere_1_radius - epsilon) / cell_size:(obs_sphere_1_center(1) + obs_sphere_1_radius  + epsilon) / cell_size;
+y_range = (obs_sphere_1_center(2) - obs_sphere_1_radius - epsilon) / cell_size:(obs_sphere_1_center(2) + obs_sphere_1_radius  + epsilon) / cell_size;
+x_range = x_range - origin(1)/cell_size;
+y_range = y_range - origin(2)/cell_size;
+figure(5); hold on;
+gpmp2.plotSignedDistanceField2D(permute(obs1_field(x_range,300-y_range,150), [2 1 3]), -1.5, -1.5, cell_size);
+% c3_map = colormap(jet);
+% c2_map;
+caxis(c2.Limits);
+colormap(jet);
+c3 = colorbar;
+c3.Limits = c2.Limits;
 
 
+figure(6); hold on;
+obs_field = zeros(300,300,300)+1;
+obs_field(obs1_rect_inds-23700 - 37) = obs1_field(obs1_rect_inds);
+obs_field(obs2_rect_inds + 24000 + 39) = obs2_field(obs2_rect_inds);
+obs_field(obs3_rect_inds + 15600 - 60) = obs3_field(obs3_rect_inds);
+gpmp2.plotSignedDistanceField2D(permute(obs_field(:,:,150), [2 1 3]), -1.5, -1.5, cell_size);
+caxis(c2.Limits);
+colormap(jet);
+c3 = colorbar;
+c3.Limits = c2.Limits;
 
 
+% Plot the static sdf
+figure(7); hold on;
+hand = gpmp2.plotSignedDistanceField2D(permute(lab_field(:,:,150), [2 1 3]), -1.5, -1.5, cell_size);
+caxis(c2.Limits);
+colormap(jet);
 
 
 

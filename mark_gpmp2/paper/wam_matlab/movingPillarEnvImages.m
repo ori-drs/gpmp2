@@ -45,8 +45,53 @@ plot3DEnvironment(pillars_env.queryEnv(2.0), X, Y, Z+1, 0.3, [0 0.5 1])
 axis(lab_axis_lims);
 axis("equal");
 
+fig_num = fig_num + 1;
+
+%% Env with the robot
+base_pose = gtsam.Pose3(gtsam.Rot3(eye(3)), gtsam.Point3([0,0,1]'));
+arm = gpmp2.generateArm('WAMArm', base_pose);
+
+start_conf = [-0.8,-1.70,1.64,1.29,1.1,-0.106,2.2]';
+end_conf = [0.0,0.94,0,1.6,0,-0.919,1.55]';
+
+figure(fig_num); hold on; 
+set(gcf,'Position',[1350 500 1200 1400]);
+view(3);
+c = colormap(autumn);
+xlabel('x (m)'); ylabel('y (m)'); zlabel('z (m)');
+
+plot3DEnvironment(lab_dataset, X, Y, Z+1, 1, [171, 104, 87]/255)
+
+% plot3DEnvironment(pillars_env.queryEnv(0), X, Y, Z+1, 1, [0 0.5 1])
+plot3DEnvironment(pillars_env.queryEnv(0.7), X, Y, Z+1, 0.8, [0 0.5 1])
+% plot3DEnvironment(pillars_env.queryEnv(1.4), X, Y, Z+1, 0.5, [0 0.5 1])
+% plot3DEnvironment(pillars_env.queryEnv(2.0), X, Y, Z+1, 0.3, [0 0.5 1])
+axis(lab_axis_lims);
+axis("equal");
+h1 = gpmp2.plotRobotModel(arm, start_conf); 
+% colormap(gca, [0.1,0.8,0.3]);
+h2 = gpmp2.plotRobotModel(arm, end_conf);
+% colormap(gca, [0.1,0.8,0.3]);
 
 
+% body_points = arm.sphereCentersMat(start_conf);
+% [X_ball, Y_ball, Z_ball] = sphere(16);
+% for i=1:arm.nr_body_spheres()
+%     h(i) = surf(X_ball * arm.sphere_radius(i-1) + body_points(1, i), ...
+%                 Y_ball * arm.sphere_radius(i-1) + body_points(2, i), ...
+%                 Z_ball * arm.sphere_radius(i-1) + body_points(3, i), 'FaceColor','g');
+% end
+% 
+% body_points = arm.sphereCentersMat(end_conf);
+% 
+% for i=1:arm.nr_body_spheres()
+%     h(i) = surf(X_ball * arm.sphere_radius(i-1) + body_points(1, i), ...
+%                 Y_ball * arm.sphere_radius(i-1) + body_points(2, i), ...
+%                 Z_ball * arm.sphere_radius(i-1) + body_points(3, i), 'FaceColor','g');
+% end
+% 
+
+fig_num = fig_num + 1;
 
 
 

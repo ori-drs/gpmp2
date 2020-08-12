@@ -6,8 +6,8 @@ clc;
 import gtsam.*
 import gpmp2.*
 
-cell_size = 0.01;
-env_size = 300;
+cell_size = 0.04;
+env_size = 64;
 total_time_step = 30;
 delta_t = 0.1;
 epsilon = 0.2;
@@ -20,13 +20,18 @@ arm_model = arm.fk_model();
 %% Avg data stats
 
 env_list = ["MovingReplannerOneBlock","MovingReplanner","MovingReplannerSmallBlocks","MovingReplannerNoStatic","MovingBlock"];
+% env_list = ["MovingBlock"];
 num_envs = length(env_list);
+num_repeats = 10;
 
-static_field_times = zeros(num_envs, total_time_step + 1);
-calc_obj_sdfs_time_times = zeros(num_envs, total_time_step + 1);
-tracking_times = zeros(num_envs, total_time_step + 1);
-my_times = zeros(num_envs, total_time_step + 1);
-bench_times = zeros(num_envs, total_time_step + 1);
+static_field_times = zeros(num_envs, total_time_step + 1, num_repeats);
+calc_obj_sdfs_time_times = zeros(num_envs, total_time_step + 1, num_repeats);
+tracking_times = zeros(num_envs, total_time_step + 1, num_repeats);
+my_times = zeros(num_envs, total_time_step + 1, num_repeats);
+bench_times = zeros(num_envs, total_time_step + 1, num_repeats);
+
+improvement = [];
+
 
 for j = 1:length(env_list)
     env_name = env_list(j);
@@ -39,36 +44,40 @@ for j = 1:length(env_list)
 
     origin_point3 = dataset.origin_point3;
 
+    for k = 1:num_repeats
+        for i = 0:total_time_step
+            test_time = i * delta_t;
 
-    for i = 0:total_time_step
-        test_time = i * delta_t;
+            object_predictor = objectTrackerPredictor(workspace_size, dataset.static_map,...
+                                            epsilon, cell_size, origin_point3);
 
-        object_predictor = objectTrackerPredictor(workspace_size, dataset.static_map,...
-                                                epsilon, cell_size, origin_point3);
-
-        % Give two initial measurements
-        object_predictor.update(0.2, env.queryEnv(0.2).map); 
-        object_predictor.update(0.6, env.queryEnv(0.6).map); 
-        
-        % Record the times taken
-        static_field_times(j, i+1) = object_predictor.init_static_field_time;
-        calc_obj_sdfs_time_times(j, i+1) = object_predictor.calc_obj_sdfs_time;
-        tracking_times(j, i+1) = object_predictor.sdf_coord_track_time;
+            % Give two initial measurements
+            object_predictor.update(0.2, env.queryEnv(0.2).map); 
+            object_predictor.update(0.6, env.queryEnv(0.6).map); 
+    
+            % Record the times taken
+            static_field_times(j, i+1, k) = object_predictor.init_static_field_time;
+            calc_obj_sdfs_time_times(j, i+1, k) = object_predictor.calc_obj_sdfs_time;
+            tracking_times(j, i+1, k) = object_predictor.sdf_coord_track_time;
 
 
-        % Record time to predict composite sdf
-        tic;
-        test_predicted_sdf = object_predictor.predict_object_locations(test_time);
-        my_time = toc;
-        my_times(j, i+1) = my_time;
-        
-        % Record time to predict exact sdf
-        tic;
-        bench_predicted_sdf = object_predictor.predict_field(test_time);
-        bench_time = toc;
-        bench_times(j, i+1) = bench_time;
+            % Record time to predict composite sdf
+            rec_t = tic;
+            test_predicted_sdf = object_predictor.predict_object_locations(test_time);
+            my_time = toc(rec_t);
+            my_times(j, i+1, k) = my_time;
 
-        clear object_predictor
+            % Record time to predict exact sdf
+            rec_t = tic;
+            bench_predicted_sdf = object_predictor.predict_field(test_time);
+            bench_time = toc(rec_t);
+            bench_times(j, i+1, k) = bench_time;
+
+            improvement(end+1) = 100*(1-my_time/bench_time);
+            
+            clear object_predictor;
+
+        end
     end
 end
 
@@ -101,30 +110,34 @@ Max = [bench_stats.max; init_stats.max; prediction_stats.max];
 T = table(Dataset,Min,Median,Mean,Max)
 
 
-function stats = getStats(data)
-
-    stats.min = min(min(data));
-    stats.mean = mean(mean(data));
-    stats.median = median(median(data));
-    stats.max = max(max(data));
-    
-end
 
 % Save results
-% writetable(T,"/home/mark/installs/gpmp2/mark_gpmp2/paper/sdf_analysis/data/sdf_timing_table")
-% save('/home/mark/installs/gpmp2/mark_gpmp2/paper/sdf_analysis/data/sdf_timing_results','bench_stats','init_stats', 'prediction_stats')
+% writetable(T,"/home/mark/installs/gpmp2/mark_gpmp2/paper/sdf_analysis/data/sdf_timing_table_96env")
+% save('/home/mark/installs/gpmp2/mark_gpmp2/paper/sdf_analysis/data/sdf_timing_results_96env','bench_stats','init_stats', 'prediction_stats')
+
+
+%%
+
+% [X, Y, Z] = getEnvironmentMesh(env.getDataset);
+% title("Graph");
+% xlabel('x'); ylabel('y'); zlabel('z'); view(3);
+% ax_lims = [-1 1.5 -1.2 1.5 -1 2];
+% axis(ax_lims);
+% h1 = plot3DEnvironment(env.getDataset, X, Y, Z);
+% 
 
 
 
 
+%%
+function stats = getStats(data)
 
-
-
-
-
-
-
-
+    stats.min = min(min(min(data)));
+    stats.mean = mean(mean(mean(data)));
+    stats.median = median(median(median(data)));
+    stats.max = max(max(max(data)));
+    
+end
 
 
 

@@ -7,7 +7,8 @@ time_steps = 0:delta_t:total_time_sec;
 %     conf_v_series = [];
 
     for i=0:total_time_step
-        x_conf = result.atVector(gtsam.symbol(v_or_x, i))/pi;
+%         x_conf = result.atVector(gtsam.symbol(v_or_x, i))/pi;
+        x_conf = result.atVector(gtsam.symbol(v_or_x, i));
         conf_x_series = horzcat(conf_x_series, x_conf);
 %         v_conf = result.atVector(gtsam.symbol('v', i));
 %         conf_v_series = horzcat(conf_v_series, v_conf);

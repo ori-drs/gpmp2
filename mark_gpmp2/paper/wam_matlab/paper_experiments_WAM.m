@@ -10,7 +10,7 @@ import gpmp2.*
 import gtsam.*
 
 % Run the lab experiments
-env_size = 75;
+env_size = 64; %75 originally for paper
 res = 0.04;
 speeds = 0.1:0.1:1.0;
 num_rands = 1;
@@ -31,7 +31,7 @@ num_speeds = size(speeds,2);
 num_combos = size(conf_combo,1);
 num_exps = size(conf_combo,1) * size(speeds,2) * num_rands;
 
-results_log = zeros(num_exps, 8);
+results_log = zeros(num_exps, 11);
 
 exp_num = 1;
 for i = 1:num_combos
@@ -45,15 +45,17 @@ for i = 1:num_combos
         for k = 1:num_rands % random trials
             disp("Experiment " + num2str(exp_num) + "/" + num2str(num_exps));
             all_cases = runPaperExperiment(env_size, res, start_conf,  end_conf, env_num, speed, full_info);
-%             results_log{i, j, k} = all_cases;
             results_log(exp_num,:) =  [i, ...
                                 speed, ...
                                 all_cases.static_case.num_collisions, ...
                                 all_cases.execute_update_case.num_collisions,...
                                 all_cases.full_knowledge_case.num_collisions,...
-                                all_cases.static_case.actual_cost, ...
-                                all_cases.execute_update_case.actual_cost,...
-                                all_cases.full_knowledge_case.actual_cost];
+                                all_cases.static_case.gp_cost, ...
+                                all_cases.execute_update_case.gp_cost,...
+                                all_cases.full_knowledge_case.gp_cost, ...
+                                all_cases.static_case.obs_cost, ...
+                                all_cases.execute_update_case.obs_cost,...
+                                all_cases.full_knowledge_case.obs_cost];
             exp_num = exp_num + 1;
         end
         
@@ -61,12 +63,12 @@ for i = 1:num_combos
     
 end
 
-% writematrix(results_log,'straight_line_results_log_cost_0_005.csv')
+writematrix(results_log,'/home/mark/installs/gpmp2/mark_gpmp2/paper/wam_matlab/data/results_log_0.2cost_0.2eps_64env.csv')
 
 %%
-start_conf = configs(:, conf_combo(7,1));
-end_conf = configs(:, conf_combo(7,2));
-speed = 0.4;
+start_conf = configs(:, conf_combo(3,1));
+end_conf = configs(:, conf_combo(3,2));
+speed = 0.3;
 
 all_cases = runPaperExperiment(env_size, res, start_conf,  end_conf, env_num, speed, true);
 

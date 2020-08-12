@@ -45,8 +45,6 @@
             obj.obj_sdf_map = containers.Map('KeyType','uint32','ValueType','uint32');
             
             if nargin > 1
-%                 obj.static_map = permute(static_map, [2 1 3]);
-%                 obj.static_map = flip(static_map);
                 obj.static_map = static_map;
                 obj.use_static_map = true;
             else
@@ -56,9 +54,9 @@
             
             obj.cell_size = cell_size;
             
-            tic;
+            object_tic = tic;
             obj.update_static_sdf_field(); % calc and sets the static sdf field initially
-            obj.init_static_field_time = toc;
+            obj.init_static_field_time = toc(object_tic);
             
             obj.calc_obj_sdfs_time = 0;
             obj.sdf_coord_track_time = 0;
@@ -100,27 +98,28 @@
                         px_vel = (centroid - obj.last_centroids(min_ind,:))./obj.delta_t;
                         obj.obs_px_velocity(j,:) = px_vel;
                         
-                        tic;
+                        update_tic = tic;
                         obj_coord_vel = [px_vel(2), px_vel(1), px_vel(3)];  
                         obj.obs_coord_velocity(j,:) = obj_coord_vel;
                         obj.obj_sdf_map(j) = ind_closest_obj_sdf;
                         obj.object_sdfs{ind_closest_obj_sdf}.min_coord =  obj.object_sdfs{ind_closest_obj_sdf}.min_coord ... 
                                                                                 + obj.delta_t * obj_coord_vel; % TODO - use min_coord to centroid and use latest centroid
-                        obj.sdf_coord_track_time = obj.sdf_coord_track_time + toc;                                                                    
+                        obj.sdf_coord_track_time = obj.sdf_coord_track_time + toc(update_tic);    
+                        
                     %Update the new location of thepixel list   
                     else
                         obj.obs_px_velocity(j,:) = [0,0,0];
-                        tic;
+                        update_tic = tic;
                         obj.object_sdfs{obj.obj_counter+1} = obj.find_sdf_object(conn_comps.PixelIdxList{j});
-                        obj.calc_obj_sdfs_time = obj.calc_obj_sdfs_time + toc;
+                        obj.calc_obj_sdfs_time = obj.calc_obj_sdfs_time + toc(update_tic);
                         obj.obj_counter = obj.obj_counter + 1; % New object seen
                         obj.obj_sdf_map(j) = obj.obj_counter;    
                     end
                 % First observation
                 else
-                    tic;
+                    update_tic = tic;
                     obj.object_sdfs{end+1} = obj.find_sdf_object(conn_comps.PixelIdxList{j});
-                    obj.calc_obj_sdfs_time = obj.calc_obj_sdfs_time + toc;
+                    obj.calc_obj_sdfs_time = obj.calc_obj_sdfs_time + toc(update_tic);
                     obj.obj_counter = obj.obj_counter + 1; % New object seen
                     obj.obj_sdf_map(obj.obj_counter) = j;
                 end
@@ -135,10 +134,10 @@
             obj.num_obs = num_obs;
 
         end
-
+        
+        
         function object_field_data =  find_sdf_object(obj, px_list)
-            %METHOD2 Summary of this method goes here
-            %   Detailed explanation goes here
+
             [row,col,z] = ind2sub(obj.map_size,px_list);
             min_coord = [min(row), min(col), min(z)];
             max_coord = [max(row), max(col), max(z)]; 
@@ -166,15 +165,24 @@
             predicted_sdf = obj.static_sdf_field;
 
             for j = 1:obj.num_obs
-                coord_vel = obj.obs_coord_velocity(j,:);
                 
                 obj_sdf_ind = obj.obj_sdf_map(j);
                 obj_sdf_data = obj.object_sdfs{obj_sdf_ind};
                 sdf_size = obj_sdf_data.size;
                 lower_coord = obj_sdf_data.min_coord;
                 
-                predicted_coord = round(lower_coord + (coord_vel*forward_t));
+%                 if any(isnan(lower_coord))
+%                     continue
+%                 end
                 
+                %  If the velocity data has been acquired, do prediction
+                if j <= length(obj.obs_coord_velocity)
+                    predicted_coord = round(lower_coord + ...
+                                                (obj.obs_coord_velocity(j,:)*forward_t));
+                else
+                    predicted_coord = lower_coord;
+                end
+                                
                 rows_range  = predicted_coord(1):predicted_coord(1) + sdf_size(1) - 1;
                 cols_range  = predicted_coord(2):predicted_coord(2) + sdf_size(2) - 1;
                 z_range     = predicted_coord(3):predicted_coord(3) + sdf_size(3) - 1;
@@ -215,8 +223,7 @@
         end
                     
        function predicted_map = predict(obj, t)
-            %METHOD2 Summary of this method goes here
-            %   Detailed explanation goes here
+
             predicted_map = obj.static_map;
             
             for j = 1:obj.num_obs
@@ -248,8 +255,6 @@
         end
         
         function field = predict_sdf(obj, t)
-            %METHOD2 Summary of this method goes here
-            %   Detailed explanation goes here
 
             predicted_map = obj.static_map;
             

@@ -18,7 +18,7 @@ limit_v = false;
 limit_x = false;
 
 cell_size = 0.04;
-env_size = 96;
+env_size = 64;
 origin = [-1,-1,-1];
 
 base_pos = [0, 0, 0.4];
@@ -31,6 +31,7 @@ sub = ros.Subscriber(node,'/joint_states','sensor_msgs/JointState');
 start_sim_pub = simulationPublisher(node, obstacle);
 
 velocity_Msg = rosmessage('std_msgs/Float32');
+% velocity_Msg.Data = 1.2;
 velocity_Msg.Data = 1.2;
 
 env = liveEnvironment(node, env_size, cell_size, origin, obstacle, scene);
@@ -45,7 +46,7 @@ pause(2);
 
 % Setup problem
 start_conf = setPandaConf('right_ready');
-end_conf = setPandaConf('forward');
+end_conf = setPandaConf('table_forward');
 
 traj_publisher.goToConfig(start_conf);
 pause(3);
@@ -106,8 +107,7 @@ traj_publisher.publish(result, t_step);
 % results = [results, result];
 last_lock = 0;
 
-% profile on
-
+% profile('on');
 while t_update < total_time_sec
     % Get latest conf and sdf to update
 %     disp('Updating map and conf');
@@ -122,12 +122,12 @@ while t_update < total_time_sec
     times = [times, t_update];
     t_step = floor(t_update/delta_t);
 
-    curr_sdf = env.getSDF(); % Only needed to update sdf
+%     curr_sdf = env.getSDF(); % Only needed to update sdf
 %     datasets = [datasets, env.dataset];
 
 %     disp('Updating tracker');
     tracker.update(t_update, env.dataset.map);
-    disp(num2str(tracker.num_obs));
+%     disp(num2str(tracker.num_obs));
 
 %     panda_planner.update_confs(t_step, curr_conf, curr_vel);
 
@@ -142,6 +142,7 @@ while t_update < total_time_sec
     for t = t_step:total_time_step
         forward_t = (t-t_step)*delta_t;
 %         forward_t = t_step*delta_t;
+
         field = tracker.predict_composite_sdf(forward_t);
 %         field = tracker.predict_field(t*delta_t);
 
@@ -161,9 +162,6 @@ while t_update < total_time_sec
     disp('Publishing trajectory');
     if t_step < total_time_step -1
         traj_publisher.publish(result, t_step);
-%         for k = 1:size(traj_publisher.rGoalMsg.Trajectory.Points,1)
-%             pub_msgs(((t_step + k-1)*7)+(1:7),i) = traj_publisher.rGoalMsg.Trajectory.Points(k).Positions;
-%         end
     end
     t_update = toc(t_start);
 
@@ -174,6 +172,83 @@ end
 
 
 % profile viewer
+%% Plot state evolution
+% load()
+close all
+figure('Renderer', 'painters', 'Position', [1000 1000 750 550]);
+ax1 = axes('Position',[0.15 0.1 0.8 0.8]);
+ax1.ActivePositionProperty = 'outerposition';
+
+time_steps = 0:delta_t:total_time_sec;
+conf_series = [];
+for i=0:total_time_step
+    conf = result.atVector(gtsam.symbol('v', i));
+    conf_series = horzcat(conf_series, conf);
+end
+
+plot(time_steps, conf_series, 'LineWidth', 2);
+xlabel('Time (s)', 'FontSize', 28);
+
+% ylabel('Joint Position (rad)', 'FontSize', 28);
+ylabel('Joint Velocity (rad/s)', 'FontSize', 28);
+
+
+hleg = legend('joint1', 'joint2','joint3', 'joint4', ...
+        'joint5','joint6','joint7', 'Location', 'north', ...
+        'NumColumns',4, 'FontSize', 24);
+% hleg.Position = [0.098    0.92    0.856    0.05];
+
+
+
+
+save_dir ="/home/mark/installs/gpmp2/mark_gpmp2/paper/gazebo_experiments/images/";
+ylim([-4,4]);
+set(gca,'FontSize',24);
+set(gca,'XMinorTick','on','YMinorTick','on');
+
+% saveas(gcf,save_dir + "prediction_state_results_x.png")
+% saveas(gcf,save_dir + "exec_update_state_results_x.png")
+saveas(gcf,save_dir + "prediction_state_results_v.png")
+% saveas(gcf,save_dir + "exec_update_state_results_v.png")
+
+%% Plot state evolution
+close all
+% figure('Renderer', 'painters', 'Position', [1000 1000 1100 550]);
+figure('Renderer', 'painters', 'Position', [1000 1000 750 550]);
+% ax1 = axes('Position',[0.1 0.1 0.85 0.8]);
+ax1 = axes('Position',[0.15 0.1 0.8 0.8]);
+ax1.ActivePositionProperty = 'outerposition';
+
+time_steps = 0:delta_t:total_time_sec;
+conf_series = [];
+for i=0:total_time_step
+    conf = result.atVector(gtsam.symbol('v', i));
+    conf_series = horzcat(conf_series, conf);
+end
+
+plot(time_steps, conf_series, 'LineWidth', 2);
+set(gca,'FontSize',24);
+
+% hleg = legend('joint1', 'joint2','joint3', 'joint4', ...
+%         'joint5','joint6','joint7', 'Location', 'Best', ...
+%         'NumColumns',7, 'FontSize', 20);
+% hleg.Position = [0.098    0.92    0.856    0.05];
+
+hleg = legend('joint1', 'joint2','joint3', 'joint4', ...
+        'joint5','joint6','joint7', 'Location', 'north', ...
+        'NumColumns',4, 'FontSize', 24);
+
+
+% ylabel('Joint Position (rad)', 'FontSize', 28);
+ylabel('Joint Velocity (rad/s)', 'FontSize', 28);
+
+xlabel('Time (s)', 'FontSize', 28);
+save_dir ="/home/mark/installs/gpmp2/mark_gpmp2/paper/gazebo_experiments/images/";
+ylim([-4,4]);
+% saveas(gcf,save_dir + "prediction_state_results_x.png")
+% saveas(gcf,save_dir + "exec_update_state_results_x.png")
+% saveas(gcf,save_dir + "prediction_state_results_v.png")
+% saveas(gcf,save_dir + "exec_update_state_results_v.png")
 
 %% 
 
