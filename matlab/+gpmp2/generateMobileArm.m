@@ -240,6 +240,65 @@ elseif strcmp(str, 'Vector')
     end
     model = Pose2MobileArmModel(marm, sphere_vec);
 
+%  Vector: omni drive base with 5 DOF HSR arm
+elseif strcmp(str, 'HSR')
+%     alpha = [0, 0,      1.57,   -1.57,  1.57,   1.57]';
+%     a =     [0, 0,      0.141,  0.005,  0,      0]';
+%     d =     [0, 0.34,   0,      -0.078, 0.345,  0]';
+%     theta = [0, 0,      0,      0,      0,      0]';
+    
+    alpha = [0,         1.57,      -1.57,  1.57,   1.57]';
+    a =     [0.34,      0,          0.005,  0,      0]';
+    d =     [0,         0.141,      -0.078, 0.345,  0]';
+    theta = [0,         0,          0,      0,      0]';
+    
+    base_pose =  Pose3(Rot3(), Point3([0, 0, 0]'));
+    % abstract arm
+    arm = Arm(5, a, alpha, d, base_pose, theta);
+    
+    rot =Rot3([  0.0000000,  1.0000000,  0.0000000;
+  -0.0000000,  0.0000000,  1.0000000;
+   1.0000000, -0.0000000,  0.0000000 ]);
+
+    base_T_torso = Pose3(rot, Point3([0, 0, 0]'));
+    torso_T_arm = Pose3(Rot3(), Point3([0, 0, 0]'));
+   
+    % abstract mobile arm
+    marm = Pose2MobileVetLinArm(arm, base_T_torso, torso_T_arm, false);
+    
+    % sphere data [id x y z r]
+    spheres_data = [...
+
+        0  0.00 0.00 0.00 0.03
+        0  0.10 0.00 0.00 0.03
+        0  -0.10 0.00 0.00 0.03
+        0  0.00 0.10 0.00 0.03
+        0  0.00 -0.10 0.00 0.03
+        
+        1  0.00 0.00 0.00 0.03
+       
+        2  0.00 0.00 0.00 0.03
+        
+        3  0.00 0.00 0.00 0.03
+       
+        4  0.00 0.00 0.00 0.03
+              
+        5  0.00 0.00 0.00 0.03
+       
+        6  0.00 0.00 0.00 0.03
+        7  0.00 0.00 0.00 0.03
+        ];
+
+    nr_body = size(spheres_data, 1);
+    
+    sphere_vec = BodySphereVector;
+    for i=1:nr_body
+        sphere_vec.push_back(BodySphere(spheres_data(i,1), spheres_data(i,5), ...
+            Point3(spheres_data(i,2:4)')));
+    end
+    model = Pose2MobileVetLinArmModel(marm, sphere_vec);
+    
+    
 %  PR2: 3 DOF base + 1 DOF linear actuator + 2 x 7 DOF arms
 elseif strcmp(str, 'PR2')
     % abstract arm
