@@ -136,7 +136,7 @@ public:
 //   const gtsam::NonlinearFactorGraph& getGraph() const { return inc_graph_.clone(); } 
 
   void printStats() const {isam_.printStats();}
-  void printVariableIndex() const {isam_.getVariableIndex().print();}
+  void printVariableIndex() const {isam_.getVariableIndex();}
 };
 }   // namespace internal
 
