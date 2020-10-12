@@ -432,7 +432,6 @@ class SignedDistanceField {
   void saveSDF(string filename);
   void loadSDF(string filename);
   void replaceSDFData(const gpmp2::SignedDistanceField& sdf);
-
 };
 
 
