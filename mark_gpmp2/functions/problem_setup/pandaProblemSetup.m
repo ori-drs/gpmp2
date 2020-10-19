@@ -9,7 +9,6 @@ function problem_setup = pandaProblemSetup(start_conf, end_conf, total_time_sec,
     rot = eye(3);
 
     arm = generateArm('Panda', Pose3(Rot3(rot), Point3(base_pos')));
-    arm_model = arm.fk_model();
 
     total_time_step = round(total_time_sec/delta_t);
     total_check_step = interp_multiplier*total_time_step;
@@ -27,9 +26,6 @@ function problem_setup = pandaProblemSetup(start_conf, end_conf, total_time_sec,
 
     pose_fix_model = gtsam.noiseModel.Isotropic.Sigma(7, pose_fix_sigma);
     vel_fix_model = gtsam.noiseModel.Isotropic.Sigma(7, vel_fix_sigma);
-    
-    % use GP interpolation
-    use_GP_inter = true;
 
     % GP
     Qc = 1 * eye(7);
