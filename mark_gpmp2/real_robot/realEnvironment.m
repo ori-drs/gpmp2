@@ -32,10 +32,10 @@ classdef realEnvironment < handle
             env.tftree = ros.TransformationTree(node);
             pause(2);
             
-            if obstacle == "ar_box"
-                env.obs_size = [0.15,0.15,0.15];
-                env.obstacle_offset = 0;    
-            end
+%             if obstacle == "ar_box"
+            env.obs_size = [0.15,0.15,0.15];
+            env.obstacle_offset = 0;    
+%             end
             
             env.dataset.cols = env_size;
             env.dataset.rows = env_size;
@@ -63,9 +63,12 @@ classdef realEnvironment < handle
                 stat_obs{1} = {[-0.31, 0, 0.2], [0.80, 1.2 , 0.4]};
 
                 stat_obs{2} = {[1.05, 0, 0.2], [0.80, 1.2 , 0.4]};
+                
+            elseif strcmp(env.scene, "big_room")
+                stat_obs{1} = {[0.45, 0, -0.25], [1.5, 0.8 , 0.4]};
             end
 
-             origin = [env.dataset.origin_x, ...
+            origin = [env.dataset.origin_x, ...
                        env.dataset.origin_y, ...
                        env.dataset.origin_z];
                    
@@ -82,32 +85,37 @@ classdef realEnvironment < handle
         end
           
    
-        function obs_pos_to_add = calculateObjPosition(env) 
-            
-            tform = getTransform(env.tftree, 'world', env.obstacle, rostime('now'), 'Timeout', 5);
-            
-            % Calculate object positions - position is start plus v * t
-            x = tform.Transform.Translation.X;
-            y = tform.Transform.Translation.Y;
-            z = tform.Transform.Translation.Z;
+        function [succ_bool,obs_pos_to_add] = calculateObjPosition(env) 
+            try
+                tform = getTransform(env.tftree, 'world', env.obstacle, rostime('now'), 'Timeout', 0.2);
 
-            %  Add each obstacle
-            obs_pos_to_add = round([x - env.dataset.origin_x, ...
-                                    -y + env.dataset.origin_y, ...
-                                    z - env.dataset.origin_z]/env.dataset.cell_size) ...
-                                    + [1, env.dataset.rows,1];
+                % Calculate object positions - position is start plus v * t
+                x = tform.Transform.Translation.X;
+                y = tform.Transform.Translation.Y;
+                z = tform.Transform.Translation.Z;
 
-            env.dataset.obs_poses{1} = [x, y, z];  
-            
+                %  Add each obstacle
+                obs_pos_to_add = round([x - env.dataset.origin_x, ...
+                                        -y + env.dataset.origin_y, ...
+                                        z - env.dataset.origin_z]/env.dataset.cell_size) ...
+                                        + [1, env.dataset.rows,1];
+
+                env.dataset.obs_poses{1} = [x, y, z];  
+                succ_bool = true;
+            catch
+                disp("Failed to find marker in tree");
+                succ_bool = false;
+                obs_pos_to_add = [];
+            end
         end
         
         function updateMap(env)
                     
             env.dataset.map = env.dataset.static_map;
                         
-            if length(msg.Pose) > 3
-                obs_pos_to_add = env.calculateObjPosition();
-
+            [succ_bool, obs_pos_to_add] = env.calculateObjPosition();
+            
+            if succ_bool
                 env.dataset.map = add_obstacle(obs_pos_to_add, ...
                                                 round(env.obs_size/env.dataset.cell_size), ...
                                                 env.dataset.map);

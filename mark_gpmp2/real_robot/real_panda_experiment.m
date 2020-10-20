@@ -5,16 +5,18 @@ clc;
 import gtsam.*
 import gpmp2.*
 
-scene = "tables"; % "bookshelf" 
-obstacle = "ar_box";
+scene = "big_room"; % "bookshelf" 
+obstacle = "Tag0";
+
+lag_steps = 2;
 
 plot_graphs = false;
-total_time_sec = 3;
+total_time_sec = 5;
 delta_t = 0.1;
 interp_multiplier = 1;
 cost_sigma = 0.05;
-epsilon_dist = 0.3;    
-limit_v = false;
+epsilon_dist = 0.2;    
+limit_v = true;
 limit_x = false;
 
 cell_size = 0.04;
@@ -26,8 +28,8 @@ base_pos = [0, 0, 0];
 % Setup ROS interactions
 node = ros.Node('/matlab_node');
 
-traj_publisher = trajectoryPublisher(delta_t);
-joint_sub = ros.Subscriber(node,'/joint_states','sensor_msgs/JointState');
+traj_publisher = realPandaTrajectoryPublisher(delta_t);
+joint_sub = ros.Subscriber(node,'/franka_state_controller/joint_states','sensor_msgs/JointState');
 
 env = realEnvironment(node, env_size, cell_size, origin, obstacle, scene);
 env.add_table_static_scene();
@@ -70,6 +72,7 @@ end
 
 %% Setup problem and graph
 
+results = [];
 panda_planner = pandaPlanner(start_sdf, problem_setup);
 
 disp('Ready to simulate and execute');
@@ -79,31 +82,37 @@ t_update = 0;
 i=1;
 t_step = 0;
 t_start = tic;
+rostime_start = rostime('now');
 
 env.updateMap();
 
 % First optimisation
 result = panda_planner.optimize(init_values);
+results = [results, result];
 
 % Execute
-traj_publisher.publish(result, t_step);
+% traj_publisher.publish(result, t_step, start_conf, zeros(7,1));
+traj_publisher.publish(result, t_step, 0);
+rostime_start = rostime('now');
 
 
 last_lock = 0;
 
 while t_update < total_time_sec
-    %
-    Get latest conf and sdf to update
+    %Get latest conf and sdf to update
     t_update = toc(t_start);
+%     t0 = clock;
     latest_msg = joint_sub.LatestMessage;
-    curr_conf = latest_msg.Position(3:end);
-    curr_vel = latest_msg.Velocity(3:end);
+    curr_conf = latest_msg.Position;
+    curr_vel = latest_msg.Velocity;
     env.updateMap();
-
+%     msg_rostime = latest_msg.Header.Stamp - rostime_start;
+%     msg_rostime = max(msg_rostime.seconds, 0);
     disp(t_update);
 
     t_step = floor(t_update/delta_t);
-
+%     t_step = floor(msg_rostime/delta_t);
+    disp(t_step);
     tracker.update(t_update, env.dataset.map);
     
 %     panda_planner.update_confs(t_step, curr_conf, curr_vel);
@@ -132,13 +141,40 @@ while t_update < total_time_sec
     disp('Reoptimising');
     result = panda_planner.optimize(init_values);
 
+%     result = panda_planner.optimize(result);
+    results = [results, result];
+
     % Execute
     disp('Publishing trajectory');
-    if t_step < total_time_step -1
-        traj_publisher.publish(result, t_step);
+    t_update = toc(t_start);
+%     t_update = rostime('now') - rostime_start;
+%     t_update = t_update.seconds;
+
+    t_step = floor(t_update/delta_t);
+    if t_step+lag_steps < total_time_step -1
+%         ms = round(etime(clock,t0) * 1000);
+        latest_msg = joint_sub.LatestMessage;
+        curr_conf = latest_msg.Position;
+        curr_vel = latest_msg.Velocity;
+%         traj_publisher.publish(result, t_step, curr_conf, curr_vel);
+        traj_publisher.publish(result, t_step, lag_steps);
+%         disp([ curr_conf, result.atVector(gtsam.symbol('x', t_step))])
+        disp(curr_conf-result.atVector(gtsam.symbol('x', t_step)))
     end
     t_update = toc(t_start);
 
 
     i = i + 1;
 end
+
+%%
+% f = figure(1);
+% results_vis(results, delta_t, 10, f)
+
+figure(4);
+hold on;
+h2 = subplot(1, 1, 1);
+plotStateEvolution(results(1), delta_t, total_time_sec, total_time_step, 'v')
+title('Iteration:' + string(k+1))
+hold off
+        
