@@ -8,7 +8,7 @@ import gpmp2.*
 scene = "big_room"; % "bookshelf" 
 obstacle = "Tag0";
 
-lag_steps = 2;
+lag_steps = 3;
 
 plot_graphs = false;
 total_time_sec = 5;
