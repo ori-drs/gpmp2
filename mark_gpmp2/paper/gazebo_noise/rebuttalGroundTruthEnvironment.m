@@ -1,17 +1,20 @@
-classdef realEnvironment < handle
+classdef rebuttalGroundTruthEnvironment < handle
 
     properties 
         dataset
-        tftree
+        objects = {};
+        fixed_scene = {}
+        sub
         obs_size
         
         obstacle
+        obstacle_id
         obstacle_offset
         scene
     end
     
     methods
-        function env = realEnvironment(node, env_size, resolution, origin, obstacle, scene)
+        function env = rebuttalGroundTruthEnvironment(env_size, resolution, origin, obstacle, scene)
 
             if nargin > 2
                 env.dataset.origin_x = origin(1);
@@ -25,14 +28,11 @@ classdef realEnvironment < handle
             
             env.obstacle = obstacle;
             env.scene = scene;
-            env.tftree = ros.TransformationTree(node);
-            pause(2);
             
-%             if obstacle == "ar_box"
-            env.obs_size = [0.2,0.25,0.35];
-%             env.obstacle_offset = [0.15,0.15,0.15];
-            env.obstacle_offset = [0.15,0,0.05];
-%             end
+            if obstacle == "hsrb"
+                env.obs_size = [0.55, 0.55, 1.0];
+                env.obstacle_offset = 0.46;            
+            end
             
             env.dataset.cols = env_size;
             env.dataset.rows = env_size;
@@ -47,7 +47,7 @@ classdef realEnvironment < handle
             env.dataset.static_map = zeros(env.dataset.rows, ...
                                     env.dataset.cols, ...
                                     env.dataset.z);    
-                                 
+                                
             env.dataset.map = env.dataset.static_map;                                
             env.dataset.obs_poses = {};
         end
@@ -55,17 +55,29 @@ classdef realEnvironment < handle
         function add_table_static_scene(env)
          
             if strcmp(env.scene, "tables")
-                
                 % Table
                 stat_obs{1} = {[-0.31, 0, 0.2], [0.80, 1.2 , 0.4]};
 
                 stat_obs{2} = {[1.05, 0, 0.2], [0.80, 1.2 , 0.4]};
-                
-            elseif strcmp(env.scene, "big_room")
-                stat_obs{1} = {[0.45, 0, -0.25], [1.5, 0.8 , 0.4]};
+
+             
+            elseif strcmp(env.scene, "bookshelf")
+                 % Table
+                 stat_obs{1} = {[-0.31, 0, 0.2], [0.80, 1.2 , 0.4]};
+
+                 % Top of bookshelf
+                 stat_obs{2} = {[0.85, 0, 1.25], [0.4, 0.9,  0.02]};
+
+                 % Top of shelf
+                 stat_obs{3} = {[0.85, 0, 0.84], [ 0.4, 0.9, 0.02]};
+
+                 % Side
+                 stat_obs{4} = {[0.85, 0.45, 0.6], [0.4, 0.02, 1.2]};
+                 stat_obs{5} = {[0.85, -0.45, 0.6], [0.4, 0.02, 1.2]};
+                 
             end
 
-            origin = [env.dataset.origin_x, ...
+             origin = [env.dataset.origin_x, ...
                        env.dataset.origin_y, ...
                        env.dataset.origin_z];
                    
@@ -82,42 +94,33 @@ classdef realEnvironment < handle
         end
           
    
-        function [succ_bool,obs_pos_to_add] = calculateObjPosition(env) 
-            try
-                tform = getTransform(env.tftree, 'world', env.obstacle, rostime('now'), 'Timeout', 0.1);
+        function obs_pos_to_add = calculateObjPosition(env, block_pos) 
+            
+            % Calculate object positions - position is start plus v * t
+            x = block_pos(1);
+            y = block_pos(2);
+            z = block_pos(3) + env.obstacle_offset;
 
-                % Calculate object positions - position is start plus v * t
-                x = tform.Transform.Translation.X + env.obstacle_offset(1);
-                y = tform.Transform.Translation.Y + env.obstacle_offset(2);
-                z = tform.Transform.Translation.Z + env.obstacle_offset(3);
+            %  Add each obstacle
+            obs_pos_to_add = round([x - env.dataset.origin_x, ...
+                                    -y + env.dataset.origin_y, ...
+                                    z - env.dataset.origin_z]/env.dataset.cell_size) ...
+                                    + [1, env.dataset.rows,1];
 
-                %  Add each obstacle
-                obs_pos_to_add = round([x - env.dataset.origin_x, ...
-                                        -y + env.dataset.origin_y, ...
-                                        z - env.dataset.origin_z]/env.dataset.cell_size) ...
-                                        + [1, env.dataset.rows,1];
-
-                env.dataset.obs_poses{1} = [x, y, z];  
-                succ_bool = true;
-            catch
-                disp("Failed to find marker in tree");
-                succ_bool = false;
-                obs_pos_to_add = [];
-            end
+            env.dataset.obs_poses{1} = [x, y, z];  
+            
         end
         
-        function updateMap(env)
+        function updateMap(env, block_pos)
                     
             env.dataset.map = env.dataset.static_map;
                         
-            [succ_bool, obs_pos_to_add] = env.calculateObjPosition();
-            
-            if succ_bool
-                env.dataset.map = add_obstacle(obs_pos_to_add, ...
-                                                round(env.obs_size/env.dataset.cell_size), ...
-                                                env.dataset.map);
-            end
-            
+            obs_pos_to_add = env.calculateObjPosition(block_pos);
+
+            env.dataset.map = add_obstacle(obs_pos_to_add, ...
+                                            round(env.obs_size/env.dataset.cell_size), ...
+                                            env.dataset.map);
+
             % Flip the map before calculating SDFs                                    
             env.dataset.map = flip(env.dataset.map);          
  
@@ -147,7 +150,7 @@ classdef realEnvironment < handle
         end
         
         function resetMap(obj)
-            obj.dataset.map = flip(obj.dataset.static_map);  
+            env.dataset.map = flip(env.dataset.static_map);  
         end
     end
 end

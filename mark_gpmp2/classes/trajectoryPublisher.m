@@ -8,14 +8,15 @@ classdef trajectoryPublisher
         joint_names
         rGoalMsg
         rArm
+        isFake
     end
   
 
     methods
-        function obj = trajectoryPublisher(delta_t)
+        function obj = trajectoryPublisher(delta_t, isFake)
             %TRAJECTORYPUBLISHER Construct an instance of this class
             %   Detailed explanation goes here
-
+            obj.isFake = isFake;
             obj.delta_t = delta_t;
             
             obj.joint_names = ["panda_joint1", "panda_joint2", "panda_joint3",...
@@ -45,8 +46,10 @@ classdef trajectoryPublisher
             end
 
             obj.rGoalMsg.Trajectory.Points = traj_points;
-
-            sendGoal(obj.rArm,obj.rGoalMsg);
+            
+            if ~obj.isFake
+                sendGoal(obj.rArm,obj.rGoalMsg);
+            end
         end
        
        function goToConfig(obj,config)
@@ -58,7 +61,9 @@ classdef trajectoryPublisher
 
             obj.rGoalMsg.Trajectory.Points = po;
 
-            sendGoal(obj.rArm,obj.rGoalMsg);
+            if ~obj.isFake
+                sendGoal(obj.rArm,obj.rGoalMsg);
+            end
        end
     end
 end
