@@ -90,6 +90,10 @@ public:
     const_cast<SignedDistanceField&>(sdf_).replaceSDFData(sdf);
   }  
 
+  SignedDistanceField getSDFData() {
+    return sdf_;
+  }  
+  
   ObstacleSDFFactor getSDFModFactor(const SignedDistanceField& sdf){
     return ObstacleSDFFactor(this->noiseModel(), this->key(), robot_ , sdf, epsilon_);
   }  
