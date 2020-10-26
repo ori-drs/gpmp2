@@ -33,8 +33,9 @@ classdef realEnvironment < handle
             pause(2);
             
 %             if obstacle == "ar_box"
-            env.obs_size = [0.15,0.15,0.15];
-            env.obstacle_offset = 0;    
+            env.obs_size = [0.2,0.25,0.35];
+%             env.obstacle_offset = [0.15,0.15,0.15];
+            env.obstacle_offset = [0.15,0,0.05];
 %             end
             
             env.dataset.cols = env_size;
@@ -87,12 +88,12 @@ classdef realEnvironment < handle
    
         function [succ_bool,obs_pos_to_add] = calculateObjPosition(env) 
             try
-                tform = getTransform(env.tftree, 'world', env.obstacle, rostime('now'), 'Timeout', 0.2);
+                tform = getTransform(env.tftree, 'world', env.obstacle, rostime('now'), 'Timeout', 0.1);
 
                 % Calculate object positions - position is start plus v * t
-                x = tform.Transform.Translation.X;
-                y = tform.Transform.Translation.Y;
-                z = tform.Transform.Translation.Z;
+                x = tform.Transform.Translation.X + env.obstacle_offset(1);
+                y = tform.Transform.Translation.Y + env.obstacle_offset(2);
+                z = tform.Transform.Translation.Z + env.obstacle_offset(3);
 
                 %  Add each obstacle
                 obs_pos_to_add = round([x - env.dataset.origin_x, ...

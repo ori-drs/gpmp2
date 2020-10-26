@@ -32,17 +32,11 @@ classdef realPandaTrajectoryPublisher
             obj.rArm.ResultFcn = [];
         end
         
-%         function publish(obj,traj, curr_step, curr_conf, curr_vel)
         function publish(obj,traj, curr_step, lag_steps)
             num_points = traj.size/2;
             traj_points = [];
-%             
-%             po = rosmessage('trajectory_msgs/JointTrajectoryPoint');
-%             po.TimeFromStart = rosduration(0);               
-%             po.Positions = curr_conf';
-%             po.Velocities = curr_vel';
-%             traj_points = [traj_points, po];
-%                 
+
+                
             for i = lag_steps: num_points-1 - curr_step
                 po = rosmessage('trajectory_msgs/JointTrajectoryPoint');
                 po.TimeFromStart = rosduration(double(i)*obj.delta_t);               

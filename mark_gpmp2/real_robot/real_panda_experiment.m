@@ -8,13 +8,13 @@ import gpmp2.*
 scene = "big_room"; % "bookshelf" 
 obstacle = "Tag0";
 
-lag_steps = 2;
+lag_steps = 3;
 
 plot_graphs = false;
 total_time_sec = 5;
 delta_t = 0.1;
 interp_multiplier = 1;
-cost_sigma = 0.05;
+cost_sigma = 0.05; % Note that 0.1 seems to make this go crazy...
 epsilon_dist = 0.2;    
 limit_v = true;
 limit_x = false;
@@ -33,7 +33,7 @@ joint_sub = ros.Subscriber(node,'/franka_state_controller/joint_states','sensor_
 
 env = realEnvironment(node, env_size, cell_size, origin, obstacle, scene);
 env.add_table_static_scene();
-
+env.updateMap();
 start_sdf = env.getSDF();
 
 tracker = liveTracker([env_size,env_size,env_size], env.dataset.static_map, ...
@@ -68,12 +68,32 @@ for i = 1:total_time_step+1
                                                 env_size);
 end
 
+panda_planner = pandaPlanner(start_sdf, problem_setup);
+%%
 
+dataset = env.getDataset();
+[X, Y, Z] = getEnvironmentMesh(dataset);
 
+% plot problem setting
+figure(1); hold on;
+title('3D Environment')
+grid on, view(3)
+axis([-1 1.5 -1.2 1.5 -1 2]);
+xlabel('x');
+ylabel('y');
+zlabel('z');
+plot3DEnvironment(dataset, X, Y, Z, 0.5)
+gpmp2.plotRobotModel(problem_setup.arm, start_conf)
+gpmp2.plotRobotModel(problem_setup.arm, end_conf)
+view(3);
 %% Setup problem and graph
 
 results = [];
-panda_planner = pandaPlanner(start_sdf, problem_setup);
+
+
+clear base_pos cost_sigma epsilon_dist ...
+    interp_multiplier start_sdf limit_x limit_v ...
+    origin cell_size 
 
 disp('Ready to simulate and execute');
 % Start the simulation
@@ -82,18 +102,17 @@ t_update = 0;
 i=1;
 t_step = 0;
 t_start = tic;
-rostime_start = rostime('now');
+% rostime_start = rostime('now');
 
 env.updateMap();
 
 % First optimisation
 result = panda_planner.optimize(init_values);
+
 results = [results, result];
 
 % Execute
-% traj_publisher.publish(result, t_step, start_conf, zeros(7,1));
-traj_publisher.publish(result, t_step, 0);
-rostime_start = rostime('now');
+% traj_publisher.publish(result, t_step, 0);
 
 
 last_lock = 0;
@@ -102,9 +121,11 @@ while t_update < total_time_sec
     %Get latest conf and sdf to update
     t_update = toc(t_start);
 %     t0 = clock;
-    latest_msg = joint_sub.LatestMessage;
-    curr_conf = latest_msg.Position;
-    curr_vel = latest_msg.Velocity;
+
+%     latest_msg = joint_sub.LatestMessage;
+%     curr_conf = latest_msg.Position;
+%     curr_vel = latest_msg.Velocity;
+    
     env.updateMap();
 %     msg_rostime = latest_msg.Header.Stamp - rostime_start;
 %     msg_rostime = max(msg_rostime.seconds, 0);
@@ -112,7 +133,7 @@ while t_update < total_time_sec
 
     t_step = floor(t_update/delta_t);
 %     t_step = floor(msg_rostime/delta_t);
-    disp(t_step);
+%     disp(t_step);
     tracker.update(t_update, env.dataset.map);
     
 %     panda_planner.update_confs(t_step, curr_conf, curr_vel);
@@ -123,7 +144,7 @@ while t_update < total_time_sec
     end
     last_lock = t_step + 1;
 
-    disp('Updating factor graph');
+%     disp('Updating factor graph');
     for t = t_step:total_time_step
         forward_t = (t-t_step)*delta_t;
 %         forward_t = t_step*delta_t;
@@ -138,14 +159,16 @@ while t_update < total_time_sec
         panda_planner.update_sdf(t, sdfs{t+1});
     end
 
-    disp('Reoptimising');
+%     disp('Reoptimising');
+%     opt_t_s = tic;
     result = panda_planner.optimize(init_values);
-
+%     opt_t_f = toc(opt_t_s);
+%     disp("Optimise time: " + opt_t_f);
 %     result = panda_planner.optimize(result);
     results = [results, result];
 
     % Execute
-    disp('Publishing trajectory');
+%     disp('Publishing trajectory');
     t_update = toc(t_start);
 %     t_update = rostime('now') - rostime_start;
 %     t_update = t_update.seconds;
@@ -153,13 +176,13 @@ while t_update < total_time_sec
     t_step = floor(t_update/delta_t);
     if t_step+lag_steps < total_time_step -1
 %         ms = round(etime(clock,t0) * 1000);
-        latest_msg = joint_sub.LatestMessage;
-        curr_conf = latest_msg.Position;
-        curr_vel = latest_msg.Velocity;
-%         traj_publisher.publish(result, t_step, curr_conf, curr_vel);
-        traj_publisher.publish(result, t_step, lag_steps);
+%         latest_msg = joint_sub.LatestMessage;
+%         curr_conf = latest_msg.Position;
+%         curr_vel = latest_msg.Velocity;
+%         traj_publisher.publish(result, t_step, lag_steps);
+
 %         disp([ curr_conf, result.atVector(gtsam.symbol('x', t_step))])
-        disp(curr_conf-result.atVector(gtsam.symbol('x', t_step)))
+%         disp(curr_conf-result.atVector(gtsam.symbol('x', t_step)))
     end
     t_update = toc(t_start);
 
