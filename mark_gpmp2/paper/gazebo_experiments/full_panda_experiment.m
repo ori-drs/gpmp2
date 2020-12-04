@@ -16,6 +16,7 @@ cost_sigma = 0.05;
 epsilon_dist = 0.3;    
 limit_v = false;
 limit_x = false;
+isFake = false;
 
 cell_size = 0.04;
 env_size = 64;
@@ -26,7 +27,7 @@ base_pos = [0, 0, 0.4];
 % Setup ROS interactions
 node = ros.Node('/matlab_node');
 
-traj_publisher = trajectoryPublisher(delta_t);
+traj_publisher = trajectoryPublisher(delta_t, isFake);
 sub = ros.Subscriber(node,'/joint_states','sensor_msgs/JointState');
 start_sim_pub = simulationPublisher(node, obstacle);
 

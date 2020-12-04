@@ -50,7 +50,7 @@ hold on;
 % gpmp2.plotArm(arm.fk_model(), start_conf, 'b', 2)
 % gpmp2.plotArm(arm.fk_model(), end_conf, 'r', 2)
 gpmp2.plotRobotModel(arm, start_conf)
-gpmp2.plotRobotModel(arm, end_conf)
+% gpmp2.plotRobotModel(arm, end_conf)
 view(3);
 
 
