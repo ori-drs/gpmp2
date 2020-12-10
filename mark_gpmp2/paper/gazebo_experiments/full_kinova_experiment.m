@@ -16,7 +16,6 @@ cost_sigma = 0.05;
 epsilon_dist = 0.3;    
 limit_v = false;
 limit_x = false;
-isFake = false;
 
 cell_size = 0.04;
 env_size = 64;
@@ -27,8 +26,8 @@ base_pos = [0, 0, 0.4];
 % Setup ROS interactions
 node = ros.Node('/matlab_node');
 
-traj_publisher = trajectoryPublisher(delta_t, isFake);
-sub = ros.Subscriber(node,'/joint_states','sensor_msgs/JointState');
+traj_publisher = kinovaTrajectoryPublisher(delta_t);
+sub = ros.Subscriber(node,'/j2n6s300_driver/out/joint_state','sensor_msgs/JointState');
 start_sim_pub = simulationPublisher(node, obstacle);
 
 velocity_Msg = rosmessage('std_msgs/Float32');
@@ -46,8 +45,8 @@ tracker = liveTracker([env_size,env_size,env_size], env.dataset.static_map, ...
 pause(2);
 
 % Setup problem
-start_conf = setPandaConf('right_ready');
-end_conf = setPandaConf('table_forward');
+start_conf = setKinovaConf('ready');
+end_conf = setPandaConf('left');
 
 traj_publisher.goToConfig(start_conf);
 pause(3);
@@ -366,42 +365,3 @@ plotEndEffectorTrajectory(problem_setup.arm.fk_model(), results(1), 'g');
 hold on;
 plotEndEffectorTrajectory(problem_setup.arm.fk_model(), results(10), 'm');
 
-
-
-% 
-% 
-% frame = 1;
-% load('/home/mark/installs/gpmp2/mark_gpmp2/data/live_panda_actual_maps.mat');
-% 
-% lab_axis_lims = [-1 2 -1 2 -1 2];
-% 
-% [X, Y, Z] = getEnvironmentMesh(datasets(1));
-% figure(2); hold on; cla;
-% set(gcf,'Position',[1350 500 1200 1400]);
-% axis(lab_axis_lims); grid on; view(3);
-% xlabel('x'); ylabel('y'); zlabel('z');
-% 
-% t_ind = 1;
-% t_s = 0;
-% 
-% for i = 0:problem_setup.total_time_step
-%     
-%     if i >= ceil(times(t_ind+1)/delta_t)
-%         t_ind = t_ind + 1;
-%     end
-%     
-%     traj = results(t_ind);
-% 
-%     cla;
-%     key_pos = gtsam.symbol('x', i);
-%     conf = traj.atVector(key_pos);
-%     obs_factor = gpmp2.ObstacleSDFFactorArm(...
-%         key_pos, problem_setup.arm, datasets(frame).sdf, problem_setup.cost_sigma, ...
-%         problem_setup.epsilon_dist);
-% 
-%     h1 = plot3DEnvironment(even_actual_maps{i+1}, X, Y, Z);
-% 
-%     static_handle = gpmp2.plotRobotModel(problem_setup.arm, conf);
-% 
-%     pause(0.2);
-% end

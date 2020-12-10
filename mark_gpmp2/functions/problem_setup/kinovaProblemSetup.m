@@ -1,4 +1,4 @@
-function problem_setup = pandaProblemSetup(start_conf, end_conf, total_time_sec, delta_t, ...
+function problem_setup = kinovaProblemSetup(start_conf, end_conf, total_time_sec, delta_t, ...
                                          cost_sigma, epsilon_dist, interp_multiplier, limit_x, limit_v, base_pos)
                                      
 %PAPERGETPROBLEMSETUP Summary of this function goes here
@@ -8,7 +8,8 @@ function problem_setup = pandaProblemSetup(start_conf, end_conf, total_time_sec,
     
     rot = eye(3);
 
-    arm = generateArm('Panda', Pose3(Rot3(rot), Point3(base_pos')));
+    arm = generateArm('Kinova', Pose3(Rot3(rot), Point3(base_pos')));
+    arm_model = arm.fk_model();
 
     total_time_step = round(total_time_sec/delta_t);
     total_check_step = interp_multiplier*total_time_step;
@@ -17,18 +18,21 @@ function problem_setup = pandaProblemSetup(start_conf, end_conf, total_time_sec,
     use_trustregion_opt = false;
     use_LM = false;
     
-    start_vel = zeros(7,1);
-    end_vel = zeros(7,1);
+    start_vel = zeros(6,1);
+    end_vel = zeros(6,1);
     
     % noise model
     pose_fix_sigma = 0.0001;
     vel_fix_sigma = 0.0001;
 
-    pose_fix_model = gtsam.noiseModel.Isotropic.Sigma(7, pose_fix_sigma);
-    vel_fix_model = gtsam.noiseModel.Isotropic.Sigma(7, vel_fix_sigma);
+    pose_fix_model = gtsam.noiseModel.Isotropic.Sigma(6, pose_fix_sigma);
+    vel_fix_model = gtsam.noiseModel.Isotropic.Sigma(6, vel_fix_sigma);
+    
+    % use GP interpolation
+    use_GP_inter = true;
 
     % GP
-    Qc = 1 * eye(7);
+    Qc = 1 * eye(6);
     Qc_model = gtsam.noiseModel.Gaussian.Covariance(Qc); 
     
     problem_setup.start_conf = start_conf;

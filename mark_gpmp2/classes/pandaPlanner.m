@@ -24,7 +24,7 @@
             joint_limit_model = gtsam.noiseModel.Isotropic.Sigma(7, 0.001);
 
             % joint velocity limit param
-            joint_vel_limit_vec = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]';
+            joint_vel_limit_vec = [2.175, 2.175, 2.175, 2.175, 2.175, 2.175, 2.175]';
             joint_vel_limit_thresh = 0.01 * ones(7,1);
             joint_vel_limit_model = gtsam.noiseModel.Isotropic.Sigma(7, 0.1);
 
