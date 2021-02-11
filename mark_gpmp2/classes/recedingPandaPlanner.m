@@ -1,4 +1,4 @@
- classdef pandaPlanner < handle
+ classdef recedingPandaPlanner < handle
     %OBJECTTRACKERPREDICTOR Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -22,7 +22,7 @@
     
     methods
         
-        function obj = pandaPlanner(initial_sdf, problem_setup)
+        function obj = recedingPandaPlanner(initial_sdf, problem_setup)
             
             obj.problem_setup = problem_setup;
             obj.parameters = gtsam.GaussNewtonParams;
@@ -123,7 +123,91 @@
 
             
         end
-              
+        
+        function obj = addEndFactors(obj, sdf)
+            
+            pose_key = gtsam.symbol('x', obj.problem_setup.total_time_step);
+            vel_key = gtsam.symbol('v', obj.problem_setup.total_time_step);
+
+            obs_fact_indices_in_timestep = [];
+
+            obj.graph.add(gtsam.PriorFactorVector(pose_key, obj.problem_setup.end_conf, obj.problem_setup.pose_fix_model));
+            obj.graph.add(gtsam.PriorFactorVector(vel_key, obj.problem_setup.end_vel, obj.problem_setup.vel_fix_model));
+            obj.factor_ind_counter = obj.factor_ind_counter + 2;
+
+            % joint limit factor on every pose
+            if obj.problem_setup.limit_x
+                obj.graph.add(gpmp2.JointLimitFactorVector(pose_key, obj.joint_limit_model, obj.joint_limit_vec_down, ...
+                    obj.joint_limit_vec_up, obj.joint_limit_thresh));
+                obj.factor_ind_counter = obj.factor_ind_counter + 1;
+            end
+
+            % joint velocity limit factor on every velocity
+            if obj.problem_setup.limit_v
+                obj.graph.add(gpmp2.VelocityLimitFactorVector(vel_key, obj.joint_vel_limit_model, ...
+                    obj.joint_vel_limit_vec, obj.joint_vel_limit_thresh));
+                obj.factor_ind_counter = obj.factor_ind_counter + 1;
+            end
+
+            obs_fact_indices_in_timestep = [obs_fact_indices_in_timestep; obj.factor_ind_counter];
+
+            obj.graph.add(gpmp2.ObstacleSDFFactorArm(pose_key, ...
+                                                obj.problem_setup.arm, ...
+                                                sdf, ...
+                                                obj.problem_setup.cost_sigma, ...
+                                                obj.problem_setup.epsilon_dist));
+            obj.factor_ind_counter = obj.factor_ind_counter + 1;
+
+            last_pose_key = gtsam.symbol('x', obj.problem_setup.total_time_step-1);
+            last_vel_key = gtsam.symbol('v', obj.problem_setup.total_time_step-1);
+
+            if obj.problem_setup.check_inter > 0
+                for j = 1:obj.problem_setup.check_inter 
+                    tau = j * (obj.problem_setup.total_time_sec / obj.problem_setup.total_check_step);
+
+                    obs_fact_indices_in_timestep = [obs_fact_indices_in_timestep; obj.factor_ind_counter];
+                    obj.graph.add(gpmp2.ObstacleSDFFactorGPArm( ...
+                        last_pose_key, last_vel_key, pose_key, vel_key, ...
+                        obj.problem_setup.arm, initial_sdf, ...
+                        obj.problem_setup.cost_sigma, obj.problem_setup.epsilon_dist, ...
+                        obj.problem_setup.Qc_model, obj.problem_setup.delta_t, tau));
+                    obj.factor_ind_counter = obj.factor_ind_counter + 1;
+
+                end
+            end
+
+            obj.gp_fact_indices(obj.problem_setup.total_time_step+1) = obj.factor_ind_counter;
+
+            obj.graph.add(gpmp2.GaussianProcessPriorLinear(last_pose_key, ...
+                                                    last_vel_key, ...
+                                                    pose_key, ...
+                                                    vel_key, ...
+                                                    obj.problem_setup.delta_t, ...
+                                                    obj.problem_setup.Qc_model));
+            obj.factor_ind_counter = obj.factor_ind_counter + 1;
+
+          
+
+            obj.all_obs_fact_indices{obj.problem_setup.total_time_step+1} = obs_fact_indices_in_timestep;
+
+            
+        end
+
+        function update_current_conf(obj, curr_conf, curr_vel)
+
+            pose_key = gtsam.symbol('x', 1);    
+            vel_key = gtsam.symbol('v', 1);    
+
+            % fix conf and vel current position
+            obj.graph.add(gtsam.PriorFactorVector(pose_key, curr_conf, obj.problem_setup.pose_fix_model));
+            obj.graph.add(gtsam.PriorFactorVector(vel_key, curr_vel, obj.problem_setup.vel_fix_model));
+            
+            obj.factor_ind_counter = obj.factor_ind_counter + 2;
+
+            
+        end
+        
+                
         function update_confs(obj, time_step, curr_conf, curr_vel)
 
             if time_step > 0
@@ -171,6 +255,31 @@
 
         end % function
         
+        function pop_graph(obj)
+            obj.graph.remove(0);
+            obj.graph.remove(1);
+            
+            obj.factor_ind_counter = obj.factor_ind_counter - 2;
+            
+            % Remove the last added factors
+            obj.graph.remove(obj.graph.size()-1);
+            obj.graph.remove(obj.graph.size()-2);
+            
+            obj.factor_ind_counter = obj.factor_ind_counter - 2;
+
+            previous_inds_to_remove = vertcat(obj.all_obs_fact_indices{1}, obj.gp_fact_indices(1));
+            for k = 1:numel(previous_inds_to_remove)
+                obj.graph.remove(previous_inds_to_remove(k));
+            end
+
+            obj.factor_ind_counter = obj.factor_ind_counter - numel(previous_inds_to_remove);
+
+            
+            obj.all_obs_fact_indices(1,1) = [];
+            obj.gp_fact_indices(1) = [];
+            
+            
+        end
     end % methods
  end % class
 
