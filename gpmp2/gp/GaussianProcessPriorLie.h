@@ -38,6 +38,8 @@ private:
   double delta_t_;
 
 public:
+  
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   GaussianProcessPriorLie() {}	/* Default constructor only for serialization */
 

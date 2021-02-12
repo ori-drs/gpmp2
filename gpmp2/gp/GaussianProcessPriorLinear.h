@@ -32,7 +32,8 @@ private:
       gtsam::Vector> Base;
 
 public:
-
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  
   GaussianProcessPriorLinear() {}	/* Default constructor only for serialization */
 
   /// Constructor

@@ -35,7 +35,8 @@ private:
   gtsam::Matrix Psi_;
 
 public:
-
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  
   /// Default constructor: only for serialization
   GaussianProcessInterpolatorLinear() {}
 
