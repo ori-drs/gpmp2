@@ -46,7 +46,7 @@ include(GtsamTesting)
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${GTSAM_DIR}/../GTSAMCMakeTools")
 
 # Boost - same requirement as gtsam
-find_package(Boost 1.50 REQUIRED)
+find_package(Boost 1.65.1 REQUIRED)
 find_package(Boost COMPONENTS filesystem REQUIRED)
 find_package(Boost COMPONENTS system REQUIRED)
 find_package(Boost COMPONENTS thread REQUIRED)
