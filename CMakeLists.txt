@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 2.6)
 enable_testing()
 project(gpmp2 CXX C)
 
-# add_compile_options(-std=c++17)
-
 # Mac ONLY. Define Relative Path on Mac OS
 if(NOT DEFINED CMAKE_MACOSX_RPATH)
   set(CMAKE_MACOSX_RPATH 0)
