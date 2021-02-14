@@ -16,14 +16,16 @@ void RobotModel<FK>::sphereCenters(const Pose& jp,
   // apply fk
   std::vector<gtsam::Pose3> link_poses;
   std::vector<gtsam::Matrix> J_pose_jp;
-  if (J_point_conf)
+  if (J_point_conf) {
     fk_model_.forwardKinematics(jp, boost::none, link_poses, boost::none, J_pose_jp);
-  else
+  }else{
     fk_model_.forwardKinematics(jp, boost::none, link_poses, boost::none);
-
+  }
   // convert to sphere centers
   sph_centers.resize(nr_body_spheres());
-  if (J_point_conf) J_point_conf->resize(nr_body_spheres());
+  if (J_point_conf) {
+    J_point_conf->resize(nr_body_spheres());
+  }
 
   for (size_t sph_idx = 0; sph_idx < nr_body_spheres(); sph_idx++) {
     if (J_point_conf) {
