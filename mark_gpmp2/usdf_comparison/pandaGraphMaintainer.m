@@ -154,6 +154,11 @@
             iterations = optimizer.iterations();
 
         end % function
+
+                
+        function error = error(obj, values)
+            error = obj.graph.error(values);
+        end % function
         
     end % methods
  end % class

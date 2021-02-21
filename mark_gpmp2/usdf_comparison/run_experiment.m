@@ -8,14 +8,14 @@ import gpmp2.*
 %% Parameters
 plot_graphs = false;
 total_time_sec = 5;
-delta_t = 0.2;
+delta_t = 0.1;
 interp_multiplier = 10;
 cost_sigma = 0.05;
 epsilon_dist = 0.1;    
 limit_v = false;
 limit_x = false;
-cell_size = 0.04;
-env_size = 64;
+cell_size = 0.02;
+env_size = 128;
 origin = [-1.28,-1.28,-1.28];
 base_pos = [0, 0, 0];
 total_time_step = round(total_time_sec/delta_t);
@@ -60,8 +60,6 @@ panda_planner = pandaGraphMaintainer(sdf, problem_setup);
 
 [result, error, iterations] = panda_planner.optimize(init_values);
 
-results_log = zeros(40000, 6); % [index, signed(1)/unsigned(0) error, collisions, iterations]
-results_log(1, :) = double([1, 1, 1, error, double(num_collisions), double(iterations)]);
 
 %% Analysis
 
@@ -79,6 +77,8 @@ disp("Error: " + num2str(error) + sprintf('\t') + "Iterations: " + num2str(itera
 % Total error
 % Time taken to plan
 
+results_log = zeros(40000, 6); % [index, signed(1)/unsigned(0) error, collisions, iterations]
+results_log(1, :) = double([1, 1, 1, error, double(num_collisions), double(iterations)]);
 
 
 %% Visualisations
