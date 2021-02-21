@@ -78,6 +78,8 @@ public:
   gtsam::Vector evaluateError(const Pose& conf,
       boost::optional<gtsam::Matrix&> H1 = boost::none) const ;
 
+  gtsam::Vector spheresInCollision(const Pose& conf) const ;
+
   /// to change the SDF dynamically
   void changeSDFData(const gtsam::Matrix& new_data) {
     const_cast<PlanarSDF&>(sdf_).changeData(new_data);

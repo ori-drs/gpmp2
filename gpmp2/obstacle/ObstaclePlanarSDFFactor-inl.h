@@ -56,4 +56,35 @@ gtsam::Vector ObstaclePlanarSDFFactor<ROBOT>::evaluateError(
   return err;
 }
 
+
+template <class ROBOT>
+gtsam::Vector ObstaclePlanarSDFFactor<ROBOT>::spheresInCollision(
+    const Pose& conf) const {
+
+  // run forward kinematics of this configuration
+  vector<Point3> sph_centers;
+  robot_.sphereCenters(conf, sph_centers);
+
+  // allocate cost vector
+  Vector spheres_in_collision(robot_.nr_body_spheres());
+
+  // for each point on arm stick, get error
+  for (size_t sph_idx = 0; sph_idx < robot_.nr_body_spheres(); sph_idx++) {
+
+    const double sphere_radius = robot_.sphere_radius(sph_idx);
+    const Point2 sph_center_2d(sph_centers[sph_idx].x(), sph_centers[sph_idx].y());
+    if (hingeLossObstacleCost(sph_center_2d, sdf_, sphere_radius)>0) {
+      spheres_in_collision(sph_idx) = 1;
+    }
+    else
+    {
+      spheres_in_collision(sph_idx) = 0;
+    }
+
+  }
+
+  return spheres_in_collision;
+}
+
+
 }

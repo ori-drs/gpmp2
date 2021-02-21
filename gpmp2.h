@@ -482,6 +482,7 @@ virtual class ObstaclePlanarSDFFactorArm : gtsam::NoiseModelFactor {
       size_t posekey, const gpmp2::ArmModel& arm,
       const gpmp2::PlanarSDF& sdf, double cost_sigma, double epsilon);
   Vector evaluateError(Vector pose) const;
+  Vector spheresInCollision(Vector pose) const;
   void changeSDFData(const Matrix& field); 
 };
 
@@ -507,6 +508,8 @@ virtual class ObstaclePlanarSDFFactorPointRobot : gtsam::NoiseModelFactor {
       size_t posekey, const gpmp2::PointRobotModel& pR,
       const gpmp2::PlanarSDF& sdf, double cost_sigma, double epsilon);
   Vector evaluateError(Vector pose) const;
+  Vector spheresInCollision(Vector pose) const;
+
 };
 
 
@@ -528,6 +531,7 @@ virtual class ObstaclePlanarSDFFactorPose2MobileBase : gtsam::NoiseModelFactor {
       size_t posekey, const gpmp2::Pose2MobileBaseModel& robot,
       const gpmp2::PlanarSDF& sdf, double cost_sigma, double epsilon);
   Vector evaluateError(const gtsam::Pose2& pose) const;
+  Vector spheresInCollision(const gtsam::Pose2&  pose) const;
 };
 
 #include <gpmp2/obstacle/ObstaclePlanarSDFFactorGPPose2MobileBase.h>
@@ -546,6 +550,7 @@ virtual class ObstaclePlanarSDFFactorPose2MobileArm : gtsam::NoiseModelFactor {
       size_t posekey, const gpmp2::Pose2MobileArmModel& marm,
       const gpmp2::PlanarSDF& sdf, double cost_sigma, double epsilon);
   Vector evaluateError(const gpmp2::Pose2Vector& pose) const;
+  Vector spheresInCollision(const gpmp2::Pose2Vector&  pose) const;
 };
 
 #include <gpmp2/obstacle/ObstaclePlanarSDFFactorGPPose2MobileArm.h>
@@ -565,6 +570,7 @@ virtual class ObstaclePlanarSDFFactorPose2Mobile2Arms : gtsam::NoiseModelFactor 
       size_t posekey, const gpmp2::Pose2Mobile2ArmsModel& marm,
       const gpmp2::PlanarSDF& sdf, double cost_sigma, double epsilon);
   Vector evaluateError(const gpmp2::Pose2Vector& pose) const;
+  Vector spheresInCollision(const gpmp2::Pose2Vector&  pose) const;
 };
 
 #include <gpmp2/obstacle/ObstaclePlanarSDFFactorGPPose2Mobile2Arms.h>
@@ -584,6 +590,7 @@ virtual class ObstacleSDFFactorPose2MobileBase : gtsam::NoiseModelFactor {
       size_t posekey, const gpmp2::Pose2MobileBaseModel& robot,
       const gpmp2::SignedDistanceField& sdf, double cost_sigma, double epsilon);
   Vector evaluateError(const gtsam::Pose2& pose) const;
+  Vector spheresInCollision(const gtsam::Pose2& pose) const;
 };
 
 // obstacle avoid factor with GP interpolation (pose2 mobile base with 3D signed distance field)
@@ -603,6 +610,7 @@ virtual class ObstacleSDFFactorPose2MobileArm : gtsam::NoiseModelFactor {
       size_t posekey, const gpmp2::Pose2MobileArmModel& marm,
       const gpmp2::SignedDistanceField& sdf, double cost_sigma, double epsilon);
   Vector evaluateError(const gpmp2::Pose2Vector& pose) const;
+  Vector spheresInCollision(const gpmp2::Pose2Vector& pose) const;
 };
 
 // obstacle avoid factor with GP interpolation (pose2 mobile arm with 3D signed distance field)
@@ -622,6 +630,7 @@ virtual class ObstacleSDFFactorPose2Mobile2Arms : gtsam::NoiseModelFactor {
       size_t posekey, const gpmp2::Pose2Mobile2ArmsModel& marm,
       const gpmp2::SignedDistanceField& sdf, double cost_sigma, double epsilon);
   Vector evaluateError(const gpmp2::Pose2Vector& pose) const;
+  Vector spheresInCollision(const gpmp2::Pose2Vector& pose) const;
 };
 
 // obstacle avoid factor with GP interpolation (pose2 mobile + 2 x arm with 3D signed distance field)
@@ -641,6 +650,7 @@ virtual class ObstacleSDFFactorPose2MobileVetLinArm : gtsam::NoiseModelFactor {
       size_t posekey, const gpmp2::Pose2MobileVetLinArmModel& marm,
       const gpmp2::SignedDistanceField& sdf, double cost_sigma, double epsilon);
   Vector evaluateError(const gpmp2::Pose2Vector& pose) const;
+  Vector spheresInCollision(const gpmp2::Pose2Vector& pose) const;
 };
 
 // obstacle avoid factor with GP interpolation (pose2 mobile + linear actuator + arm with 3D signed distance field)
@@ -660,6 +670,7 @@ virtual class ObstacleSDFFactorPose2MobileVetLin2Arms : gtsam::NoiseModelFactor 
       size_t posekey, const gpmp2::Pose2MobileVetLin2ArmsModel& marm,
       const gpmp2::SignedDistanceField& sdf, double cost_sigma, double epsilon);
   Vector evaluateError(const gpmp2::Pose2Vector& pose) const;
+  Vector spheresInCollision(const gpmp2::Pose2Vector& pose) const;
 };
 
 // obstacle avoid factor with GP interpolation (pose2 mobile + linear actuator + 2 x arm with 3D signed distance field)
