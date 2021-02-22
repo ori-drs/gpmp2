@@ -84,7 +84,7 @@ for config_ind = 1:num_combos
 
         evaluation_planner = pandaGraphMaintainer(sdf, evaluation_setup);
 
-        sdf_error = evaluation_planner.error(usdf_result);
+        sdf_error = evaluation_planner.error(sdf_result);
         usdf_error = evaluation_planner.error(usdf_result);
 
         %% Analysis
