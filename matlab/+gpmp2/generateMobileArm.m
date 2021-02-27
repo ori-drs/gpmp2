@@ -252,7 +252,7 @@ elseif strcmp(str, 'HSR')
     % abstract arm
     arm = Arm(4, a, alpha, d, base_pose, theta);
 
-    base_T_torso = Pose3(Rot3(), Point3([0, 0, 0]'));
+    base_T_torso = Pose3(Rot3(), Point3([0, 0, 0.34]'));
     torso_T_arm = Pose3(Rot3.RzRyRx(1.57, 0, 0), Point3([0.141, 0.078, 0]'));
 
     % abstract mobile arm
