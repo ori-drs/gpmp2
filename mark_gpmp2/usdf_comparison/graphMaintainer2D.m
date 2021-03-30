@@ -30,6 +30,8 @@
             obj.parameters = gtsam.LevenbergMarquardtParams;
             obj.parameters.setVerbosity('NONE');
             
+            obj.parameters.setlambdaInitial(0.01)
+            
             obj.sdf = sdf;
             
             obj.createFullGraph();

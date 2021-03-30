@@ -29,7 +29,8 @@
 %             obj.parameters = gtsam.GaussNewtonParams;
             obj.parameters = gtsam.LevenbergMarquardtParams;
             obj.parameters.setVerbosity('NONE');
-            
+            obj.parameters.setlambdaInitial(0.01)
+
             obj.sdf = sdf;
             
             obj.joint_limit_vec_down = [-2.6, -2, -2.8, -0.9, -4.8, -1.6, -2.2]';
