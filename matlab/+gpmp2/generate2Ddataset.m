@@ -59,8 +59,8 @@ elseif strcmp(dataset_str, 'MultiObstacleDataset')
 % mobile 2d map
 elseif strcmp(dataset_str, 'MobileMap1')
     % params
-    dataset.cols = 500; %x
-    dataset.rows = 500; %y
+    dataset.cols = 1000; %x
+    dataset.rows = 1000; %y
     dataset.origin_x = -5;
     dataset.origin_y = -5;
     dataset.cell_size = 0.01;

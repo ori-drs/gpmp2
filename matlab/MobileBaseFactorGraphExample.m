@@ -30,7 +30,7 @@ delta_t = total_time_sec / total_time_step;
 total_check_step = (check_inter + 1)*total_time_step;
 
 % use 2d vehicle dynamics
-use_vehicle_dynamics = true;
+use_vehicle_dynamics = false;
 dynamics_sigma = 0.001;
 
 % robot model
@@ -180,5 +180,6 @@ plotEvidenceMap2D(dataset.map, dataset.origin_x, dataset.origin_y, cell_size);
 for i=0:total_plot_step
     p = plot_values.atPose2(symbol('x', i));
     plotPlanarMobileBase(robot.fk_model(), p, [0.4 0.2], 'b', 1);
+    pause(0.2);
 end
 hold off;
