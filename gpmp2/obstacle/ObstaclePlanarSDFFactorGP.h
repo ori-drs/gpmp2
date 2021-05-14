@@ -82,6 +82,13 @@ public:
     // TODO: check arm is plannar
   }
 
+  ObstaclePlanarSDFFactorGP(
+      const gtsam::SharedNoiseModel& noiseModel, GPBase gpbase, gtsam::Key pose1Key, gtsam::Key vel1Key, gtsam::Key pose2Key, gtsam::Key vel2Key,
+      const Robot& robot, const PlanarSDF& sdf, double epsilon) :
+
+        Base(noiseModel, pose1Key, vel1Key, pose2Key, vel2Key), GPbase_(gpbase),
+        epsilon_(epsilon), robot_(robot), sdf_(sdf) {}
+
   virtual ~ObstaclePlanarSDFFactorGP() {}
 
   /// to change the SDF dynamically
@@ -90,6 +97,11 @@ public:
     // sdf_ptr->changeData(new_data);
     const_cast<PlanarSDF&>(sdf_).changeData(new_data);
   }
+
+  ObstaclePlanarSDFFactorGP getSDFModFactor(const PlanarSDF& sdf){
+    return ObstaclePlanarSDFFactorGP(this->noiseModel(), GPbase_, this->key1(), this->key2(), this->key3(), this->key4(),
+                              robot_ , sdf, epsilon_);
+  }  
 
   /// error function
   /// numerical jacobians / analytic jacobians from cost function

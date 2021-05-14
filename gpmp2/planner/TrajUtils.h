@@ -21,6 +21,23 @@ namespace gpmp2 {
 
 /**
  * @brief initial the trajectory in configuration space as a straight line
+ * @param input_traj previous trajectory
+ * @param start_pose  current pose
+ * @param start_vel  current velocity
+ * @param Qc_model  QC model
+ * @param old_delta_t  delta_t in the old trajectory
+ * @param new_delta_t  delta_t in the new trajectory
+ * @param old_time_steps  number of time steps in old trajectory
+ * @param new_time_steps  number of time steps in new trajectory
+ * @param start_index The start index of the previous trajectory that you wish to keep
+ * @return values
+ */
+GPMP2_EXPORT gtsam::Values refitPose2MobileTraj(const gtsam::Values& input_traj, const gtsam::Pose2& start_pose, const gtsam::Vector& start_vel,
+        const gtsam::SharedNoiseModel Qc_model, const double old_delta_t, const double new_delta_t, const size_t old_time_steps, const size_t new_time_steps, 
+        const size_t start_index);
+
+/**
+ * @brief initial the trajectory in configuration space as a straight line
  * @param init_conf trajectory start configuration
  * @param end_conf  trajectory end configuration
  * @param total_step is how many intervals do you want in the traj

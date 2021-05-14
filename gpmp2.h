@@ -532,6 +532,9 @@ virtual class ObstaclePlanarSDFFactorPose2MobileBase : gtsam::NoiseModelFactor {
       const gpmp2::PlanarSDF& sdf, double cost_sigma, double epsilon);
   Vector evaluateError(const gtsam::Pose2& pose) const;
   Vector spheresInCollision(const gtsam::Pose2&  pose) const;
+  bool isInCollision(const gtsam::Pose2&  pose) const;
+  gpmp2::ObstaclePlanarSDFFactorPose2MobileBase getSDFModFactor(const gpmp2::PlanarSDF& sdf);
+
 };
 
 #include <gpmp2/obstacle/ObstaclePlanarSDFFactorGPPose2MobileBase.h>
@@ -541,6 +544,7 @@ virtual class ObstaclePlanarSDFFactorGPPose2MobileBase : gtsam::NoiseModelFactor
       const gpmp2::Pose2MobileBaseModel& robot, const gpmp2::PlanarSDF& sdf,
       double cost_sigma, double epsilon, const gtsam::noiseModel::Base* Qc_model,
       double delta_t, double tau);
+  gpmp2::ObstaclePlanarSDFFactorGPPose2MobileBase getSDFModFactor(const gpmp2::PlanarSDF& sdf);
 };
 
 // planar obstacle avoid factor (pose2 mobile arm with 2D signed distance field)
@@ -966,6 +970,17 @@ class ISAM2TrajOptimizerPose2MobileVetLin2Arms {
 
 // utils for traj init and interpolation
 #include <gpmp2/planner/TrajUtils.h>
+
+/// reinitialization
+gtsam::Values refitPose2MobileTraj(const gtsam::Values& input_traj, 
+                                  const gtsam::Pose2& start_pose, 
+                                  const Vector& start_vel,
+                                  const gtsam::noiseModel::Base* Qc_model, 
+                                  double old_delta_t, 
+                                  double new_delta_t, 
+                                  size_t old_time_steps, 
+                                  size_t new_time_steps, 
+                                  size_t start_index);
 
 /// reinitialization
 gtsam::Values reinitRemainderArmTrajStraightLine(gtsam::Values& traj, 

@@ -70,6 +70,11 @@ public:
     // TODO: check robot is plannar
   }
 
+  ObstaclePlanarSDFFactor(const gtsam::SharedNoiseModel& noiseModel, gtsam::Key poseKey, const Robot& robot,
+      const PlanarSDF& sdf, double epsilon) :
+        Base(noiseModel, poseKey),
+        epsilon_(epsilon), robot_(robot), sdf_(sdf) {}
+
   virtual ~ObstaclePlanarSDFFactor() {}
 
 
@@ -80,10 +85,16 @@ public:
 
   gtsam::Vector spheresInCollision(const Pose& conf) const ;
 
+  bool isInCollision(const typename Robot::Pose& conf) const ;
+
   /// to change the SDF dynamically
   void changeSDFData(const gtsam::Matrix& new_data) {
     const_cast<PlanarSDF&>(sdf_).changeData(new_data);
   }
+
+  ObstaclePlanarSDFFactor getSDFModFactor(const PlanarSDF& sdf){
+    return ObstaclePlanarSDFFactor(this->noiseModel(), this->key(), robot_ , sdf, epsilon_);
+  }  
 
   /// @return a deep copy of this factor
   virtual gtsam::NonlinearFactor::shared_ptr clone() const {

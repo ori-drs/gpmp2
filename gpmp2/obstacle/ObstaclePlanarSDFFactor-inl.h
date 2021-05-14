@@ -86,5 +86,10 @@ gtsam::Vector ObstaclePlanarSDFFactor<ROBOT>::spheresInCollision(
   return spheres_in_collision;
 }
 
+template <class ROBOT>
+bool ObstaclePlanarSDFFactor<ROBOT>::isInCollision(const Pose& conf) const {
+
+  return spheresInCollision(conf).sum() > 0;
+}
 
 }
