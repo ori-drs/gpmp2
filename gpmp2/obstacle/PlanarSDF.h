@@ -135,7 +135,7 @@ public:
   /// print
   void print(const std::string& str = "") const {
     std::cout << str;
-    std::cout << "field origin:     "; origin_;
+    std::cout << "field origin:     " << origin_ << std::endl;
     std::cout << "field resolution: " << cell_size_ << std::endl;
     std::cout << "field size:       " << field_cols_ << " x "
         << field_rows_ << std::endl;
