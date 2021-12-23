@@ -30,7 +30,7 @@ delta_t = total_time_sec / total_time_step;
 total_check_step = (check_inter + 1)*total_time_step;
 
 % use 2d vehicle dynamics
-use_vehicle_dynamics = false;
+use_vehicle_dynamics = true;
 dynamics_sigma = 0.001;
 
 % robot model

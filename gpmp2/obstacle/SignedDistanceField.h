@@ -72,12 +72,6 @@ public:
     return data_;
   }
 
-  // // to change the SDF dynamically
-  // void replaceSDFData(SignedDistanceField& sdf) {
-  //   std::vector<gtsam::Matrix> temp = sdf.getData();
-  //   changeData(temp);
-  // }
-
   void changeData(const std::vector<gtsam::Matrix>& new_data) {
     std::vector<gtsam::Matrix> temp = new_data; // This copies
     data_ = temp;
