@@ -18,7 +18,6 @@ class gtsam::VariableIndex;
 
 namespace gpmp2 {
 
-   
 ////////////////////////////////////////////////////////////////////////////////
 // geometry
 ////////////////////////////////////////////////////////////////////////////////
@@ -35,6 +34,7 @@ class Pose2Vector {
   // print
   void print(string s) const;
 };
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // gp
@@ -445,6 +445,7 @@ class PlanarSDF {
   void changeData(const Matrix& new_data);
 };
 
+
 // obstacle avoid factor
 #include <gpmp2/obstacle/ObstacleSDFFactorArm.h>
 virtual class ObstacleSDFFactorArm : gtsam::NoiseModelFactor {
@@ -455,7 +456,6 @@ virtual class ObstacleSDFFactorArm : gtsam::NoiseModelFactor {
   Vector spheresInCollision(Vector pose) const;
 //   void replaceSDFData(const gpmp2::SignedDistanceField& sdf); 
   void replaceSDFData(const gpmp2::SignedDistanceField& sdf); 
-  
   gpmp2::ObstacleSDFFactorArm getSDFModFactor(const gpmp2::SignedDistanceField& sdf);
 };
 
@@ -470,7 +470,6 @@ virtual class ObstacleSDFFactorGPArm : gtsam::NoiseModelFactor {
       double delta_t, double tau);
   void replaceSDFData(const gpmp2::SignedDistanceField& sdf);
   gpmp2::ObstacleSDFFactorGPArm getSDFModFactor(const gpmp2::SignedDistanceField& sdf);
-  
 };
 
 
@@ -534,7 +533,6 @@ virtual class ObstaclePlanarSDFFactorPose2MobileBase : gtsam::NoiseModelFactor {
   Vector spheresInCollision(const gtsam::Pose2&  pose) const;
   bool isInCollision(const gtsam::Pose2&  pose) const;
   gpmp2::ObstaclePlanarSDFFactorPose2MobileBase getSDFModFactor(const gpmp2::PlanarSDF& sdf);
-
 };
 
 #include <gpmp2/obstacle/ObstaclePlanarSDFFactorGPPose2MobileBase.h>
@@ -846,7 +844,6 @@ class ISAM2TrajOptimizer2DArm {
 
   /// accesses
   gtsam::Values values() const;
-
 };
 
 /// 3D replanner
@@ -868,7 +865,6 @@ class ISAM2TrajOptimizer3DArm {
 
   /// accesses
   gtsam::Values values() const;
-
 };
 
 /// 2D mobile arm replanner
@@ -890,7 +886,6 @@ class ISAM2TrajOptimizerPose2MobileArm2D {
 
   /// accesses
   gtsam::Values values() const;
-
 };
 
 /// 3D mobile arm replanner
@@ -912,7 +907,6 @@ class ISAM2TrajOptimizerPose2MobileArm {
 
   /// accesses
   gtsam::Values values() const;
-
 };
 
 
@@ -934,7 +928,6 @@ class ISAM2TrajOptimizerPose2MobileVetLin2Arms {
 
   /// accesses
   gtsam::Values values() const;
-
 };
 
 
