@@ -1,7 +1,4 @@
 build*
-
-gpmp2/.vscode/settings.json
-
+gpmp2/.vscode/*
 *.m~
-
-.vscode/settings.json
+.vscode/*
