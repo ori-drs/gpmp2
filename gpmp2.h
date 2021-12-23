@@ -824,36 +824,6 @@ double CollisionCostPose2MobileVetLin2Arms(
 gtsam::Values optimize(const gtsam::NonlinearFactorGraph& graph, const gtsam::Values& init_values,
     const gpmp2::TrajOptimizerSetting& setting, bool iter_no_increase);
 
-/// iSAM2 incremental trajectory optimizers for dynamic environments
-#include <gpmp2/planner/ISAM2DynamicTrajOptimizer.h>
-
-/// 3D replanner
-class ISAM2DynamicTrajOptimizer3DArm {
-  ISAM2DynamicTrajOptimizer3DArm(const gpmp2::ArmModel& arm, const gpmp2::SignedDistanceField& sdf,
-      const gpmp2::TrajOptimizerSetting& setting);
-
-  void initFactorGraph(Vector start_conf, Vector start_vel,
-      Vector goal_conf, Vector goal_vel);
-  void initValues(const gtsam::Values& init_values);
-  void update();
-
-  /// Replanning interfaces
-  void changeGoalConfigAndVel(Vector goal_conf, Vector goal_vel);
-  void removeGoalConfigAndVel();
-  void fixConfigAndVel(size_t state_idx, Vector conf_fix, Vector vel_fix);
-  void addPoseEstimate(size_t state_idx, Vector pose, Matrix pose_cov);
-  void addStateEstimate(size_t state_idx, Vector pose, Matrix pose_cov, Vector vel, Matrix vel_cov);
-
-  /// accesses
-  gtsam::Values values() const;
-  gtsam::VariableIndex getVariableIndex() const;
-
-  void printStats() const;
-  void printVariableIndex() const;
-
-};
-
-
 /// iSAM2 incremental trajectory optimizers
 #include <gpmp2/planner/ISAM2TrajOptimizer.h>
 
